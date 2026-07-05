@@ -98,14 +98,23 @@
                     <a href="{{ discordUrl }}" class="rounded-full px-4 py-2 transition hover:bg-camelia-blush hover:text-camelia-rose" target="_blank" rel="noopener noreferrer">Discord</a>
                 </div>
 
-                <a
-                    href="{{ installUrl }}"
-                    class="hidden min-h-11 items-center justify-center rounded-full border border-white/60 bg-white/88 px-5 text-sm font-black text-camelia-rose shadow-xl shadow-camelia-ink/10 backdrop-blur-xl transition hover:bg-camelia-blush md:inline-flex"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    Ajouter à mon serveur
-                </a>
+                <div class="hidden items-center gap-2 md:flex">
+                    <a
+                        href="{{ path('app_dashboard') }}"
+                        class="inline-flex min-h-11 items-center justify-center rounded-full border border-camelia-ink/10 bg-camelia-ink px-5 text-sm font-black text-white shadow-xl shadow-camelia-ink/10 transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+                        data-testid="landing-backoffice-link"
+                    >
+                        Backoffice
+                    </a>
+                    <a
+                        href="{{ installUrl }}"
+                        class="inline-flex min-h-11 items-center justify-center rounded-full border border-white/60 bg-white/88 px-5 text-sm font-black text-camelia-rose shadow-xl shadow-camelia-ink/10 backdrop-blur-xl transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Ajouter à mon serveur
+                    </a>
+                </div>
 
                 <button
                     type="button"
@@ -164,6 +173,9 @@
                         </a>
                         <a href="#espaces" class="rounded-3xl bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" data-action="mobile-menu#navigate">
                             La collection
+                        </a>
+                        <a href="{{ path('app_dashboard') }}" class="rounded-3xl bg-camelia-ink px-5 py-4 font-display text-3xl leading-none text-white shadow-sm transition hover:bg-camelia-rose" data-testid="landing-backoffice-link">
+                            Backoffice
                         </a>
                         <a href="{{ installUrl }}" class="rounded-3xl bg-camelia-rose px-5 py-4 font-display text-3xl leading-none text-white shadow-sm transition hover:bg-camelia-ink" target="_blank" rel="noopener noreferrer">
                             Ajouter

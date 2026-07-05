@@ -29,6 +29,8 @@ final class HomeControllerTest extends WebTestCase
         self::assertSelectorExists('a[href="https://git.crystalyx.net/camelia-studio/Gachamelia/wiki"]');
         self::assertSelectorExists('a[href="https://git.crystalyx.net/camelia-studio/Gachamelia"]');
         self::assertSelectorExists('a[href="https://discord.gg/nBuZ9vJ"]');
+        self::assertSelectorExists('a[href="/app"][data-testid="landing-backoffice-link"]');
+        self::assertSelectorTextContains('body', 'Backoffice');
         self::assertSelectorTextContains('body', 'Ouvrir le menu');
         self::assertSelectorTextContains('body', 'À conserver');
         self::assertSame(
