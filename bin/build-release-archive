@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_NAME="gachamelia-backoffice"
+TAG_NAME="${1:-${GITEA_REF_NAME:-${GITHUB_REF_NAME:-local}}}"
+APP_ENV="${APP_ENV:-prod}"
+APP_DEBUG="${APP_DEBUG:-0}"
+APP_BASE_PATH="${APP_BASE_PATH:-/gachamelia}"
+DEFAULT_URI="${DEFAULT_URI:-http://localhost${APP_BASE_PATH}/}"
+BUILD_ROOT="${BUILD_ROOT:-var/release}"
+ARCHIVE_NAME="${ARCHIVE_NAME:-${PROJECT_NAME}-${TAG_NAME}.zip}"
+STAGING_DIR="${BUILD_ROOT}/package"
+ARCHIVE_PATH="${BUILD_ROOT}/${ARCHIVE_NAME}"
+
+rm -rf "${BUILD_ROOT}"
+mkdir -p "${STAGING_DIR}"
+
+rsync -a --delete \
+    --exclude '/.git/' \
+    --exclude '/.gitea/' \
+    --exclude '/.github/' \
+    --exclude '/.idea/' \
+    --exclude '/.fleet/' \
+    --exclude '/.vscode/' \
+    --exclude '/.phpunit.cache/' \
+    --exclude '/.superpowers/' \
+    --exclude '/.editorconfig' \
+    --exclude '/.gitignore' \
+    --exclude '/.env.dev' \
+    --exclude '/.env.test' \
+    --exclude '/assets/' \
+    --exclude '/bin/build-release-archive' \
+    --exclude '/bin/phpunit' \
+    --exclude '/config/reference.php' \
+    --exclude '/docker/' \
+    --exclude '/docs/' \
+    --exclude '/node_modules/' \
+    --exclude '/package.json' \
+    --exclude '/package-lock.json' \
+    --exclude '/phpunit.dist.xml' \
+    --exclude '/postcss.config.mjs' \
+    --exclude '/tests/' \
+    --exclude '/var/' \
+    --exclude '/webpack.config.js' \
+    ./ "${STAGING_DIR}/"
+
+php -r '
+[$path, $appEnv, $appDebug, $basePath, $defaultUri] = array_slice($argv, 1);
+$env = file_get_contents($path);
+$set = static function (string $key, string $value) use (&$env): void {
+    $line = $key."=".$value;
+    if (preg_match("/^".$key."=.*$/m", $env)) {
+        $env = preg_replace("/^".$key."=.*$/m", $line, $env);
+
+        return;
+    }
+
+    $env = rtrim($env)."\n".$line."\n";
+};
+
+$set("APP_ENV", $appEnv);
+$set("APP_DEBUG", $appDebug);
+$set("APP_BASE_PATH", $basePath);
+$set("DEFAULT_URI", $defaultUri);
+
+file_put_contents($path, $env);
+' "${STAGING_DIR}/.env" "${APP_ENV}" "${APP_DEBUG}" "${APP_BASE_PATH}" "${DEFAULT_URI}"
+
+test -f "${STAGING_DIR}/vendor/autoload.php"
+test -f "${STAGING_DIR}/public/build/manifest.json"
+test -f "${STAGING_DIR}/.htaccess"
+test -f "${STAGING_DIR}/public/.htaccess"
+
+php -r '
+[$manifestPath, $basePath] = array_slice($argv, 1);
+$manifest = json_decode(file_get_contents($manifestPath), true, 512, JSON_THROW_ON_ERROR);
+$prefix = rtrim($basePath, "/")."/build/";
+
+foreach ($manifest as $path) {
+    if (is_string($path) && str_starts_with($path, $prefix)) {
+        exit(0);
+    }
+}
+
+fwrite(STDERR, "No Encore asset uses the expected ".$prefix." prefix.\n");
+exit(1);
+' "${STAGING_DIR}/public/build/manifest.json" "${APP_BASE_PATH}"
+
+mkdir -p "${BUILD_ROOT}"
+(cd "${STAGING_DIR}" && zip -qr "../${ARCHIVE_NAME}" .)
+
+echo "${ARCHIVE_PATH}"

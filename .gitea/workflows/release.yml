@@ -1,0 +1,118 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+env:
+  APP_ENV: prod
+  APP_DEBUG: 0
+  APP_BASE_PATH: /gachamelia
+  APP_SECRET: release-build-secret
+  DEFAULT_URI: http://localhost/gachamelia/
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq rsync unzip zip
+
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: ctype, iconv, intl, pdo_pgsql, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader --no-scripts
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Warm up Symfony
+        run: composer run-script auto-scripts --no-interaction
+
+      - name: Build deployment ZIP
+        run: bin/build-release-archive "${{ gitea.ref_name }}"
+
+      - name: Create or find tag release
+        id: release
+        env:
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ gitea.ref_name }}
+          REPOSITORY: ${{ gitea.repository }}
+          SERVER_URL: ${{ gitea.server_url }}
+        run: |
+          set -euo pipefail
+
+          api="${SERVER_URL}/api/v1/repos/${REPOSITORY}/releases"
+          auth_header="Authorization: token ${GITEA_TOKEN}"
+
+          release_json="$(curl -fsS -H "${auth_header}" "${api}/tags/${TAG_NAME}" || true)"
+
+          if [ -z "${release_json}" ]; then
+            payload="$(jq -n \
+              --arg tag "${TAG_NAME}" \
+              --arg name "${TAG_NAME}" \
+              --arg body "Archive prête à déployer du backoffice Gachamélia." \
+              '{tag_name: $tag, name: $name, body: $body, draft: false, prerelease: false}')"
+
+            release_json="$(curl -fsS -X POST \
+              -H "${auth_header}" \
+              -H "Content-Type: application/json" \
+              -d "${payload}" \
+              "${api}")"
+          fi
+
+          release_id="$(printf '%s' "${release_json}" | jq -r '.id')"
+          test -n "${release_id}"
+          test "${release_id}" != "null"
+
+          echo "id=${release_id}" >> "${GITHUB_OUTPUT}"
+
+      - name: Upload ZIP to release
+        env:
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ID: ${{ steps.release.outputs.id }}
+          REPOSITORY: ${{ gitea.repository }}
+          SERVER_URL: ${{ gitea.server_url }}
+          TAG_NAME: ${{ gitea.ref_name }}
+        run: |
+          set -euo pipefail
+
+          archive="gachamelia-backoffice-${TAG_NAME}.zip"
+          archive_path="var/release/${archive}"
+          api="${SERVER_URL}/api/v1/repos/${REPOSITORY}/releases/${RELEASE_ID}"
+          auth_header="Authorization: token ${GITEA_TOKEN}"
+
+          asset_id="$(curl -fsS -H "${auth_header}" "${api}/assets" \
+            | jq -r --arg name "${archive}" '.[] | select(.name == $name) | .id' \
+            | head -n 1)"
+
+          if [ -n "${asset_id}" ]; then
+            curl -fsS -X DELETE -H "${auth_header}" "${api}/assets/${asset_id}"
+          fi
+
+          curl -fsS -X POST \
+            -H "${auth_header}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @"${archive_path}" \
+            "${api}/assets?name=${archive}"
