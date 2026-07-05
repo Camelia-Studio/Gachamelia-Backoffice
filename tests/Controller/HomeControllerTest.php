@@ -122,6 +122,67 @@ final class HomeControllerTest extends WebTestCase
         );
     }
 
+    public function testAssetUrlsUseSingleSubdirectoryPrefixWhenServedBelowBasePath(): void
+    {
+        $_ENV['APP_BASE_PATH'] = $_SERVER['APP_BASE_PATH'] = '/gachamelia';
+        $_ENV['DEFAULT_URI'] = $_SERVER['DEFAULT_URI'] = 'https://cila.camelia-studio.org/gachamelia/';
+        putenv('APP_BASE_PATH=/gachamelia');
+        putenv('DEFAULT_URI=https://cila.camelia-studio.org/gachamelia/');
+
+        self::ensureKernelShutdown();
+
+        try {
+            $client = static::createClient();
+
+            $crawler = $client->request('GET', '/gachamelia/', server: [
+                'HTTP_HOST' => 'cila.camelia-studio.org',
+                'HTTPS' => 'on',
+                'PHP_SELF' => '/gachamelia/index.php',
+                'REQUEST_URI' => '/gachamelia/',
+                'SCRIPT_FILENAME' => '/var/www/gachamelia/public/index.php',
+                'SCRIPT_NAME' => '/gachamelia/index.php',
+            ]);
+
+            self::assertResponseIsSuccessful();
+            self::assertSame(
+                '/gachamelia/images/gachamelia-hero.jpg',
+                $crawler->filter('[data-testid="hero-visual"]')->attr('src'),
+            );
+            self::assertSame(
+                '/gachamelia/images/gachamelia-bot-avatar.png',
+                $crawler->filter('[data-testid="bot-avatar-visual"]')->attr('src'),
+            );
+            self::assertSame(
+                '/gachamelia/site.webmanifest',
+                $crawler->filter('link[rel="manifest"]')->attr('href'),
+            );
+            self::assertSame(
+                'https://cila.camelia-studio.org/gachamelia/images/gachamelia-hero.jpg',
+                $crawler->filter('meta[property="og:image"]')->attr('content'),
+            );
+            self::assertStringNotContainsString('/gachamelia/gachamelia/', $client->getResponse()->getContent() ?: '');
+        } finally {
+            $_ENV['APP_BASE_PATH'] = $_SERVER['APP_BASE_PATH'] = '';
+            $_ENV['DEFAULT_URI'] = $_SERVER['DEFAULT_URI'] = 'http://localhost';
+            putenv('APP_BASE_PATH=');
+            putenv('DEFAULT_URI=http://localhost');
+            self::ensureKernelShutdown();
+        }
+    }
+
+    public function testSiteManifestUsesRelativeUrlsForSubdirectoryDeployments(): void
+    {
+        $manifest = json_decode(
+            file_get_contents(\dirname(__DIR__, 2).'/public/site.webmanifest') ?: '',
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+
+        self::assertSame('./', $manifest['start_url']);
+        self::assertSame('./', $manifest['scope']);
+        self::assertSame('images/gachamelia-bot-avatar.png', $manifest['icons'][0]['src']);
+    }
+
     public function testSeoUtilityEndpointsUseCurrentHost(): void
     {
         $client = static::createClient();

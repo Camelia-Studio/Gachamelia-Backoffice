@@ -2,9 +2,6 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
-    assets:
-        base_path: '%env(APP_BASE_PATH)%'
-
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 

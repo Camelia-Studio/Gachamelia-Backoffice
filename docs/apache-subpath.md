@@ -10,9 +10,12 @@ APP_BASE_PATH=/gachamelia
 DEFAULT_URI=https://example.test/gachamelia/
 ```
 
-`APP_BASE_PATH` est utilisé pour générer les URLs d'assets et pour que Symfony
-reconnaisse le sous-chemin public pendant les requêtes HTTP. `DEFAULT_URI`
-permet à Symfony de générer des URLs correctes hors requête HTTP.
+`APP_BASE_PATH` est utilisé par le front controller pour que Symfony reconnaisse
+le sous-chemin public pendant les requêtes HTTP, et par Encore pour préfixer les
+assets compilés. Les assets publics classiques, comme `public/images`, utilisent
+ensuite le base path de la requête Symfony ; il ne faut donc pas aussi le définir
+dans `framework.assets.base_path`, sinon les URLs sont préfixées deux fois.
+`DEFAULT_URI` permet à Symfony de générer des URLs correctes hors requête HTTP.
 
 Après avoir changé `APP_BASE_PATH`, il faut reconstruire les assets :
 
