@@ -6,11 +6,8 @@ DirectoryIndex public/index.php
     RewriteCond %{HTTP:Authorization} .+
     RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
 
-    RewriteCond public/$1 -f [OR]
-    RewriteCond public/$1 -d
-    RewriteRule ^(.+)$ public/$1 [END]
-
-    RewriteRule ^ public/index.php [END]
+    RewriteRule ^public(?:/|$) - [L]
+    RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
 
 <IfModule !mod_rewrite.c>
