@@ -19,8 +19,8 @@
                 class="absolute inset-0 size-full object-cover object-[60%_center]"
                 data-testid="hero-visual"
             >
-            <div class="absolute inset-0 bg-gradient-to-r from-camelia-ink/90 via-camelia-ink/55 to-camelia-ink/10"></div>
-            <div class="absolute inset-0 bg-gradient-to-b from-camelia-ink/20 via-transparent to-camelia-ink/70"></div>
+            <div class="absolute inset-0 bg-linear-to-r from-camelia-ink/90 via-camelia-ink/55 to-camelia-ink/10"></div>
+            <div class="absolute inset-0 bg-linear-to-b from-camelia-ink/20 via-transparent to-camelia-ink/70"></div>
 
             <nav
                 class="fixed inset-x-4 top-4 z-50 flex items-center justify-between gap-3 text-camelia-ink md:inset-x-8 md:top-5 xl:inset-x-18"
@@ -77,7 +77,7 @@
 
                 <aside
                     id="mobile-menu"
-                    class="fixed top-0 right-0 z-50 flex h-dvh w-[min(22rem,calc(100vw-1.5rem))] translate-x-full flex-col overflow-y-auto rounded-l-[2rem] bg-camelia-ivory p-6 text-camelia-ink shadow-2xl transition-transform duration-300 ease-out md:hidden"
+                    class="fixed top-0 right-0 z-50 flex h-dvh w-[min(22rem,calc(100vw-1.5rem))] translate-x-full flex-col overflow-y-auto rounded-l-4xl bg-camelia-ivory p-6 text-camelia-ink shadow-2xl transition-transform duration-300 ease-out md:hidden"
                     aria-hidden="true"
                     inert
                     data-mobile-menu-target="panel"
@@ -102,22 +102,22 @@
                     </div>
 
                     <div class="mt-12 flex flex-col gap-2">
-                        <a href="#bot" class="rounded-[1.5rem] bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" data-action="mobile-menu#navigate">
+                        <a href="#bot" class="rounded-3xl bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" data-action="mobile-menu#navigate">
                             Le rituel
                         </a>
-                        <a href="#fiche" class="rounded-[1.5rem] bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" data-action="mobile-menu#navigate">
+                        <a href="#fiche" class="rounded-3xl bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" data-action="mobile-menu#navigate">
                             La fiche
                         </a>
-                        <a href="#espaces" class="rounded-[1.5rem] bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" data-action="mobile-menu#navigate">
+                        <a href="#espaces" class="rounded-3xl bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" data-action="mobile-menu#navigate">
                             La collection
                         </a>
-                        <a href="{{ installUrl }}" class="rounded-[1.5rem] bg-camelia-rose px-5 py-4 font-display text-3xl leading-none text-white shadow-sm transition hover:bg-camelia-ink" target="_blank" rel="noopener noreferrer">
+                        <a href="{{ installUrl }}" class="rounded-3xl bg-camelia-rose px-5 py-4 font-display text-3xl leading-none text-white shadow-sm transition hover:bg-camelia-ink" target="_blank" rel="noopener noreferrer">
                             Ajouter
                         </a>
-                        <a href="{{ repositoryUrl }}" class="rounded-[1.5rem] bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" target="_blank" rel="noopener noreferrer">
+                        <a href="{{ repositoryUrl }}" class="rounded-3xl bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" target="_blank" rel="noopener noreferrer">
                             Gitea
                         </a>
-                        <a href="{{ discordUrl }}" class="rounded-[1.5rem] bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" target="_blank" rel="noopener noreferrer">
+                        <a href="{{ discordUrl }}" class="rounded-3xl bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" target="_blank" rel="noopener noreferrer">
                             Discord
                         </a>
                     </div>
@@ -158,15 +158,15 @@
                     <div class="mt-10 grid grid-cols-2 gap-2 rounded-[1.75rem] border border-white/20 bg-camelia-ink/45 p-2 text-camelia-ink shadow-2xl backdrop-blur-xl md:hidden">
                         <span class="min-w-0 rounded-[1.25rem] bg-white/94 px-3 py-3 shadow-sm">
                             <small class="block text-[0.62rem] font-black tracking-[0.14em] text-camelia-rose uppercase">Rareté</small>
-                            <b class="mt-1 block text-sm">1★ à 5★</b>
+                            <b class="mt-1 block text-sm">{{ gachaRarity }}★</b>
                         </span>
                         <span class="min-w-0 rounded-[1.25rem] bg-camelia-blush px-3 py-3 shadow-sm">
                             <small class="block text-[0.62rem] font-black tracking-[0.14em] text-camelia-rose uppercase">Rôle</small>
-                            <b class="mt-1 block text-sm">Lame Stellaire</b>
+                            <b class="mt-1 block text-sm">{{ gachaRole.value }}</b>
                         </span>
                         <span class="min-w-0 rounded-[1.25rem] bg-white/94 px-3 py-3 shadow-sm">
                             <small class="block text-[0.62rem] font-black tracking-[0.14em] text-camelia-rose uppercase">Élément</small>
-                            <b class="mt-1 block text-sm">Brume</b>
+                            <b class="mt-1 block text-sm">{{ gachaElement.value }}</b>
                         </span>
                         <span class="min-w-0 rounded-[1.25rem] bg-camelia-rose px-3 py-3 text-white shadow-sm">
                             <small class="block text-[0.62rem] font-black tracking-[0.14em] text-white/70 uppercase">Fiche</small>
@@ -176,19 +176,19 @@
                 </div>
             </div>
 
-            <div class="absolute right-6 bottom-5 z-10 hidden max-w-[45rem] rounded-[2rem] border border-white/20 bg-camelia-ink/45 p-2 text-camelia-ink shadow-2xl backdrop-blur-xl md:block xl:right-18">
+            <div class="absolute right-6 bottom-5 z-10 hidden max-w-180 rounded-4xl border border-white/20 bg-camelia-ink/45 p-2 text-camelia-ink shadow-2xl backdrop-blur-xl md:block xl:right-18">
                 <div class="grid grid-cols-4 gap-2">
                     <span class="rounded-[1.45rem] bg-white/94 px-4 py-3 shadow-sm">
                         <small class="block text-[0.65rem] font-black tracking-[0.18em] text-camelia-rose uppercase">Rareté</small>
-                        <b class="mt-1 block whitespace-nowrap text-sm">1★ à 5★</b>
+                        <b class="mt-1 block whitespace-nowrap text-sm">{{ gachaRarity }}★</b>
                     </span>
                     <span class="rounded-[1.45rem] bg-camelia-blush px-4 py-3 shadow-sm">
                         <small class="block text-[0.65rem] font-black tracking-[0.18em] text-camelia-rose uppercase">Rôle</small>
-                        <b class="mt-1 block whitespace-nowrap text-sm">Lame Stellaire</b>
+                        <b class="mt-1 block whitespace-nowrap text-sm">{{ gachaRole.value }}</b>
                     </span>
                     <span class="rounded-[1.45rem] bg-white/94 px-4 py-3 shadow-sm">
                         <small class="block text-[0.65rem] font-black tracking-[0.18em] text-camelia-rose uppercase">Élément</small>
-                        <b class="mt-1 block whitespace-nowrap text-sm">Brume</b>
+                        <b class="mt-1 block whitespace-nowrap text-sm">{{ gachaElement.value }}</b>
                     </span>
                     <span class="rounded-[1.45rem] bg-camelia-rose px-4 py-3 text-white shadow-sm">
                         <small class="block text-[0.65rem] font-black tracking-[0.18em] text-white/70 uppercase">Fiche</small>
@@ -230,19 +230,19 @@
             </div>
 
             <div class="mt-12 grid gap-5 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-center">
-                <article class="rounded-[2rem] bg-camelia-cream p-8 shadow-[inset_0_0_0_1px_rgba(36,24,19,0.08)]">
+                <article class="rounded-4xl bg-camelia-cream p-8 shadow-[inset_0_0_0_1px_rgba(36,24,19,0.08)]">
                     <span class="inline-flex size-12 items-center justify-center rounded-full bg-camelia-rose font-display text-2xl text-white">1</span>
                     <h3 class="mt-18 max-w-64 font-display text-4xl leading-none">Un membre arrive</h3>
                     <p class="mt-4 leading-7 text-camelia-muted">Le salon d’accueil devient une scène, avec un message qui donne tout de suite le ton.</p>
                 </article>
                 <span class="hidden text-3xl font-black text-camelia-rose lg:block">→</span>
-                <article class="rounded-[2rem] bg-camelia-cream p-8 shadow-[inset_0_0_0_1px_rgba(36,24,19,0.08)] lg:mt-12">
+                <article class="rounded-4xl bg-camelia-cream p-8 shadow-[inset_0_0_0_1px_rgba(36,24,19,0.08)] lg:mt-12">
                     <span class="inline-flex size-12 items-center justify-center rounded-full bg-camelia-rose font-display text-2xl text-white">2</span>
                     <h3 class="mt-18 max-w-64 font-display text-4xl leading-none">Son identité tombe</h3>
                     <p class="mt-4 leading-7 text-camelia-muted">Protecteur, Comète, Lame Stellaire, Sève, Brume ou Ambre : le tirage lui donne une couleur.</p>
                 </article>
                 <span class="hidden text-3xl font-black text-camelia-rose lg:block">→</span>
-                <article class="rounded-[2rem] bg-camelia-cream p-8 shadow-[inset_0_0_0_1px_rgba(36,24,19,0.08)] lg:mt-24">
+                <article class="rounded-4xl bg-camelia-cream p-8 shadow-[inset_0_0_0_1px_rgba(36,24,19,0.08)] lg:mt-24">
                     <span class="inline-flex size-12 items-center justify-center rounded-full bg-camelia-rose font-display text-2xl text-white">3</span>
                     <h3 class="mt-18 max-w-64 font-display text-4xl leading-none">La fiche reste</h3>
                     <p class="mt-4 leading-7 text-camelia-muted">La fiche perso garde la trace du tirage et donne à chacun une place visible dans la collection.</p>
@@ -266,24 +266,24 @@
             <aside class="overflow-hidden rounded-[2.5rem] bg-white text-camelia-ink shadow-2xl">
                 <div class="bg-camelia-blush p-8">
                     <span class="rounded-full bg-camelia-rose px-4 py-2 text-xs font-black tracking-wider text-white uppercase">Invocation confirmée</span>
-                    <h3 class="mt-14 font-display text-6xl leading-[0.88]">Membre<br>4★</h3>
+                    <h3 class="mt-14 font-display text-6xl leading-[0.88]">Membre<br>{{ gachaRarity }}★</h3>
                 </div>
                 <div class="grid grid-cols-1 gap-3 p-5 sm:grid-cols-2">
                     <div class="rounded-3xl bg-camelia-cream p-5">
                         <small class="text-xs font-black tracking-wider text-camelia-muted uppercase">Rôle</small>
-                        <b class="mt-2 block text-xl">Lame Stellaire</b>
+                        <b class="mt-2 block text-xl">{{ gachaRole.value }}</b>
                     </div>
                     <div class="rounded-3xl bg-camelia-cream p-5">
                         <small class="text-xs font-black tracking-wider text-camelia-muted uppercase">Élément</small>
-                        <b class="mt-2 block text-xl">Brume</b>
+                        <b class="mt-2 block text-xl">{{ gachaElement.value }}</b>
                     </div>
                     <div class="rounded-3xl bg-camelia-cream p-5">
                         <small class="text-xs font-black tracking-wider text-camelia-muted uppercase">Rareté</small>
-                        <b class="mt-2 block text-xl">4 étoiles</b>
+                        <b class="mt-2 block text-xl">{{ gachaRarity }} étoiles</b>
                     </div>
                     <div class="rounded-3xl bg-camelia-cream p-5">
                         <small class="text-xs font-black tracking-wider text-camelia-muted uppercase">Stat</small>
-                        <b class="mt-2 block text-xl">Astral</b>
+                        <b class="mt-2 block text-xl">{{ gachaStat.value }}</b>
                     </div>
                 </div>
             </aside>
@@ -361,7 +361,7 @@
                 <img
                     src="{{ botAvatarImage }}"
                     alt="Avatar Discord du bot Gachamélia"
-                    class="mx-auto aspect-square w-full max-w-[24rem] rounded-full object-cover drop-shadow-2xl lg:ml-auto lg:max-w-[28rem]"
+                    class="mx-auto aspect-square w-full max-w-[24rem] rounded-full object-cover drop-shadow-2xl lg:ml-auto lg:max-w-md"
                     data-testid="bot-avatar-visual"
                 >
             </div>

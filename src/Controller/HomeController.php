@@ -2,6 +2,10 @@
 
 namespace App\Controller;
 
+use App\Enum\GachaElementEnum;
+use App\Enum\GachaRoleEnum;
+use App\Enum\GachaStatEnum;
+use Random\RandomException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -9,10 +13,23 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class HomeController extends AbstractController
 {
+    /**
+     * @throws RandomException
+     */
     #[Route('/', name: 'app_home')]
     public function index(): Response
     {
-        return $this->render('home/index.html.twig');
+        $gachaRole = GachaRoleEnum::random();
+        $gachaElement = GachaElementEnum::random();
+        $gachaStat = GachaStatEnum::random();
+        $gachaRarity = random_int(1,5);
+
+        return $this->render('home/index.html.twig', [
+            'gachaRole' => $gachaRole,
+            'gachaElement' => $gachaElement,
+            'gachaStat' => $gachaStat,
+            'gachaRarity' => $gachaRarity,
+        ]);
     }
 
     #[Route('/robots.txt', name: 'app_robots', methods: ['GET'])]
@@ -20,16 +37,9 @@ final class HomeController extends AbstractController
     {
         $baseUrl = $this->getBaseUrl($request);
 
-        return new Response(
-            <<<ROBOTS
-            User-agent: *
-            Allow: /
-
-            Sitemap: {$baseUrl}sitemap.xml
-
-            ROBOTS,
-            headers: ['Content-Type' => 'text/plain; charset=UTF-8'],
-        );
+        return $this->render('seo/robots.txt.twig', [
+            'baseUrl' => $baseUrl,
+        ], new Response(headers: ['Content-Type' => 'text/plain; charset=UTF-8']));
     }
 
     #[Route('/sitemap.xml', name: 'app_sitemap', methods: ['GET'])]
@@ -37,20 +47,10 @@ final class HomeController extends AbstractController
     {
         $homeUrl = htmlspecialchars($this->getBaseUrl($request), ENT_XML1);
 
-        return new Response(
-            <<<XML
-            <?xml version="1.0" encoding="UTF-8"?>
-            <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-                <url>
-                    <loc>{$homeUrl}</loc>
-                    <changefreq>monthly</changefreq>
-                    <priority>1.0</priority>
-                </url>
-            </urlset>
-
-            XML,
-            headers: ['Content-Type' => 'application/xml; charset=UTF-8'],
-        );
+        // On va render le seo/sitemap.xml.twig
+        return $this->render('seo/sitemap.xml.twig', [
+            'homeUrl' => $homeUrl,
+        ], new Response(headers: ['Content-Type' => 'application/xml; charset=UTF-8']));
     }
 
     private function getBaseUrl(Request $request): string
