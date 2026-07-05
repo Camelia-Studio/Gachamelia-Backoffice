@@ -21,3 +21,13 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\Security\BotTokenIssuer:
+        arguments:
+            $clientId: '%env(BOT_CLIENT_ID)%'
+            $clientSecret: '%env(BOT_CLIENT_SECRET)%'
+            $jwtSecret: '%env(JWT_SECRET)%'
+            $ttlSeconds: '%env(int:JWT_TTL)%'
+
+    App\Security\JwtAuthenticator:
+        arguments:
+            $jwtSecret: '%env(JWT_SECRET)%'
