@@ -1,9 +1,15 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Bot gacha communautaire{% endblock %}
+{% block title %}Gachamélia - Bot gacha communautaire Discord{% endblock %}
+
+{% block meta_description %}Gachamélia transforme les arrivées Discord en invocations gacha communautaires avec rareté, rôle, élément et fiche personnage.{% endblock %}
 
 {% block body %}
-    {% set heroImage = 'https://camelia-studio.org/wp-content/uploads/2025/07/1080JPEG.jpg' %}
+    {% set heroImage = asset('images/gachamelia-hero.jpg') %}
+    {% set botAvatarImage = asset('images/gachamelia-bot-avatar.png') %}
+    {% set installUrl = 'https://git.crystalyx.net/camelia-studio/Gachamelia/wiki' %}
+    {% set repositoryUrl = 'https://git.crystalyx.net/camelia-studio/Gachamelia' %}
+    {% set discordUrl = 'https://discord.gg/nBuZ9vJ' %}
 
     <main class="overflow-hidden bg-camelia-cream">
         <section class="relative min-h-screen overflow-hidden text-white">
@@ -23,18 +29,29 @@
             >
                 <a href="#" class="flex items-center gap-3 rounded-full border border-white/60 bg-white/88 py-2 pr-4 pl-2 text-sm font-extrabold tracking-wide text-camelia-ink shadow-xl shadow-camelia-ink/10 backdrop-blur-xl transition hover:bg-white">
                     <img
-                        src="https://camelia-studio.org/wp-content/uploads/2025/07/cropped-camelia-150x150.png"
+                        src="{{ botAvatarImage }}"
                         alt=""
-                        class="size-8"
+                        class="size-8 rounded-full object-cover"
                     >
                     <span>Gachamélia</span>
                 </a>
 
-                <div class="hidden items-center gap-1 rounded-full border border-white/60 bg-white/86 p-1 text-sm font-extrabold text-camelia-ink shadow-xl shadow-camelia-ink/10 backdrop-blur-xl md:flex">
+                <div class="hidden items-center gap-1 rounded-full border border-white/60 bg-white/86 p-1 text-sm font-extrabold text-camelia-ink shadow-xl shadow-camelia-ink/10 backdrop-blur-xl lg:flex">
                     <a href="#bot" class="rounded-full px-4 py-2 transition hover:bg-camelia-blush hover:text-camelia-rose" data-action="mobile-menu#navigate">Le projet</a>
                     <a href="#fiche" class="rounded-full px-4 py-2 transition hover:bg-camelia-blush hover:text-camelia-rose" data-action="mobile-menu#navigate">La fiche</a>
                     <a href="#espaces" class="rounded-full px-4 py-2 transition hover:bg-camelia-blush hover:text-camelia-rose" data-action="mobile-menu#navigate">L’équipe</a>
+                    <a href="{{ repositoryUrl }}" class="rounded-full px-4 py-2 transition hover:bg-camelia-blush hover:text-camelia-rose" target="_blank" rel="noopener noreferrer">Gitea</a>
+                    <a href="{{ discordUrl }}" class="rounded-full px-4 py-2 transition hover:bg-camelia-blush hover:text-camelia-rose" target="_blank" rel="noopener noreferrer">Discord</a>
                 </div>
+
+                <a
+                    href="{{ installUrl }}"
+                    class="hidden min-h-11 items-center justify-center rounded-full border border-white/60 bg-white/88 px-5 text-sm font-black text-camelia-rose shadow-xl shadow-camelia-ink/10 backdrop-blur-xl transition hover:bg-camelia-blush md:inline-flex"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Ajouter à mon serveur
+                </a>
 
                 <button
                     type="button"
@@ -60,7 +77,7 @@
 
                 <aside
                     id="mobile-menu"
-                    class="fixed top-0 right-0 z-50 flex h-dvh w-[min(22rem,calc(100vw-1.5rem))] translate-x-full flex-col rounded-l-[2rem] bg-camelia-ivory p-6 text-camelia-ink shadow-2xl transition-transform duration-300 ease-out md:hidden"
+                    class="fixed top-0 right-0 z-50 flex h-dvh w-[min(22rem,calc(100vw-1.5rem))] translate-x-full flex-col overflow-y-auto rounded-l-[2rem] bg-camelia-ivory p-6 text-camelia-ink shadow-2xl transition-transform duration-300 ease-out md:hidden"
                     aria-hidden="true"
                     inert
                     data-mobile-menu-target="panel"
@@ -68,9 +85,9 @@
                     <div class="flex items-center justify-between gap-4">
                         <a href="#" class="flex items-center gap-3 text-sm font-extrabold" data-action="mobile-menu#close">
                             <img
-                                src="https://camelia-studio.org/wp-content/uploads/2025/07/cropped-camelia-150x150.png"
+                                src="{{ botAvatarImage }}"
                                 alt=""
-                                class="size-9"
+                                class="size-9 rounded-full object-cover"
                             >
                             <span>Gachamélia</span>
                         </a>
@@ -94,6 +111,15 @@
                         <a href="#espaces" class="rounded-[1.5rem] bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" data-action="mobile-menu#navigate">
                             La collection
                         </a>
+                        <a href="{{ installUrl }}" class="rounded-[1.5rem] bg-camelia-rose px-5 py-4 font-display text-3xl leading-none text-white shadow-sm transition hover:bg-camelia-ink" target="_blank" rel="noopener noreferrer">
+                            Ajouter
+                        </a>
+                        <a href="{{ repositoryUrl }}" class="rounded-[1.5rem] bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" target="_blank" rel="noopener noreferrer">
+                            Gitea
+                        </a>
+                        <a href="{{ discordUrl }}" class="rounded-[1.5rem] bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" target="_blank" rel="noopener noreferrer">
+                            Discord
+                        </a>
                     </div>
 
                     <div class="mt-auto rounded-[1.75rem] bg-camelia-ink p-5 text-white">
@@ -114,18 +140,20 @@
                     <h1 class="max-w-5xl font-display text-6xl leading-[0.86] tracking-normal text-white sm:text-7xl md:text-8xl xl:text-[9.25rem]">
                         Chaque arrivée devient une <span class="italic text-camelia-blush">invocation</span>.
                     </h1>
-                    <div class="mt-8 flex max-w-4xl flex-col gap-8 md:flex-row md:items-end md:justify-between">
+                    <div class="mt-8 max-w-2xl">
                         <p class="max-w-2xl text-lg leading-8 text-white/82 md:text-2xl">
                             Sur Discord, Gachamélia transforme un nouveau membre en personnage
                             de l’univers Camélia : une rareté, un rôle, un élément, puis une fiche
                             que la communauté peut retrouver.
                         </p>
-                        <a
-                            href="#bot"
-                            class="inline-flex min-h-13 shrink-0 items-center justify-center rounded-full bg-white px-6 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush"
-                        >
-                            Découvrir le projet
-                        </a>
+                        <div class="mt-6 flex flex-wrap gap-3" data-testid="hero-actions">
+                            <a
+                                href="#bot"
+                                class="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-black text-camelia-rose shadow-xl shadow-camelia-ink/15 transition hover:bg-camelia-blush"
+                            >
+                                Découvrir le projet
+                            </a>
+                        </div>
                     </div>
                     <div class="mt-10 grid grid-cols-2 gap-2 rounded-[1.75rem] border border-white/20 bg-camelia-ink/45 p-2 text-camelia-ink shadow-2xl backdrop-blur-xl md:hidden">
                         <span class="min-w-0 rounded-[1.25rem] bg-white/94 px-3 py-3 shadow-sm">
@@ -170,7 +198,7 @@
             </div>
         </section>
 
-        <section id="bot" class="-mt-px rounded-t-[2.5rem] bg-camelia-cream px-6 py-18 md:px-12 md:py-28 xl:px-18">
+        <section id="bot" class="-mt-px scroll-mt-24 rounded-t-[2.5rem] bg-camelia-cream px-6 py-18 md:scroll-mt-28 md:px-12 md:py-28 xl:px-18">
             <div class="grid gap-10 md:grid-cols-[minmax(12rem,24rem)_minmax(0,48rem)] md:gap-20">
                 <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">Le rituel</p>
                 <div>
@@ -222,7 +250,7 @@
             </div>
         </section>
 
-        <section id="fiche" class="grid gap-12 bg-camelia-leaf px-6 py-18 text-white md:px-12 md:py-28 lg:grid-cols-[minmax(0,0.95fr)_minmax(20rem,32rem)] lg:items-center xl:px-18">
+        <section id="fiche" class="grid scroll-mt-24 gap-12 bg-camelia-leaf px-6 py-18 text-white md:scroll-mt-28 md:px-12 md:py-28 lg:grid-cols-[minmax(0,0.95fr)_minmax(20rem,32rem)] lg:items-center xl:px-18">
             <div>
                 <p class="mb-5 text-xs font-black tracking-[0.18em] text-camelia-blush uppercase">La fiche</p>
                 <h2 class="font-display text-5xl leading-[0.94] tracking-normal md:text-7xl">
@@ -261,7 +289,7 @@
             </aside>
         </section>
 
-        <section id="espaces" class="bg-camelia-cream px-6 py-18 md:px-12 md:py-28 xl:px-18">
+        <section id="espaces" class="scroll-mt-24 bg-camelia-cream px-6 py-18 md:scroll-mt-28 md:px-12 md:py-28 xl:px-18">
             <div class="grid gap-10 md:grid-cols-[minmax(12rem,24rem)_minmax(0,48rem)] md:gap-20">
                 <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">Pour qui ?</p>
                 <div>
@@ -307,22 +335,35 @@
             </div>
         </section>
 
-        <section class="relative min-h-[34rem] overflow-hidden px-6 py-18 text-white md:px-12 md:py-28 xl:px-18">
-            <img
-                src="{{ heroImage }}"
-                alt=""
-                class="absolute inset-0 size-full object-cover object-[center_62%]"
-            >
-            <div class="absolute inset-0 bg-gradient-to-r from-camelia-ink/88 to-camelia-ink/25"></div>
-            <div class="relative z-10 max-w-4xl">
-                <p class="mb-5 inline-flex border-b-2 border-camelia-pink pb-2 text-xs font-black tracking-[0.18em] text-white/80 uppercase">Gachamélia</p>
-                <h2 class="font-display text-5xl leading-[0.94] tracking-normal md:text-7xl">
-                    Un bot pour donner une place à chacun dans l’histoire du serveur.
-                </h2>
-                <p class="mt-7 max-w-2xl text-lg leading-8 text-white/80">
-                    Aujourd’hui, Gachamélia pose le rituel d’arrivée et la fiche. La suite construit
-                    une aventure complète autour de l’activité, des inventaires, des combats et des succès.
-                </p>
+        <section class="overflow-hidden bg-camelia-ink px-6 py-18 text-white md:px-12 md:py-28 xl:px-18">
+            <div class="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,28rem)] lg:items-center">
+                <div class="max-w-4xl">
+                    <p class="mb-5 inline-flex border-b-2 border-camelia-pink pb-2 text-xs font-black tracking-[0.18em] text-white/80 uppercase">Gachamélia</p>
+                    <h2 class="font-display text-5xl leading-[0.94] tracking-normal md:text-7xl">
+                        Un bot pour donner une place à chacun dans l’histoire du serveur.
+                    </h2>
+                    <p class="mt-7 max-w-2xl text-lg leading-8 text-white/80">
+                        Aujourd’hui, Gachamélia pose le rituel d’arrivée et la fiche. La suite construit
+                        une aventure complète autour de l’activité, des inventaires, des combats et des succès.
+                    </p>
+                    <div class="mt-9 flex flex-wrap gap-3">
+                        <a href="{{ installUrl }}" class="inline-flex min-h-13 items-center justify-center rounded-full bg-white px-6 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush" target="_blank" rel="noopener noreferrer">
+                            Ajouter à mon serveur
+                        </a>
+                        <a href="{{ repositoryUrl }}" class="inline-flex min-h-13 items-center justify-center rounded-full border border-white/24 px-6 text-sm font-black text-white transition hover:bg-white hover:text-camelia-rose" target="_blank" rel="noopener noreferrer">
+                            Voir le Gitea
+                        </a>
+                        <a href="{{ discordUrl }}" class="inline-flex min-h-13 items-center justify-center rounded-full border border-white/24 px-6 text-sm font-black text-white transition hover:bg-white hover:text-camelia-rose" target="_blank" rel="noopener noreferrer">
+                            Rejoindre Discord
+                        </a>
+                    </div>
+                </div>
+                <img
+                    src="{{ botAvatarImage }}"
+                    alt="Avatar Discord du bot Gachamélia"
+                    class="mx-auto aspect-square w-full max-w-[24rem] rounded-full object-cover drop-shadow-2xl lg:ml-auto lg:max-w-[28rem]"
+                    data-testid="bot-avatar-visual"
+                >
             </div>
         </section>
     </main>

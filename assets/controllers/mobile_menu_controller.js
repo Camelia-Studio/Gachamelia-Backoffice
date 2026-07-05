@@ -43,8 +43,8 @@ export default class extends Controller {
         }
 
         window.setTimeout(() => {
-            window.scrollTo({
-                top: target.getBoundingClientRect().top + window.scrollY,
+            target.scrollIntoView({
+                block: 'start',
                 behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
             });
             window.history.pushState(null, '', hash);

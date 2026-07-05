@@ -1,0 +1,17 @@
+{
+    "name": "Gachamélia",
+    "short_name": "Gachamélia",
+    "description": "Bot gacha communautaire pour Discord.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#fbf3ea",
+    "theme_color": "#241813",
+    "icons": [
+        {
+            "src": "/images/gachamelia-bot-avatar.png",
+            "sizes": "1024x1024",
+            "type": "image/png"
+        }
+    ]
+}
