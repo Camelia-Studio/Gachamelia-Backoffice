@@ -13,6 +13,8 @@ final class HomeControllerTest extends WebTestCase
         $crawler = $client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
+        self::assertSelectorExists('body[data-layout="landing"]');
+        self::assertSelectorNotExists('[data-testid="backoffice-navbar"]');
         self::assertSelectorTextContains('h1', 'Chaque arrivée devient une invocation.');
         self::assertSelectorTextContains('body', 'Bot gacha communautaire');
         self::assertSelectorTextContains('body', 'On ne rejoint pas seulement le serveur');
