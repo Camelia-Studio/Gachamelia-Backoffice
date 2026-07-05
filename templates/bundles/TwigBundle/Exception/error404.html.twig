@@ -1,0 +1,10 @@
+{% extends 'bundles/TwigBundle/Exception/error.html.twig' %}
+
+{% block title %}Page introuvable - Gachamélia Backoffice{% endblock %}
+
+{% block meta_description %}La page demandée est introuvable dans le backoffice Gachamélia.{% endblock %}
+
+{% block error_title %}Invocation introuvable{% endblock %}
+{% block error_message %}Cette page n’existe pas ou n’est plus disponible. Le backoffice garde la navigation sous la main pour repartir sans afficher de détail technique.{% endblock %}
+{% block error_card_title %}Route inconnue{% endblock %}
+{% block error_card_action %}Retourner à l’accueil public{% endblock %}

@@ -1,0 +1,23 @@
+security:
+    providers:
+        bot_api:
+            memory: null
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js|assets|build)/
+            security: false
+        api_token:
+            pattern: ^/api/auth/token$
+            security: false
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: bot_api
+            custom_authenticators:
+                - App\Security\JwtAuthenticator
+            entry_point: App\Security\JwtAuthenticator
+
+    access_control:
+        - { path: ^/api/auth/token$, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: ROLE_BOT }

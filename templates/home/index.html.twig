@@ -1,10 +1,64 @@
-{% extends 'base.html.twig' %}
+<!doctype html>
+<html lang="fr" class="scroll-smooth motion-reduce:scroll-auto">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gachamélia - Bot gacha communautaire Discord</title>
+    <meta name="description" content="Gachamélia transforme les arrivées Discord en invocations gacha communautaires avec rareté, rôle, élément et fiche personnage.">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Camélia Studio">
+    <meta name="theme-color" content="#241813">
+    <link rel="canonical" href="{{ absolute_url(path('app_home')) }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/gachamelia-bot-avatar.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/gachamelia-bot-avatar.png') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Gachamélia">
+    <meta property="og:title" content="Gachamélia - Bot gacha communautaire Discord">
+    <meta property="og:description" content="Gachamélia transforme les arrivées Discord en invocations gacha communautaires avec rareté, rôle, élément et fiche personnage.">
+    <meta property="og:url" content="{{ absolute_url(path('app_home')) }}">
+    <meta property="og:image" content="{{ absolute_url(asset('images/gachamelia-hero.jpg')) }}">
+    <meta property="og:image:alt" content="Illustration de l’univers Gachamélia">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Gachamélia - Bot gacha communautaire Discord">
+    <meta name="twitter:description" content="Gachamélia transforme les arrivées Discord en invocations gacha communautaires avec rareté, rôle, élément et fiche personnage.">
+    <meta name="twitter:image" content="{{ absolute_url(asset('images/gachamelia-hero.jpg')) }}">
+    {% set structuredData = {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        'name': 'Gachamélia',
+        'applicationCategory': 'Discord bot',
+        'operatingSystem': 'Discord',
+        'description': 'Gachamélia transforme les arrivées Discord en invocations gacha communautaires avec rareté, rôle, élément et fiche personnage.',
+        'url': absolute_url(path('app_home')),
+        'image': absolute_url(asset('images/gachamelia-hero.jpg')),
+        'creator': {
+            '@type': 'Organization',
+            'name': 'Camélia Studio',
+            'url': 'https://discord.gg/nBuZ9vJ'
+        },
+        'sameAs': [
+            'https://git.crystalyx.net/camelia-studio/Gachamelia',
+            'https://discord.gg/nBuZ9vJ'
+        ],
+        'downloadUrl': 'https://git.crystalyx.net/camelia-studio/Gachamelia/wiki'
+    } %}
+    <script type="application/ld+json">{{ structuredData|json_encode(320)|raw }}</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
+    {{ encore_entry_link_tags('app') }}
+    {{ encore_entry_script_tags('app') }}
 
-{% block title %}Gachamélia - Bot gacha communautaire Discord{% endblock %}
-
-{% block meta_description %}Gachamélia transforme les arrivées Discord en invocations gacha communautaires avec rareté, rôle, élément et fiche personnage.{% endblock %}
-
-{% block body %}
+    {% set frankenphpHotReload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
+    {% if frankenphpHotReload %}
+        <meta name="frankenphp-hot-reload:url" content="{{ frankenphpHotReload }}">
+        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
+        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
+    {% endif %}
+</head>
+<body class="bg-camelia-cream font-sans text-camelia-ink antialiased" data-layout="landing" data-turbo="false">
     {% set heroImage = asset('images/gachamelia-hero.jpg') %}
     {% set botAvatarImage = asset('images/gachamelia-bot-avatar.png') %}
     {% set installUrl = 'https://git.crystalyx.net/camelia-studio/Gachamelia/wiki' %}
@@ -367,4 +421,5 @@
             </div>
         </section>
     </main>
-{% endblock %}
+</body>
+</html>
