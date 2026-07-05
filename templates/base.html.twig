@@ -3,7 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Gachamélia - {% block title %}Accueil{% endblock %}</title>
+    <title>{% block title %}Gachamélia - Bot gacha communautaire Discord{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Gachamélia transforme les arrivées Discord en invocations gacha communautaires avec rareté, rôle, élément et fiche personnage.{% endblock %}">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="Camélia Studio">
+    <meta name="theme-color" content="#241813">
+    <link rel="canonical" href="{% block canonical_url %}{{ absolute_url(path('app_home')) }}{% endblock %}">
+    <link rel="icon" type="image/png" href="{{ asset('images/gachamelia-bot-avatar.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/gachamelia-bot-avatar.png') }}">
+    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:site_name" content="Gachamélia">
+    <meta property="og:title" content="{{ block('title')|striptags|trim }}">
+    <meta property="og:description" content="{{ block('meta_description')|striptags|trim }}">
+    <meta property="og:url" content="{{ block('canonical_url')|striptags|trim }}">
+    <meta property="og:image" content="{% block seo_image_url %}{{ absolute_url(asset('images/gachamelia-hero.jpg')) }}{% endblock %}">
+    <meta property="og:image:alt" content="Illustration de l’univers Gachamélia">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ block('title')|striptags|trim }}">
+    <meta name="twitter:description" content="{{ block('meta_description')|striptags|trim }}">
+    <meta name="twitter:image" content="{{ block('seo_image_url')|striptags|trim }}">
+    {% set structuredData = {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        'name': 'Gachamélia',
+        'applicationCategory': 'Discord bot',
+        'operatingSystem': 'Discord',
+        'description': block('meta_description')|striptags|trim,
+        'url': block('canonical_url')|striptags|trim,
+        'image': block('seo_image_url')|striptags|trim,
+        'creator': {
+            '@type': 'Organization',
+            'name': 'Camélia Studio',
+            'url': 'https://discord.gg/nBuZ9vJ'
+        },
+        'sameAs': [
+            'https://git.crystalyx.net/camelia-studio/Gachamelia',
+            'https://discord.gg/nBuZ9vJ'
+        ],
+        'downloadUrl': 'https://git.crystalyx.net/camelia-studio/Gachamelia/wiki'
+    } %}
+    <script type="application/ld+json">{{ structuredData|json_encode(320)|raw }}</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
@@ -22,7 +63,7 @@
         <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
     {% endif %}
 </head>
-<body class="bg-camelia-cream font-sans text-camelia-ink antialiased">
+<body class="bg-camelia-cream font-sans text-camelia-ink antialiased" data-turbo="false">
     {% block body %}{% endblock %}
 </body>
 </html>
