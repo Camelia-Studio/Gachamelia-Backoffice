@@ -1,2 +1,17 @@
 @import "tailwindcss";
 @source not "../../public";
+
+@theme {
+    --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Fraunces", Georgia, serif;
+
+    --color-camelia-cream: #fbf3ea;
+    --color-camelia-ivory: #fffaf4;
+    --color-camelia-ink: #241813;
+    --color-camelia-muted: #66544c;
+    --color-camelia-rose: #c41649;
+    --color-camelia-pink: #e97896;
+    --color-camelia-blush: #f5ded6;
+    --color-camelia-gold: #d4a13f;
+    --color-camelia-leaf: #2f594e;
+}
