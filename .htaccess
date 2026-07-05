@@ -1,0 +1,20 @@
+DirectoryIndex public/index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteCond %{HTTP:Authorization} .+
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
+
+    RewriteCond public/$1 -f [OR]
+    RewriteCond public/$1 -d
+    RewriteRule ^(.+)$ public/$1 [END]
+
+    RewriteRule ^ public/index.php [END]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        RedirectMatch 307 ^/?$ public/index.php/
+    </IfModule>
+</IfModule>

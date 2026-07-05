@@ -1,5 +1,17 @@
 import Encore from '@symfony/webpack-encore';
 
+const normalizeBasePath = (value = '') => {
+    const path = value.trim();
+
+    if (path === '' || path === '/') {
+        return '';
+    }
+
+    return `/${path.replace(/^\/+|\/+$/g, '')}`;
+};
+
+const appBasePath = normalizeBasePath(process.env.APP_BASE_PATH);
+
 // Manually configure the runtime environment if not already configured yet by the "encore" command.
 // It's useful when you use tools that rely on webpack.config.js file.
 if (!Encore.isRuntimeEnvironmentConfigured()) {
@@ -11,9 +23,9 @@ Encore
     // directory where compiled assets will be stored
     .setOutputPath('public/build/')
     // public path used by the web server to access the output path
-    .setPublicPath('/build')
+    .setPublicPath(`${appBasePath}/build`)
     // only needed for CDN's or subdirectory deploy
-    //.setManifestKeyPrefix('build/')
+    .setManifestKeyPrefix('build')
 
     /*
      * ENTRY CONFIG
