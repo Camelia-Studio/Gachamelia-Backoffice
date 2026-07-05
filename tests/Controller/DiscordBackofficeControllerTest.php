@@ -72,7 +72,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $client = static::createClient();
         $this->seedBackofficeSession($client);
 
-        $client->request('GET', '/app');
+        $crawler = $client->request('GET', '/app');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('[data-testid="backoffice-dashboard"]', 'Serveur Admin');
@@ -81,6 +81,10 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('[data-testid="guild-admin"] a[href="/app/serveurs/admin/fiche-personnage"]');
         self::assertSelectorNotExists('[data-testid="guild-member"] a[href="/app/serveurs/member/configuration"]');
         self::assertSelectorExists('[data-testid="guild-member"] a[href="/app/serveurs/member/fiche-personnage"]');
+        self::assertStringContainsString(
+            'cursor-pointer',
+            $crawler->filter('form[action="/deconnexion"] button[type="submit"]')->attr('class') ?? '',
+        );
     }
 
     public function testConfigurationPageRequiresAdministratorAccess(): void
