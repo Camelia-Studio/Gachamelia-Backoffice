@@ -12,16 +12,26 @@ DEFAULT_URI=https://example.test/gachamelia/
 
 `APP_BASE_PATH` est utilisé par le front controller pour que Symfony reconnaisse
 le sous-chemin public pendant les requêtes HTTP, et par Encore pour préfixer les
-assets compilés. Les assets publics classiques, comme `public/images`, utilisent
-ensuite le base path de la requête Symfony ; il ne faut donc pas aussi le définir
-dans `framework.assets.base_path`, sinon les URLs sont préfixées deux fois.
+assets compilés. Le build Encore lit les fichiers `.env` Symfony, dont
+`.env.local`, avant de calculer son `publicPath`. Les assets publics classiques,
+comme `public/images`, utilisent ensuite le base path de la requête Symfony ; il
+ne faut donc pas aussi le définir dans `framework.assets.base_path`, sinon les
+URLs sont préfixées deux fois.
 `DEFAULT_URI` permet à Symfony de générer des URLs correctes hors requête HTTP.
 
 Après avoir changé `APP_BASE_PATH`, il faut reconstruire les assets :
 
 ```shell
-APP_BASE_PATH=/gachamelia npm run build
+npm run build
 php bin/console cache:clear
+```
+
+Une variable d'environnement réellement exportée dans le shell garde la priorité
+sur les fichiers `.env`, ce qui permet toujours de forcer ponctuellement un
+autre préfixe :
+
+```shell
+APP_BASE_PATH=/autre-chemin npm run build
 ```
 
 ## Apache recommandé : alias vers `public/`

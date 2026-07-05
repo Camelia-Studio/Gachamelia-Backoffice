@@ -1,15 +1,7 @@
 import Encore from '@symfony/webpack-encore';
+import { loadSymfonyDotenvFiles, normalizeBasePath } from './webpack.env.js';
 
-const normalizeBasePath = (value = '') => {
-    const path = value.trim();
-
-    if (path === '' || path === '/') {
-        return '';
-    }
-
-    return `/${path.replace(/^\/+|\/+$/g, '')}`;
-};
-
+loadSymfonyDotenvFiles();
 const appBasePath = normalizeBasePath(process.env.APP_BASE_PATH);
 
 // Manually configure the runtime environment if not already configured yet by the "encore" command.
