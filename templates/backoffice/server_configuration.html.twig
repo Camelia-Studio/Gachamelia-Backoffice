@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Configuration - {{ guild.name }} - Gachamélia Backoffice{% endblock %}
+
+{% block navbar_actions %}
+    <a
+        href="{{ path('app_dashboard') }}"
+        class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-ink/10 bg-white px-4 text-sm font-black text-camelia-ink shadow-sm transition hover:border-camelia-rose/30 hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+    >
+        Serveurs
+    </a>
+{% endblock %}
+
+{% block body %}
+    <section class="grid gap-8" data-testid="server-configuration">
+        <div class="grid gap-3 border-b border-camelia-ink/10 pb-6">
+            <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">{{ guild.name }}</p>
+            <h1 class="font-display text-4xl leading-tight md:text-5xl">Configuration du serveur</h1>
+        </div>
+
+        <div class="grid gap-4 border border-camelia-ink/10 bg-white p-6 shadow-sm">
+            <p class="text-lg font-black">Socle prêt</p>
+            <p class="max-w-2xl text-sm leading-6 text-camelia-muted">
+                Les réglages multi-serveur seront branchés ici.
+            </p>
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
+
+services:
+    App\Discord\DiscordApiClientInterface:
+        public: true
+        alias: App\Discord\DiscordHttpApiClient

@@ -31,3 +31,19 @@ services:
     App\Security\JwtAuthenticator:
         arguments:
             $jwtSecret: '%env(JWT_SECRET)%'
+
+    App\Discord\DiscordApiClientInterface:
+        alias: App\Discord\DiscordHttpApiClient
+
+    App\Discord\DiscordHttpApiClient:
+        arguments:
+            $apiBaseUri: '%env(DISCORD_API_BASE_URI)%'
+            $clientId: '%env(DISCORD_CLIENT_ID)%'
+            $clientSecret: '%env(DISCORD_CLIENT_SECRET)%'
+            $redirectUri: '%env(DISCORD_REDIRECT_URI)%'
+            $botToken: '%env(DISCORD_BOT_TOKEN)%'
+
+    App\Controller\DiscordAuthController:
+        arguments:
+            $discordClientId: '%env(DISCORD_CLIENT_ID)%'
+            $discordRedirectUri: '%env(DISCORD_REDIRECT_URI)%'
