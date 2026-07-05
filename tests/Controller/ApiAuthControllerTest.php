@@ -70,6 +70,61 @@ final class ApiAuthControllerTest extends WebTestCase
         ]);
     }
 
+    public function testUnknownApiRouteReturnsJsonError(): void
+    {
+        $client = static::createClient();
+        $accessToken = $this->requestAccessToken($client);
+
+        $client->request('GET', '/api/unknown', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$accessToken,
+        ]);
+
+        self::assertResponseStatusCodeSame(404);
+        self::assertResponseHeaderSame('content-type', 'application/json');
+        $this->assertJsonPayloadContains([
+            'error' => 'not_found',
+            'message' => 'Not Found',
+            'status' => 404,
+        ]);
+    }
+
+    public function testApiRootReturnsJsonError(): void
+    {
+        $client = static::createClient();
+        $accessToken = $this->requestAccessToken($client);
+
+        $client->request('GET', '/api', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$accessToken,
+        ]);
+
+        self::assertResponseStatusCodeSame(404);
+        self::assertResponseHeaderSame('content-type', 'application/json');
+        $this->assertJsonPayloadContains([
+            'error' => 'not_found',
+            'message' => 'Not Found',
+            'status' => 404,
+        ]);
+    }
+
+    public function testApiMethodErrorReturnsJson(): void
+    {
+        $client = static::createClient();
+        $accessToken = $this->requestAccessToken($client);
+
+        $client->request('POST', '/api/me', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$accessToken,
+        ]);
+
+        self::assertResponseStatusCodeSame(405);
+        self::assertResponseHeaderSame('content-type', 'application/json');
+        self::assertResponseHeaderSame('allow', 'GET');
+        $this->assertJsonPayloadContains([
+            'error' => 'method_not_allowed',
+            'message' => 'Method Not Allowed',
+            'status' => 405,
+        ]);
+    }
+
     private function requestAccessToken(KernelBrowser $client): string
     {
         $client->request('POST', '/api/auth/token', server: [
