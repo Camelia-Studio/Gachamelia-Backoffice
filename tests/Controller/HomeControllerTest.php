@@ -60,6 +60,34 @@ final class HomeControllerTest extends WebTestCase
         self::assertStringNotContainsString('Discord de l’asso', $crawler->text());
     }
 
+    public function testHeroGachaSummaryHandlesLongRandomValues(): void
+    {
+        $client = static::createClient();
+
+        $crawler = $client->request('GET', '/');
+
+        self::assertResponseIsSuccessful();
+
+        $summary = $crawler->filter('[data-testid="hero-desktop-gacha-summary"]');
+        self::assertSame(1, $summary->count());
+        self::assertStringContainsString('w-[min(calc(100vw-3rem),48rem)]', $summary->attr('class') ?? '');
+
+        $summaryGrid = $summary->filter('[data-testid="hero-desktop-gacha-summary-grid"]');
+        self::assertStringContainsString(
+            'grid-cols-[minmax(5.5rem,0.75fr)_minmax(12rem,1.6fr)_minmax(6rem,0.9fr)_minmax(7rem,1fr)]',
+            $summaryGrid->attr('class') ?? '',
+        );
+
+        foreach ($summary->filter('[data-testid="hero-gacha-summary-card"]') as $card) {
+            self::assertStringContainsString('min-w-0', $card->getAttribute('class'));
+        }
+
+        foreach ($summary->filter('[data-testid="hero-gacha-summary-value"]') as $value) {
+            self::assertStringContainsString('break-words', $value->getAttribute('class'));
+            self::assertStringNotContainsString('whitespace-nowrap', $value->getAttribute('class'));
+        }
+    }
+
     public function testHomePageExposesSeoMetadataAndDisablesTurbo(): void
     {
         $client = static::createClient();

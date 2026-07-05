@@ -158,41 +158,41 @@
                     <div class="mt-10 grid grid-cols-2 gap-2 rounded-[1.75rem] border border-white/20 bg-camelia-ink/45 p-2 text-camelia-ink shadow-2xl backdrop-blur-xl md:hidden">
                         <span class="min-w-0 rounded-[1.25rem] bg-white/94 px-3 py-3 shadow-sm">
                             <small class="block text-[0.62rem] font-black tracking-[0.14em] text-camelia-rose uppercase">Rareté</small>
-                            <b class="mt-1 block text-sm">{{ gachaRarity }}★</b>
+                            <b class="mt-1 block text-sm leading-tight break-words">1★ à 5★</b>
                         </span>
                         <span class="min-w-0 rounded-[1.25rem] bg-camelia-blush px-3 py-3 shadow-sm">
                             <small class="block text-[0.62rem] font-black tracking-[0.14em] text-camelia-rose uppercase">Rôle</small>
-                            <b class="mt-1 block text-sm">{{ gachaRole.value }}</b>
+                            <b class="mt-1 block text-sm leading-tight break-words">{{ gachaRole.value }}</b>
                         </span>
                         <span class="min-w-0 rounded-[1.25rem] bg-white/94 px-3 py-3 shadow-sm">
                             <small class="block text-[0.62rem] font-black tracking-[0.14em] text-camelia-rose uppercase">Élément</small>
-                            <b class="mt-1 block text-sm">{{ gachaElement.value }}</b>
+                            <b class="mt-1 block text-sm leading-tight break-words">{{ gachaElement.value }}</b>
                         </span>
                         <span class="min-w-0 rounded-[1.25rem] bg-camelia-rose px-3 py-3 text-white shadow-sm">
                             <small class="block text-[0.62rem] font-black tracking-[0.14em] text-white/70 uppercase">Fiche</small>
-                            <b class="mt-1 block text-sm">À conserver</b>
+                            <b class="mt-1 block text-sm leading-tight break-words">À conserver</b>
                         </span>
                     </div>
                 </div>
             </div>
 
-            <div class="absolute right-6 bottom-5 z-10 hidden max-w-180 rounded-4xl border border-white/20 bg-camelia-ink/45 p-2 text-camelia-ink shadow-2xl backdrop-blur-xl md:block xl:right-18">
-                <div class="grid grid-cols-4 gap-2">
-                    <span class="rounded-[1.45rem] bg-white/94 px-4 py-3 shadow-sm">
+            <div class="absolute right-6 bottom-5 z-10 hidden w-[min(calc(100vw-3rem),48rem)] rounded-4xl border border-white/20 bg-camelia-ink/45 p-2 text-camelia-ink shadow-2xl backdrop-blur-xl md:block xl:right-18" data-testid="hero-desktop-gacha-summary">
+                <div class="grid grid-cols-[minmax(5.5rem,0.75fr)_minmax(12rem,1.6fr)_minmax(6rem,0.9fr)_minmax(7rem,1fr)] gap-2" data-testid="hero-desktop-gacha-summary-grid">
+                    <span class="min-w-0 rounded-[1.45rem] bg-white/94 px-4 py-3 shadow-sm" data-testid="hero-gacha-summary-card">
                         <small class="block text-[0.65rem] font-black tracking-[0.18em] text-camelia-rose uppercase">Rareté</small>
-                        <b class="mt-1 block whitespace-nowrap text-sm">{{ gachaRarity }}★</b>
+                        <b class="mt-1 block text-sm leading-tight break-words" data-testid="hero-gacha-summary-value">1★ à 5★</b>
                     </span>
-                    <span class="rounded-[1.45rem] bg-camelia-blush px-4 py-3 shadow-sm">
+                    <span class="min-w-0 rounded-[1.45rem] bg-camelia-blush px-4 py-3 shadow-sm" data-testid="hero-gacha-summary-card">
                         <small class="block text-[0.65rem] font-black tracking-[0.18em] text-camelia-rose uppercase">Rôle</small>
-                        <b class="mt-1 block whitespace-nowrap text-sm">{{ gachaRole.value }}</b>
+                        <b class="mt-1 block text-sm leading-tight break-words" data-testid="hero-gacha-summary-value">{{ gachaRole.value }}</b>
                     </span>
-                    <span class="rounded-[1.45rem] bg-white/94 px-4 py-3 shadow-sm">
+                    <span class="min-w-0 rounded-[1.45rem] bg-white/94 px-4 py-3 shadow-sm" data-testid="hero-gacha-summary-card">
                         <small class="block text-[0.65rem] font-black tracking-[0.18em] text-camelia-rose uppercase">Élément</small>
-                        <b class="mt-1 block whitespace-nowrap text-sm">{{ gachaElement.value }}</b>
+                        <b class="mt-1 block text-sm leading-tight break-words" data-testid="hero-gacha-summary-value">{{ gachaElement.value }}</b>
                     </span>
-                    <span class="rounded-[1.45rem] bg-camelia-rose px-4 py-3 text-white shadow-sm">
+                    <span class="min-w-0 rounded-[1.45rem] bg-camelia-rose px-4 py-3 text-white shadow-sm" data-testid="hero-gacha-summary-card">
                         <small class="block text-[0.65rem] font-black tracking-[0.18em] text-white/70 uppercase">Fiche</small>
-                        <b class="mt-1 block whitespace-nowrap text-sm">À conserver</b>
+                        <b class="mt-1 block text-sm leading-tight break-words" data-testid="hero-gacha-summary-value">À conserver</b>
                     </span>
                 </div>
             </div>
