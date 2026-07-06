@@ -146,7 +146,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
-        $client->request('GET', '/app/serveurs/admin/configuration');
+        $crawler = $client->request('GET', '/app/serveurs/admin/configuration');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Configuration du serveur');
@@ -154,6 +154,8 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('[data-testid="server-configuration"] img[alt="Logo Serveur Admin"][src="https://cdn.discordapp.com/icons/admin/static-icon-hash.webp?size=64"]');
         self::assertSelectorExists('[data-testid="configuration-nav-overview"][aria-current="page"]');
         self::assertSelectorExists('[data-testid="configuration-overview"]');
+        self::assertStringContainsString('xl:grid-cols-3', $crawler->filter('[data-testid="configuration-overview"] > div')->attr('class') ?? '');
+        self::assertStringContainsString('min-h-72', $crawler->filter('[data-testid="configuration-overview-card-ranks"]')->attr('class') ?? '');
         self::assertSelectorExists('[data-testid="configuration-overview-card-ranks"] a[href="/app/serveurs/admin/configuration/ranks"]');
         self::assertSelectorExists('[data-testid="configuration-overview-card-roles"] a[href="/app/serveurs/admin/configuration/roles"]');
         self::assertSelectorExists('[data-testid="configuration-overview-card-stats"] a[href="/app/serveurs/admin/configuration/stats"]');

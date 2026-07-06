@@ -17,23 +17,23 @@
     {% set page_title = is_overview ? 'Configuration du serveur' : active_configuration_section.label %}
     {% set page_description = is_overview ? 'Choisis une partie du catalogue à compléter pour ce serveur.' : active_configuration_section.description %}
 
-    <section class="grid gap-8" data-testid="server-configuration">
-        <div class="grid gap-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
-            <aside class="lg:sticky lg:top-24 lg:self-start">
-                <div class="grid gap-5">
-                    <div class="flex items-center gap-3 border border-camelia-ink/10 bg-camelia-ivory p-3 shadow-sm">
+    <section class="grid gap-10" data-testid="server-configuration">
+        <div class="grid gap-8 lg:grid-cols-[16.5rem_minmax(0,1fr)] xl:gap-12">
+            <aside class="lg:sticky lg:top-28 lg:self-start">
+                <div class="grid gap-7">
+                    <div class="flex items-center gap-4 border border-camelia-ink/10 bg-camelia-ivory p-4 shadow-sm">
                         {% if guild.icon_url %}
                             <img
                                 src="{{ guild.icon_url }}"
                                 alt="Logo {{ guild.name }}"
-                                width="40"
-                                height="40"
-                                class="size-10 shrink-0 rounded-full border border-camelia-ink/10 bg-camelia-blush object-cover"
+                                width="48"
+                                height="48"
+                                class="size-12 shrink-0 rounded-full border border-camelia-ink/10 bg-camelia-blush object-cover"
                                 loading="lazy"
                             >
                         {% else %}
                             <span
-                                class="flex size-10 shrink-0 items-center justify-center rounded-full border border-camelia-ink/10 bg-camelia-blush font-display text-xl font-black text-camelia-rose"
+                                class="flex size-12 shrink-0 items-center justify-center rounded-full border border-camelia-ink/10 bg-camelia-blush font-display text-2xl font-black text-camelia-rose"
                                 data-testid="guild-icon-fallback"
                                 aria-hidden="true"
                             >
@@ -46,38 +46,38 @@
                         </div>
                     </div>
 
-                    <nav class="grid gap-5" aria-label="Sections de configuration" data-testid="configuration-sidebar">
-                        <div class="grid gap-1.5">
-                            <p class="px-2 text-[0.68rem] font-black tracking-[0.16em] text-camelia-muted uppercase">Serveur</p>
+                    <nav class="grid gap-7" aria-label="Sections de configuration" data-testid="configuration-sidebar">
+                        <div class="grid gap-2">
+                            <p class="px-3 text-[0.68rem] font-black tracking-[0.16em] text-camelia-muted uppercase">Serveur</p>
                             <a
                                 href="{{ path('app_character_sheet', { guildId: guild.id }) }}"
-                                class="grid min-h-10 grid-cols-[1.6rem_minmax(0,1fr)] items-center gap-2 px-2 text-sm font-black text-camelia-muted transition hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+                                class="grid min-h-12 grid-cols-[1.8rem_minmax(0,1fr)] items-center gap-3 px-3 text-sm font-black text-camelia-muted transition hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
                             >
-                                <span class="flex size-6 items-center justify-center border border-camelia-ink/10 bg-white text-[0.68rem] font-black text-camelia-rose">FP</span>
+                                <span class="flex size-7 items-center justify-center border border-camelia-ink/10 bg-white text-[0.68rem] font-black text-camelia-rose">FP</span>
                                 Fiche personnage
                             </a>
                             <a
                                 href="{{ path('app_server_configuration', { guildId: guild.id }) }}"
-                                class="relative grid min-h-10 grid-cols-[1.6rem_minmax(0,1fr)] items-center gap-2 px-2 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 {{ is_overview ? 'bg-camelia-blush text-camelia-ink before:absolute before:left-0 before:h-6 before:w-1 before:rounded-full before:bg-camelia-rose' : 'text-camelia-muted hover:text-camelia-rose' }}"
+                                class="relative grid min-h-12 grid-cols-[1.8rem_minmax(0,1fr)] items-center gap-3 px-3 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 {{ is_overview ? 'bg-camelia-blush text-camelia-ink before:absolute before:left-0 before:h-7 before:w-1 before:rounded-full before:bg-camelia-rose' : 'text-camelia-muted hover:text-camelia-rose' }}"
                                 data-testid="configuration-nav-overview"
                                 {% if is_overview %}aria-current="page"{% endif %}
                             >
-                                <span class="flex size-6 items-center justify-center border border-camelia-ink/10 bg-white text-[0.68rem] font-black text-camelia-rose">CF</span>
+                                <span class="flex size-7 items-center justify-center border border-camelia-ink/10 bg-white text-[0.68rem] font-black text-camelia-rose">CF</span>
                                 Configuration
                             </a>
                         </div>
 
-                        <div class="grid gap-1.5">
-                            <p class="px-2 text-[0.68rem] font-black tracking-[0.16em] text-camelia-muted uppercase">Catalogue</p>
+                        <div class="grid gap-2">
+                            <p class="px-3 text-[0.68rem] font-black tracking-[0.16em] text-camelia-muted uppercase">Catalogue</p>
                             {% for section in configuration_sections %}
                                 {% set is_active = section.id == active_section %}
                                 <a
                                     href="{{ path('app_server_configuration_section', { guildId: guild.id, section: section.id }) }}"
-                                    class="relative grid min-h-10 grid-cols-[1.6rem_minmax(0,1fr)_auto] items-center gap-2 px-2 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 {{ is_active ? 'bg-camelia-blush text-camelia-ink before:absolute before:left-0 before:h-6 before:w-1 before:rounded-full before:bg-camelia-rose' : 'text-camelia-muted hover:text-camelia-rose' }}"
+                                    class="relative grid min-h-12 grid-cols-[1.8rem_minmax(0,1fr)_auto] items-center gap-3 px-3 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 {{ is_active ? 'bg-camelia-blush text-camelia-ink before:absolute before:left-0 before:h-7 before:w-1 before:rounded-full before:bg-camelia-rose' : 'text-camelia-muted hover:text-camelia-rose' }}"
                                     data-testid="configuration-nav-{{ section.id }}"
                                     {% if is_active %}aria-current="page"{% endif %}
                                 >
-                                    <span class="flex size-6 items-center justify-center border border-camelia-ink/10 bg-white text-[0.68rem] font-black text-camelia-rose">{{ section.icon }}</span>
+                                    <span class="flex size-7 items-center justify-center border border-camelia-ink/10 bg-white text-[0.68rem] font-black text-camelia-rose">{{ section.icon }}</span>
                                     <span>{{ section.label }}</span>
                                     <span class="text-xs font-black text-camelia-rose">{{ section.count }}</span>
                                 </a>
@@ -87,38 +87,38 @@
                 </div>
             </aside>
 
-            <div class="grid min-w-0 gap-6">
-                <header class="flex items-start gap-4 border-b border-camelia-ink/10 pb-6">
-                    <span class="flex size-14 shrink-0 items-center justify-center border border-camelia-ink/10 bg-camelia-blush font-display text-xl font-black text-camelia-rose">
+            <div class="grid min-w-0 gap-8">
+                <header class="flex items-start gap-5 border-b border-camelia-ink/10 pb-8">
+                    <span class="flex size-16 shrink-0 items-center justify-center border border-camelia-ink/10 bg-camelia-blush font-display text-2xl font-black text-camelia-rose">
                         {{ page_icon }}
                     </span>
                     <div class="min-w-0">
                         <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">{{ guild.name }} · Catalogue</p>
                         <h1 class="mt-2 font-display text-4xl leading-tight md:text-5xl">{{ page_title }}</h1>
-                        <p class="mt-3 max-w-2xl text-sm font-bold leading-relaxed text-camelia-muted">{{ page_description }}</p>
+                        <p class="mt-4 max-w-3xl text-base font-bold leading-relaxed text-camelia-muted">{{ page_description }}</p>
                     </div>
                 </header>
 
                 {% if is_overview %}
-                    <section class="grid gap-5" data-testid="configuration-overview">
-                        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <section class="grid gap-7" data-testid="configuration-overview">
+                        <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                             {% for section in configuration_sections %}
                                 {% set tone = loop.index == 2 ? 'bg-camelia-gold/20 text-[#7a5415]' : (loop.index == 3 ? 'bg-camelia-leaf/15 text-camelia-leaf' : 'bg-camelia-blush text-camelia-rose') %}
                                 <article
-                                    class="grid min-h-56 gap-4 border border-camelia-ink/10 bg-camelia-ivory p-5 shadow-sm"
+                                    class="grid min-h-72 gap-6 border border-camelia-ink/10 bg-camelia-ivory p-7 shadow-sm"
                                     data-testid="configuration-overview-card-{{ section.id }}"
                                 >
-                                    <div class="flex items-start justify-between gap-3">
-                                        <span class="flex size-12 items-center justify-center {{ tone }} font-display text-lg font-black">{{ section.icon }}</span>
-                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ section.count }} entrées</span>
+                                    <div class="flex items-start justify-between gap-4">
+                                        <span class="flex size-14 items-center justify-center {{ tone }} font-display text-xl font-black">{{ section.icon }}</span>
+                                        <span class="inline-flex min-h-8 items-center rounded-full bg-camelia-gold/20 px-4 text-xs font-black text-[#7a5415]">{{ section.count }} entrées</span>
                                     </div>
-                                    <div class="grid gap-2">
-                                        <h2 class="text-lg font-black">{{ section.label }}</h2>
-                                        <p class="text-sm font-bold leading-relaxed text-camelia-muted">{{ section.description }}</p>
+                                    <div class="grid gap-3">
+                                        <h2 class="text-xl font-black">{{ section.label }}</h2>
+                                        <p class="max-w-sm text-base font-bold leading-relaxed text-camelia-muted">{{ section.description }}</p>
                                     </div>
                                     <a
                                         href="{{ path('app_server_configuration_section', { guildId: guild.id, section: section.id }) }}"
-                                        class="mt-auto inline-flex min-h-10 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+                                        class="mt-auto inline-flex min-h-11 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
                                     >
                                         Configurer
                                     </a>
@@ -129,13 +129,13 @@
                 {% else %}
                     <div data-testid="configuration-panel">
                         {% if active_section == 'ranks' %}
-                            <div class="grid gap-5 xl:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
-                                <section class="grid gap-5 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
-                                    <div class="border-b border-camelia-ink/10 p-5">
+                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
                                         <h2 class="text-lg font-black">Ajouter un rang</h2>
                                         <p class="mt-1 text-sm font-bold text-camelia-muted">Renseigne les infos minimales pour alimenter le bot.</p>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_rank_create', { guildId: guild.id }) }}" class="grid gap-4 p-5">
+                                    <form method="post" action="{{ path('app_server_catalog_rank_create', { guildId: guild.id }) }}" class="grid gap-5 p-6">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             ID Discord
                                             <input name="discord_id" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
@@ -158,23 +158,23 @@
                                             Rang staff prioritaire
                                             <input name="is_staff" type="checkbox" value="1" class="size-4 accent-camelia-rose">
                                         </label>
-                                        <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                             Ajouter le rang
                                         </button>
                                     </form>
                                 </section>
 
-                                <section class="grid gap-5 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
-                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-5">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
                                         <div>
                                             <h2 class="text-lg font-black">Rangs existants</h2>
                                             <p class="mt-1 text-sm font-bold text-camelia-muted">Les données affichées restent strictement celles de ce serveur.</p>
                                         </div>
                                         <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ catalog.ranks|length }} entrées</span>
                                     </div>
-                                    <div class="grid gap-3 p-5">
+                                    <div class="grid gap-4 p-6">
                                         {% for rank in catalog.ranks %}
-                                            <article class="grid gap-3 border border-camelia-ink/10 bg-white p-4 text-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5 text-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
                                                 <div class="flex min-w-0 items-center gap-3">
                                                     <span class="flex size-10 shrink-0 items-center justify-center bg-camelia-blush font-display text-lg font-black text-camelia-rose">{{ rank.name|slice(0, 1)|upper }}</span>
                                                     <div class="min-w-0">
@@ -190,19 +190,19 @@
                                                 </div>
                                             </article>
                                         {% else %}
-                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-4 text-sm font-bold text-camelia-muted">Aucun rang pour l’instant. Ajoute le premier rang de ce serveur.</p>
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted">Aucun rang pour l’instant. Ajoute le premier rang de ce serveur.</p>
                                         {% endfor %}
                                     </div>
                                 </section>
                             </div>
                         {% elseif active_section == 'roles' %}
-                            <div class="grid gap-5 xl:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)]">
-                                <section class="grid gap-5 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
-                                    <div class="border-b border-camelia-ink/10 p-5">
+                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
                                         <h2 class="text-lg font-black">Ajouter un rôle</h2>
                                         <p class="mt-1 text-sm font-bold text-camelia-muted">Les images serviront aux fiches et aux tirages.</p>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="grid gap-4 p-5">
+                                    <form method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="grid gap-5 p-6">
                                         <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
                                             <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                 Nom
@@ -217,30 +217,30 @@
                                             Image
                                             <input name="image_url" type="url" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
                                         </label>
-                                        <div class="flex items-center gap-3 border border-camelia-ink/10 bg-camelia-blush/50 p-3" data-testid="role-image-preview">
-                                            <span class="flex size-11 shrink-0 items-center justify-center bg-camelia-gold/20 font-display text-lg font-black text-[#7a5415]">R</span>
+                                        <div class="flex items-center gap-4 border border-camelia-ink/10 bg-camelia-blush/50 p-4" data-testid="role-image-preview">
+                                            <span class="flex size-12 shrink-0 items-center justify-center bg-camelia-gold/20 font-display text-lg font-black text-[#7a5415]">R</span>
                                             <div>
                                                 <strong class="text-sm">Prévisualisation</strong>
                                                 <p class="mt-1 text-xs font-bold text-camelia-muted">Image ou placeholder du rôle</p>
                                             </div>
                                         </div>
-                                        <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                             Ajouter le rôle
                                         </button>
                                     </form>
                                 </section>
 
-                                <section class="grid gap-5 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
-                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-5">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
                                         <div>
                                             <h2 class="text-lg font-black">Rôles existants</h2>
                                             <p class="mt-1 text-sm font-bold text-camelia-muted">Chaque rôle reste attaché uniquement à ce serveur.</p>
                                         </div>
                                         <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ catalog.roles|length }} entrées</span>
                                     </div>
-                                    <div class="grid gap-3 p-5">
+                                    <div class="grid gap-4 p-6">
                                         {% for role in catalog.roles %}
-                                            <article class="grid gap-3 border border-camelia-ink/10 bg-white p-4 text-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5 text-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
                                                 <div class="flex min-w-0 items-center gap-3">
                                                     <span class="flex size-10 shrink-0 items-center justify-center bg-camelia-gold/20 font-display text-lg font-black text-[#7a5415]">{{ role.name|slice(0, 1)|upper }}</span>
                                                     <div class="min-w-0">
@@ -251,40 +251,40 @@
                                                 <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415] md:justify-self-end">{{ role.percentage }}%</span>
                                             </article>
                                         {% else %}
-                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-4 text-sm font-bold text-camelia-muted">Aucun rôle pour l’instant. Ajoute le premier rôle de ce serveur.</p>
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted">Aucun rôle pour l’instant. Ajoute le premier rôle de ce serveur.</p>
                                         {% endfor %}
                                     </div>
                                 </section>
                             </div>
                         {% elseif active_section == 'stats' %}
-                            <div class="grid gap-5 xl:grid-cols-[minmax(18rem,21rem)_minmax(0,1fr)]">
-                                <section class="grid gap-5 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
-                                    <div class="border-b border-camelia-ink/10 p-5">
+                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,24rem)_minmax(0,1fr)]">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
                                         <h2 class="text-lg font-black">Ajouter une stat</h2>
                                         <p class="mt-1 text-sm font-bold text-camelia-muted">Une stat est simplement un nom pour l’instant.</p>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_stat_create', { guildId: guild.id }) }}" class="grid gap-4 p-5">
+                                    <form method="post" action="{{ path('app_server_catalog_stat_create', { guildId: guild.id }) }}" class="grid gap-5 p-6">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Nom
                                             <input name="name" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
                                         </label>
-                                        <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                             Ajouter la stat
                                         </button>
                                     </form>
                                 </section>
 
-                                <section class="grid gap-5 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
-                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-5">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
                                         <div>
                                             <h2 class="text-lg font-black">Stats existantes</h2>
-                                            <p class="mt-1 text-sm font-bold text-camelia-muted">Une vue scannable pour les catalogues courts.</p>
+                                            <p class="mt-1 text-sm font-bold text-camelia-muted">Une vue scannable pour les catalogues du serveur.</p>
                                         </div>
                                         <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-leaf/15 px-3 text-xs font-black text-camelia-leaf">{{ catalog.stats|length }} entrées</span>
                                     </div>
-                                    <div class="grid gap-3 p-5 sm:grid-cols-2">
+                                    <div class="grid gap-4 p-6 sm:grid-cols-2">
                                         {% for stat in catalog.stats %}
-                                            <article class="grid min-h-28 gap-3 border border-camelia-ink/10 bg-white p-4" data-testid="stat-card">
+                                            <article class="grid min-h-32 gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="stat-card">
                                                 <div class="flex items-center justify-between gap-3">
                                                     <strong>{{ stat.name }}</strong>
                                                     <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-leaf/15 px-3 text-xs font-black text-camelia-leaf">Stat</span>
@@ -292,48 +292,48 @@
                                                 <p class="text-sm font-semibold leading-relaxed text-camelia-muted">Disponible sur les fiches et futures distributions.</p>
                                             </article>
                                         {% else %}
-                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-leaf/10 p-4 text-sm font-bold text-camelia-muted sm:col-span-2">Aucune stat pour l’instant. Ajoute la première caractéristique du serveur.</p>
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-leaf/10 p-5 text-sm font-bold text-camelia-muted sm:col-span-2">Aucune stat pour l’instant. Ajoute la première caractéristique du serveur.</p>
                                         {% endfor %}
                                     </div>
                                 </section>
                             </div>
                         {% elseif active_section == 'elements' %}
-                            <div class="grid gap-5 xl:grid-cols-[minmax(18rem,21rem)_minmax(0,1fr)]">
-                                <section class="grid gap-5 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
-                                    <div class="border-b border-camelia-ink/10 p-5">
+                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,24rem)_minmax(0,1fr)]">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
                                         <h2 class="text-lg font-black">Ajouter un élément</h2>
                                         <p class="mt-1 text-sm font-bold text-camelia-muted">Un élément est simplement un nom pour l’instant.</p>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_element_create', { guildId: guild.id }) }}" class="grid gap-4 p-5">
+                                    <form method="post" action="{{ path('app_server_catalog_element_create', { guildId: guild.id }) }}" class="grid gap-5 p-6">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Nom
                                             <input name="name" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
                                         </label>
-                                        <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                             Ajouter l’élément
                                         </button>
                                     </form>
                                 </section>
 
-                                <section class="grid gap-5 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
-                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-5">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
                                         <div>
                                             <h2 class="text-lg font-black">Éléments existants</h2>
-                                            <p class="mt-1 text-sm font-bold text-camelia-muted">Une grille compacte pour les affinités du serveur.</p>
+                                            <p class="mt-1 text-sm font-bold text-camelia-muted">Une grille lisible pour les affinités du serveur.</p>
                                         </div>
                                         <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-blush px-3 text-xs font-black text-camelia-rose">{{ catalog.elements|length }} entrées</span>
                                     </div>
-                                    <div class="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-3">
+                                    <div class="grid gap-4 p-6 sm:grid-cols-2 2xl:grid-cols-3">
                                         {% for element in catalog.elements %}
-                                            <article class="grid min-h-28 gap-3 border border-camelia-ink/10 bg-white p-4" data-testid="element-card">
+                                            <article class="grid min-h-32 gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="element-card">
                                                 <div class="flex items-center gap-3">
-                                                    <span class="flex size-9 shrink-0 items-center justify-center bg-camelia-blush font-display text-base font-black text-camelia-rose">{{ element.name|slice(0, 1)|upper }}</span>
+                                                    <span class="flex size-10 shrink-0 items-center justify-center bg-camelia-blush font-display text-lg font-black text-camelia-rose">{{ element.name|slice(0, 1)|upper }}</span>
                                                     <strong>{{ element.name }}</strong>
                                                 </div>
                                                 <p class="text-sm font-semibold leading-relaxed text-camelia-muted">Affinité disponible pour les tirages et fiches.</p>
                                             </article>
                                         {% else %}
-                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-4 text-sm font-bold text-camelia-muted sm:col-span-2 xl:col-span-3">Aucun élément pour l’instant. Ajoute la première affinité du serveur.</p>
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted sm:col-span-2 2xl:col-span-3">Aucun élément pour l’instant. Ajoute la première affinité du serveur.</p>
                                         {% endfor %}
                                     </div>
                                 </section>

@@ -32,7 +32,7 @@
 <body class="min-h-full bg-camelia-cream font-sans text-camelia-ink antialiased" data-turbo="false">
     <div class="flex min-h-dvh flex-col bg-camelia-cream" data-testid="backoffice-layout">
         <header class="sticky top-0 z-40 border-b border-camelia-ink/10 bg-camelia-ivory/92 backdrop-blur-xl" data-testid="backoffice-navbar">
-            <nav class="mx-auto flex min-h-18 w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8" aria-label="Navigation backoffice">
+            <nav class="mx-auto flex min-h-18 w-full max-w-[90rem] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8" aria-label="Navigation backoffice">
                 <a href="{{ path('app_home') }}" class="flex min-w-0 items-center gap-3 rounded-full pr-2 text-camelia-ink transition hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60" data-testid="backoffice-brand">
                     <img
                         src="{{ asset('images/gachamelia-bot-avatar.png') }}"
@@ -58,7 +58,7 @@
             </nav>
         </header>
 
-        <main class="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-8 sm:px-6 lg:px-8">
+        <main class="mx-auto flex w-full max-w-[90rem] flex-1 flex-col px-4 py-10 sm:px-6 lg:px-8">
             {% block body %}{% endblock %}
         </main>
     </div>
