@@ -246,8 +246,9 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('[data-testid="catalog-create-panel"]');
         self::assertSelectorExists('[data-testid="catalog-list-panel"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Novice');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Probabilités de stats');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Force');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Guerrier');
-        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Force');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Feu');
         self::assertSelectorTextNotContains('[data-testid="server-configuration"]', 'Hors serveur');
 
@@ -419,6 +420,211 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertResponseRedirects('/app/serveurs/admin/configuration/roles');
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM roles WHERE server_id = ?', [$adminServerId]));
         self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM roles WHERE server_id = ?', [$otherServerId]));
+    }
+
+    public function testAdministratorCanUpdateAndDeleteServerCatalogRows(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+
+        $adminServerId = $this->serverDatabaseId('admin');
+        $otherServerId = $this->serverDatabaseId('unrelated');
+
+        $this->connection()->insert('ranks', [
+            'server_id' => $adminServerId,
+            'discord_id' => 'rank-old',
+            'name' => 'Ancien rang',
+            'percentage' => 12,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $rankId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('ranks', [
+            'server_id' => $otherServerId,
+            'discord_id' => 'rank-other',
+            'name' => 'Rang externe',
+            'percentage' => 100,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+
+        $this->connection()->insert('stats', [
+            'server_id' => $adminServerId,
+            'name' => 'Ancienne stat',
+        ]);
+        $statId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('stats', [
+            'server_id' => $otherServerId,
+            'name' => 'Stat externe',
+        ]);
+
+        $this->connection()->insert('elements', [
+            'server_id' => $adminServerId,
+            'name' => 'Ancien élément',
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '✨',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
+        ]);
+        $elementId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('elements', [
+            'server_id' => $otherServerId,
+            'name' => 'Élément externe',
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '🌒',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
+        ]);
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId, [
+            'discord_id' => 'rank-new',
+            'name' => 'Nouveau rang',
+            'percentage' => '42',
+            'bye_title' => 'Départ solaire',
+            'is_staff' => '1',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+        self::assertSame([
+            'discord_id' => 'rank-new',
+            'name' => 'Nouveau rang',
+            'percentage' => 42,
+            'bye_title' => 'Départ solaire',
+            'is_staff' => 1,
+        ], $this->connection()->fetchAssociative(
+            'SELECT discord_id, name, percentage, bye_title, is_staff FROM ranks WHERE id = ?',
+            [$rankId],
+        ));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/stats/'.$statId, [
+            'name' => 'Nouvelle stat',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/stats');
+        self::assertSame('Nouvelle stat', $this->connection()->fetchOne('SELECT name FROM stats WHERE id = ?', [$statId]));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/elements/'.$elementId, [
+            'name' => 'Nouvel élément',
+            'emoji_source' => 'bot',
+            'emoji_value' => '<a:cristal:555555555555555555>',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/elements');
+        self::assertSame([
+            'name' => 'Nouvel élément',
+            'emoji_source' => 'bot',
+            'emoji_id' => '555555555555555555',
+            'emoji_name' => 'cristal',
+            'emoji_animated' => 1,
+            'emoji_unicode' => null,
+        ], $this->connection()->fetchAssociative(
+            'SELECT name, emoji_source, emoji_id, emoji_name, emoji_animated, emoji_unicode FROM elements WHERE id = ?',
+            [$elementId],
+        ));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/supprimer');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/stats/'.$statId.'/supprimer');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/stats');
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/elements/'.$elementId.'/supprimer');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/elements');
+
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM ranks WHERE server_id = ?', [$adminServerId]));
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM stats WHERE server_id = ?', [$adminServerId]));
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM elements WHERE server_id = ?', [$adminServerId]));
+        self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM ranks WHERE server_id = ?', [$otherServerId]));
+        self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM stats WHERE server_id = ?', [$otherServerId]));
+        self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM elements WHERE server_id = ?', [$otherServerId]));
+    }
+
+    public function testAdministratorCanManageRankStatsAndMessages(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+
+        $adminServerId = $this->serverDatabaseId('admin');
+
+        $this->connection()->insert('ranks', [
+            'server_id' => $adminServerId,
+            'discord_id' => 'rank-admin',
+            'name' => 'Novice',
+            'percentage' => 30,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $rankId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('stats', [
+            'server_id' => $adminServerId,
+            'name' => 'Force',
+        ]);
+        $statId = (int) $this->connection()->lastInsertId();
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats', [
+            'stat_id' => (string) $statId,
+            'percentage' => '80',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+        self::assertSame(80, (int) $this->connection()->fetchOne(
+            'SELECT percentage FROM rank_stats WHERE rank_id = ? AND stat_id = ?',
+            [$rankId, $statId],
+        ));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats', [
+            'stat_id' => (string) $statId,
+            'percentage' => '25',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+        self::assertSame(1, (int) $this->connection()->fetchOne(
+            'SELECT COUNT(*) FROM rank_stats WHERE rank_id = ? AND stat_id = ?',
+            [$rankId, $statId],
+        ));
+        self::assertSame(25, (int) $this->connection()->fetchOne(
+            'SELECT percentage FROM rank_stats WHERE rank_id = ? AND stat_id = ?',
+            [$rankId, $statId],
+        ));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/welcome-messages', [
+            'message' => 'Bienvenue dans la guilde.',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+        $welcomeMessageId = (int) $this->connection()->fetchOne('SELECT id FROM welcome_messages WHERE rank_id = ?', [$rankId]);
+        self::assertSame('Bienvenue dans la guilde.', $this->connection()->fetchOne('SELECT message FROM welcome_messages WHERE id = ?', [$welcomeMessageId]));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/bye-messages', [
+            'message' => 'À la prochaine.',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+        $byeMessageId = (int) $this->connection()->fetchOne('SELECT id FROM bye_messages WHERE rank_id = ?', [$rankId]);
+        self::assertSame('À la prochaine.', $this->connection()->fetchOne('SELECT message FROM bye_messages WHERE id = ?', [$byeMessageId]));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats/'.$statId.'/supprimer');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM rank_stats WHERE rank_id = ?', [$rankId]));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/welcome-messages/'.$welcomeMessageId.'/supprimer');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM welcome_messages WHERE rank_id = ?', [$rankId]));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/bye-messages/'.$byeMessageId.'/supprimer');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM bye_messages WHERE rank_id = ?', [$rankId]));
     }
 
     public function testMemberCannotCreateServerCatalogRows(): void

@@ -95,4 +95,14 @@ class Rank
     {
         return $this->staff;
     }
+
+    public function updateConfiguration(string $discordId, string $name, int $percentage, ?string $byeTitle, bool $staff): void
+    {
+        $this->discordId = $discordId;
+        $this->name = $name;
+        $this->percentage = $percentage;
+        $this->byeTitle = $byeTitle;
+        $this->staff = $staff;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
 }

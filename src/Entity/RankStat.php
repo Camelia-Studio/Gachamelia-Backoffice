@@ -29,4 +29,24 @@ class RankStat
         $this->stat = $stat;
         $this->percentage = $percentage;
     }
+
+    public function rank(): Rank
+    {
+        return $this->rank;
+    }
+
+    public function stat(): Stat
+    {
+        return $this->stat;
+    }
+
+    public function percentage(): int
+    {
+        return $this->percentage;
+    }
+
+    public function updatePercentage(int $percentage): void
+    {
+        $this->percentage = $percentage;
+    }
 }

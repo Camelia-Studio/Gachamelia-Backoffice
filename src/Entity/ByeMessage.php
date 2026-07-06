@@ -38,4 +38,19 @@ class ByeMessage
     {
         return $this->id;
     }
+
+    public function server(): DiscordServer
+    {
+        return $this->server;
+    }
+
+    public function rank(): Rank
+    {
+        return $this->rank;
+    }
+
+    public function message(): string
+    {
+        return $this->message;
+    }
 }

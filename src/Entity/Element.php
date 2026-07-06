@@ -74,6 +74,22 @@ class Element
         return $this->name;
     }
 
+    public function updateConfiguration(
+        string $name,
+        string $emojiSource,
+        ?string $emojiUnicode,
+        ?string $emojiId,
+        ?string $emojiName,
+        bool $emojiAnimated,
+    ): void {
+        $this->name = $name;
+        $this->emojiSource = $emojiSource;
+        $this->emojiUnicode = $emojiUnicode;
+        $this->emojiId = $emojiId;
+        $this->emojiName = $emojiName;
+        $this->emojiAnimated = $emojiAnimated;
+    }
+
     public function emojiSource(): string
     {
         return $this->emojiSource;

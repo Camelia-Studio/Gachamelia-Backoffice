@@ -4,12 +4,15 @@ namespace App\Controller;
 
 use App\Backoffice\BackofficeAccess;
 use App\Backoffice\BackofficeSession;
+use App\Entity\ByeMessage;
 use App\Entity\CharacterRole;
 use App\Entity\DiscordEmoji;
 use App\Entity\DiscordServer;
 use App\Entity\Element;
 use App\Entity\Rank;
+use App\Entity\RankStat;
 use App\Entity\Stat;
+use App\Entity\WelcomeMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -179,6 +182,182 @@ final class BackofficeController extends AbstractController
         return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
     }
 
+    #[Route('/app/serveurs/{guildId}/catalogue/ranks/{rankId}', name: 'app_server_catalog_rank_update', requirements: ['rankId' => '\d+'], methods: ['POST'])]
+    public function updateRank(
+        string $guildId,
+        string $rankId,
+        Request $request,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
+
+        $discordId = $this->requiredRequestString($request, 'discord_id');
+        $name = $this->requiredRequestString($request, 'name');
+        if (null !== $discordId && null !== $name) {
+            $rank->updateConfiguration(
+                $discordId,
+                $name,
+                $this->requestPercentage($request),
+                $this->optionalRequestString($request, 'bye_title'),
+                $request->request->has('is_staff'),
+            );
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/ranks/{rankId}/supprimer', name: 'app_server_catalog_rank_delete', requirements: ['rankId' => '\d+'], methods: ['POST'])]
+    public function deleteRank(
+        string $guildId,
+        string $rankId,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
+
+        $entityManager->remove($rank);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/ranks/{rankId}/stats', name: 'app_server_catalog_rank_stat_upsert', requirements: ['rankId' => '\d+'], methods: ['POST'])]
+    public function upsertRankStat(
+        string $guildId,
+        string $rankId,
+        Request $request,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
+        $statId = (int) $request->request->get('stat_id', 0);
+
+        if ($statId > 0) {
+            $stat = $this->statForServerOr404($entityManager, $server, $statId);
+            $rankStat = $entityManager->getRepository(RankStat::class)->findOneBy(['rank' => $rank, 'stat' => $stat]);
+            if (!$rankStat instanceof RankStat) {
+                $rankStat = new RankStat($rank, $stat, $this->requestPercentage($request));
+                $entityManager->persist($rankStat);
+            } else {
+                $rankStat->updatePercentage($this->requestPercentage($request));
+            }
+
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/ranks/{rankId}/stats/{statId}/supprimer', name: 'app_server_catalog_rank_stat_delete', requirements: ['rankId' => '\d+', 'statId' => '\d+'], methods: ['POST'])]
+    public function deleteRankStat(
+        string $guildId,
+        string $rankId,
+        string $statId,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
+        $stat = $this->statForServerOr404($entityManager, $server, (int) $statId);
+        $rankStat = $entityManager->getRepository(RankStat::class)->findOneBy(['rank' => $rank, 'stat' => $stat]);
+
+        if ($rankStat instanceof RankStat) {
+            $entityManager->remove($rankStat);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/ranks/{rankId}/welcome-messages', name: 'app_server_catalog_rank_welcome_message_create', requirements: ['rankId' => '\d+'], methods: ['POST'])]
+    public function createWelcomeMessage(
+        string $guildId,
+        string $rankId,
+        Request $request,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
+        $message = $this->requiredRequestString($request, 'message');
+
+        if (null !== $message) {
+            $entityManager->persist(new WelcomeMessage($server, $rank, $message));
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/ranks/{rankId}/welcome-messages/{messageId}/supprimer', name: 'app_server_catalog_rank_welcome_message_delete', requirements: ['rankId' => '\d+', 'messageId' => '\d+'], methods: ['POST'])]
+    public function deleteWelcomeMessage(
+        string $guildId,
+        string $rankId,
+        string $messageId,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
+        $message = $this->welcomeMessageForServerOr404($entityManager, $server, $rank, (int) $messageId);
+
+        $entityManager->remove($message);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/ranks/{rankId}/bye-messages', name: 'app_server_catalog_rank_bye_message_create', requirements: ['rankId' => '\d+'], methods: ['POST'])]
+    public function createByeMessage(
+        string $guildId,
+        string $rankId,
+        Request $request,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
+        $message = $this->requiredRequestString($request, 'message');
+
+        if (null !== $message) {
+            $entityManager->persist(new ByeMessage($server, $rank, $message));
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/ranks/{rankId}/bye-messages/{messageId}/supprimer', name: 'app_server_catalog_rank_bye_message_delete', requirements: ['rankId' => '\d+', 'messageId' => '\d+'], methods: ['POST'])]
+    public function deleteByeMessage(
+        string $guildId,
+        string $rankId,
+        string $messageId,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
+        $message = $this->byeMessageForServerOr404($entityManager, $server, $rank, (int) $messageId);
+
+        $entityManager->remove($message);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
+    }
+
     #[Route('/app/serveurs/{guildId}/catalogue/roles', name: 'app_server_catalog_role_create', methods: ['POST'])]
     public function createRole(
         string $guildId,
@@ -274,6 +453,44 @@ final class BackofficeController extends AbstractController
         return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'stats']);
     }
 
+    #[Route('/app/serveurs/{guildId}/catalogue/stats/{statId}', name: 'app_server_catalog_stat_update', requirements: ['statId' => '\d+'], methods: ['POST'])]
+    public function updateStat(
+        string $guildId,
+        string $statId,
+        Request $request,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $stat = $this->statForServerOr404($entityManager, $server, (int) $statId);
+
+        $name = $this->requiredRequestString($request, 'name');
+        if (null !== $name) {
+            $stat->updateName($name);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'stats']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/stats/{statId}/supprimer', name: 'app_server_catalog_stat_delete', requirements: ['statId' => '\d+'], methods: ['POST'])]
+    public function deleteStat(
+        string $guildId,
+        string $statId,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $stat = $this->statForServerOr404($entityManager, $server, (int) $statId);
+
+        $entityManager->remove($stat);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'stats']);
+    }
+
     #[Route('/app/serveurs/{guildId}/catalogue/elements', name: 'app_server_catalog_element_create', methods: ['POST'])]
     public function createElement(
         string $guildId,
@@ -298,6 +515,52 @@ final class BackofficeController extends AbstractController
             ));
             $entityManager->flush();
         }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'elements']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/elements/{elementId}', name: 'app_server_catalog_element_update', requirements: ['elementId' => '\d+'], methods: ['POST'])]
+    public function updateElement(
+        string $guildId,
+        string $elementId,
+        Request $request,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $element = $this->elementForServerOr404($entityManager, $server, (int) $elementId);
+
+        $name = $this->requiredRequestString($request, 'name');
+        if (null !== $name) {
+            $emoji = $this->requestEmoji($request, Element::DEFAULT_EMOJI);
+            $element->updateConfiguration(
+                $name,
+                $emoji['source'],
+                $emoji['unicode'],
+                $emoji['id'],
+                $emoji['name'],
+                $emoji['animated'],
+            );
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'elements']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/elements/{elementId}/supprimer', name: 'app_server_catalog_element_delete', requirements: ['elementId' => '\d+'], methods: ['POST'])]
+    public function deleteElement(
+        string $guildId,
+        string $elementId,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $element = $this->elementForServerOr404($entityManager, $server, (int) $elementId);
+
+        $entityManager->remove($element);
+        $entityManager->flush();
 
         return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'elements']);
     }
@@ -365,6 +628,72 @@ final class BackofficeController extends AbstractController
         return $role;
     }
 
+    private function rankForServerOr404(EntityManagerInterface $entityManager, DiscordServer $server, int $rankId): Rank
+    {
+        $rank = $entityManager->getRepository(Rank::class)->findOneBy(['id' => $rankId, 'server' => $server]);
+        if (!$rank instanceof Rank) {
+            throw new NotFoundHttpException('Rank is not available on this server.');
+        }
+
+        return $rank;
+    }
+
+    private function statForServerOr404(EntityManagerInterface $entityManager, DiscordServer $server, int $statId): Stat
+    {
+        $stat = $entityManager->getRepository(Stat::class)->findOneBy(['id' => $statId, 'server' => $server]);
+        if (!$stat instanceof Stat) {
+            throw new NotFoundHttpException('Stat is not available on this server.');
+        }
+
+        return $stat;
+    }
+
+    private function elementForServerOr404(EntityManagerInterface $entityManager, DiscordServer $server, int $elementId): Element
+    {
+        $element = $entityManager->getRepository(Element::class)->findOneBy(['id' => $elementId, 'server' => $server]);
+        if (!$element instanceof Element) {
+            throw new NotFoundHttpException('Element is not available on this server.');
+        }
+
+        return $element;
+    }
+
+    private function welcomeMessageForServerOr404(
+        EntityManagerInterface $entityManager,
+        DiscordServer $server,
+        Rank $rank,
+        int $messageId,
+    ): WelcomeMessage {
+        $message = $entityManager->getRepository(WelcomeMessage::class)->findOneBy([
+            'id' => $messageId,
+            'server' => $server,
+            'rank' => $rank,
+        ]);
+        if (!$message instanceof WelcomeMessage) {
+            throw new NotFoundHttpException('Welcome message is not available on this server.');
+        }
+
+        return $message;
+    }
+
+    private function byeMessageForServerOr404(
+        EntityManagerInterface $entityManager,
+        DiscordServer $server,
+        Rank $rank,
+        int $messageId,
+    ): ByeMessage {
+        $message = $entityManager->getRepository(ByeMessage::class)->findOneBy([
+            'id' => $messageId,
+            'server' => $server,
+            'rank' => $rank,
+        ]);
+        if (!$message instanceof ByeMessage) {
+            throw new NotFoundHttpException('Bye message is not available on this server.');
+        }
+
+        return $message;
+    }
+
     private function configurationSectionOr404(string $section): void
     {
         if (!isset(self::CONFIGURATION_SECTIONS[$section])) {
@@ -373,23 +702,22 @@ final class BackofficeController extends AbstractController
     }
 
     /**
-     * @return array{
-     *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
-     *     roles: list<array{id: int, name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
-     *     stats: list<array{name: string}>,
-     *     elements: list<array{name: string, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>
-     * }
+     * @return array<string, list<array<string, mixed>>>
      */
     private function catalogPayload(EntityManagerInterface $entityManager, DiscordServer $server): array
     {
         return [
             'ranks' => array_map(
-                static fn (Rank $rank): array => [
+                fn (Rank $rank): array => [
+                    'id' => (int) $rank->id(),
                     'discord_id' => $rank->discordId(),
                     'name' => $rank->name(),
                     'percentage' => $rank->percentage(),
                     'bye_title' => $rank->byeTitle(),
                     'is_staff' => $rank->isStaff(),
+                    'rank_stats' => $this->rankStatsPayload($entityManager, $rank),
+                    'welcome_messages' => $this->welcomeMessagesPayload($entityManager, $server, $rank),
+                    'bye_messages' => $this->byeMessagesPayload($entityManager, $server, $rank),
                 ],
                 $entityManager->getRepository(Rank::class)->findBy(['server' => $server], ['percentage' => 'ASC', 'name' => 'ASC']),
             ),
@@ -410,11 +738,15 @@ final class BackofficeController extends AbstractController
                 $entityManager->getRepository(CharacterRole::class)->findBy(['server' => $server], ['percentage' => 'ASC', 'name' => 'ASC']),
             ),
             'stats' => array_map(
-                static fn (Stat $stat): array => ['name' => $stat->name()],
+                static fn (Stat $stat): array => [
+                    'id' => (int) $stat->id(),
+                    'name' => $stat->name(),
+                ],
                 $entityManager->getRepository(Stat::class)->findBy(['server' => $server], ['name' => 'ASC']),
             ),
             'elements' => array_map(
                 static fn (Element $element): array => [
+                    'id' => (int) $element->id(),
                     'name' => $element->name(),
                     'emoji_source' => $element->emojiSource(),
                     'emoji_source_label' => self::EMOJI_SOURCE_LABELS[$element->emojiSource()] ?? self::EMOJI_SOURCE_LABELS['unicode'],
@@ -431,12 +763,50 @@ final class BackofficeController extends AbstractController
     }
 
     /**
-     * @param array{
-     *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
-     *     roles: list<array{id: int, name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
-     *     stats: list<array{name: string}>,
-     *     elements: list<array{name: string, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>
-     * } $catalog
+     * @return list<array{stat_id: int, stat_name: string, percentage: int}>
+     */
+    private function rankStatsPayload(EntityManagerInterface $entityManager, Rank $rank): array
+    {
+        return array_map(
+            static fn (RankStat $rankStat): array => [
+                'stat_id' => (int) $rankStat->stat()->id(),
+                'stat_name' => $rankStat->stat()->name(),
+                'percentage' => $rankStat->percentage(),
+            ],
+            $entityManager->getRepository(RankStat::class)->findBy(['rank' => $rank], ['percentage' => 'ASC']),
+        );
+    }
+
+    /**
+     * @return list<array{id: int, message: string}>
+     */
+    private function welcomeMessagesPayload(EntityManagerInterface $entityManager, DiscordServer $server, Rank $rank): array
+    {
+        return array_map(
+            static fn (WelcomeMessage $message): array => [
+                'id' => (int) $message->id(),
+                'message' => $message->message(),
+            ],
+            $entityManager->getRepository(WelcomeMessage::class)->findBy(['server' => $server, 'rank' => $rank], ['id' => 'ASC']),
+        );
+    }
+
+    /**
+     * @return list<array{id: int, message: string}>
+     */
+    private function byeMessagesPayload(EntityManagerInterface $entityManager, DiscordServer $server, Rank $rank): array
+    {
+        return array_map(
+            static fn (ByeMessage $message): array => [
+                'id' => (int) $message->id(),
+                'message' => $message->message(),
+            ],
+            $entityManager->getRepository(ByeMessage::class)->findBy(['server' => $server, 'rank' => $rank], ['id' => 'ASC']),
+        );
+    }
+
+    /**
+     * @param array<string, list<array<string, mixed>>> $catalog
      *
      * @return list<array{id: string, label: string, description: string, icon: string, count: int}>
      */
@@ -459,12 +829,7 @@ final class BackofficeController extends AbstractController
     }
 
     /**
-     * @param array{
-     *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
-     *     roles: list<array{id: int, name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
-     *     stats: list<array{name: string}>,
-     *     elements: list<array{name: string, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>
-     * } $catalog
+     * @param array<string, list<array<string, mixed>>> $catalog
      *
      * @return array{id: string, label: string, description: string, icon: string, count: int}
      */
