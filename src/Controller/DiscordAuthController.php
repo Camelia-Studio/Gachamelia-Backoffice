@@ -2,9 +2,9 @@
 
 namespace App\Controller;
 
+use App\Backoffice\DiscordBackofficeSynchronizer;
 use App\Backoffice\BackofficeSession;
 use App\Discord\DiscordApiClientInterface;
-use App\Discord\DiscordGuildAccessResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -40,7 +40,7 @@ final class DiscordAuthController extends AbstractController
     public function callback(
         Request $request,
         DiscordApiClientInterface $discordApiClient,
-        DiscordGuildAccessResolver $guildAccessResolver,
+        DiscordBackofficeSynchronizer $backofficeSynchronizer,
         BackofficeSession $backofficeSession,
     ): Response {
         $session = $request->getSession();
@@ -65,14 +65,14 @@ final class DiscordAuthController extends AbstractController
             $accessToken = $discordApiClient->exchangeCodeForAccessToken($code);
             $profile = $discordApiClient->fetchCurrentUser($accessToken);
             $userGuilds = $discordApiClient->fetchCurrentUserGuilds($accessToken);
-            $botGuilds = $discordApiClient->fetchBotGuilds();
         } catch (\Throwable) {
             $this->addFlash('error', 'Discord ne répond pas pour le moment.');
 
             return $this->redirectToRoute('app_home');
         }
 
-        $backofficeSession->login($this->normalizeProfile($profile), $guildAccessResolver->resolveAccessibleGuilds($userGuilds, $botGuilds));
+        $discordUser = $backofficeSynchronizer->synchronize($this->normalizeProfile($profile), $userGuilds);
+        $backofficeSession->login($discordUser);
 
         return $this->redirectToRoute('app_dashboard');
     }

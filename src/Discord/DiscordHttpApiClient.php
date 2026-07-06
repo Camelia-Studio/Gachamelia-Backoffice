@@ -9,7 +9,6 @@ final readonly class DiscordHttpApiClient implements DiscordApiClientInterface
         private string $clientId,
         private string $clientSecret,
         private string $redirectUri,
-        private string $botToken,
     ) {
     }
 
@@ -43,13 +42,6 @@ final readonly class DiscordHttpApiClient implements DiscordApiClientInterface
     {
         return $this->listPayload($this->requestJson('GET', '/users/@me/guilds', [
             'Authorization: Bearer '.$accessToken,
-        ]));
-    }
-
-    public function fetchBotGuilds(): array
-    {
-        return $this->listPayload($this->requestJson('GET', '/users/@me/guilds', [
-            'Authorization: Bot '.$this->botToken,
         ]));
     }
 

@@ -3,12 +3,15 @@
 namespace App\Tests\Controller;
 
 use App\Discord\DiscordApiClientInterface;
+use App\Tests\Support\DatabaseResetter;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\BrowserKit\Cookie;
 
 final class DiscordBackofficeControllerTest extends WebTestCase
 {
+    use DatabaseResetter;
+
     public function testBackofficeDashboardRedirectsAnonymousUserToDiscordLogin(): void
     {
         $client = static::createClient();
@@ -44,11 +47,17 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertResponseRedirects('/');
     }
 
-    public function testDiscordCallbackStoresOnlyGuildsSharedWithBot(): void
+    public function testDiscordCallbackPersistsUserMembershipsFromKnownServersWithoutBotTokenCall(): void
     {
         $client = static::createClient();
         $client->disableReboot();
-        static::getContainer()->set(DiscordApiClientInterface::class, new FakeDiscordApiClient());
+        $this->resetDatabase();
+        $this->seedKnownDiscordServer('admin', 'Ancien nom', 'old-icon');
+        $this->seedKnownDiscordServer('member', 'Serveur Membre', null);
+        $this->seedKnownDiscordServer('known-without-user', 'Serveur Absent', null);
+
+        $fakeDiscordApiClient = new FakeDiscordApiClient();
+        static::getContainer()->set(DiscordApiClientInterface::class, $fakeDiscordApiClient);
 
         $client->request('GET', '/connexion/discord');
         $location = $client->getResponse()->headers->get('Location') ?? '';
@@ -60,17 +69,59 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseRedirects('/app');
 
+        $user = $this->connection()->fetchAssociative('SELECT discord_id, username, global_name, avatar FROM discord_users WHERE discord_id = ?', ['42']);
+        self::assertSame([
+            'discord_id' => '42',
+            'username' => 'melaine',
+            'global_name' => 'Melaine',
+            'avatar' => 'avatar-hash',
+        ], $user);
+
+        $memberships = $this->connection()->fetchAllAssociative(
+            <<<'SQL'
+                SELECT ds.discord_id, ds.name, ds.icon, dsm.owner, dsm.permissions, dsm.can_manage_configuration
+                FROM discord_server_members dsm
+                INNER JOIN discord_servers ds ON ds.id = dsm.server_id
+                INNER JOIN discord_users du ON du.id = dsm.user_id
+                WHERE du.discord_id = ?
+                ORDER BY ds.discord_id
+            SQL,
+            ['42'],
+        );
+
+        self::assertSame([
+            [
+                'discord_id' => 'admin',
+                'name' => 'Serveur Admin',
+                'icon' => 'fresh-icon',
+                'owner' => 0,
+                'permissions' => '8',
+                'can_manage_configuration' => 1,
+            ],
+            [
+                'discord_id' => 'member',
+                'name' => 'Serveur Membre',
+                'icon' => null,
+                'owner' => 0,
+                'permissions' => '0',
+                'can_manage_configuration' => 0,
+            ],
+        ], $memberships);
+
         $client->followRedirect();
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('[data-testid="backoffice-dashboard"]', 'Serveur Admin');
+        self::assertSelectorTextContains('[data-testid="backoffice-dashboard"]', 'Serveur Membre');
         self::assertSelectorTextNotContains('[data-testid="backoffice-dashboard"]', 'Serveur Sans Bot');
+        self::assertSelectorTextNotContains('[data-testid="backoffice-dashboard"]', 'Serveur Absent');
     }
 
-    public function testDashboardListsAccessibleGuildsAndRoleSpecificLinks(): void
+    public function testDashboardListsDatabaseServersAndRoleSpecificLinks(): void
     {
         $client = static::createClient();
-        $this->seedBackofficeSession($client);
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
 
         $crawler = $client->request('GET', '/app');
 
@@ -87,10 +138,11 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         );
     }
 
-    public function testConfigurationPageRequiresAdministratorAccess(): void
+    public function testConfigurationPageRequiresAdministratorAccessFromDatabaseMembership(): void
     {
         $client = static::createClient();
-        $this->seedBackofficeSession($client);
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
 
         $client->request('GET', '/app/serveurs/admin/configuration');
 
@@ -103,10 +155,133 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
-    public function testCharacterSheetPageIsAvailableToEveryAccessibleGuildMember(): void
+    public function testConfigurationPageDisplaysCurrentServerCatalogRows(): void
     {
         $client = static::createClient();
-        $this->seedBackofficeSession($client);
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+
+        $adminServerId = $this->serverDatabaseId('admin');
+        $otherServerId = $this->serverDatabaseId('unrelated');
+
+        $this->connection()->insert('ranks', [
+            'server_id' => $adminServerId,
+            'discord_id' => 'rank-admin',
+            'name' => 'Novice',
+            'percentage' => 30,
+            'bye_title' => 'Novice sortant',
+            'is_staff' => 0,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $this->connection()->insert('roles', [
+            'server_id' => $adminServerId,
+            'name' => 'Guerrier',
+            'percentage' => 45,
+            'image_url' => 'https://example.test/guerrier.png',
+        ]);
+        $this->connection()->insert('stats', [
+            'server_id' => $adminServerId,
+            'name' => 'Force',
+        ]);
+        $this->connection()->insert('elements', [
+            'server_id' => $adminServerId,
+            'name' => 'Feu',
+        ]);
+        $this->connection()->insert('stats', [
+            'server_id' => $otherServerId,
+            'name' => 'Hors serveur',
+        ]);
+
+        $client->request('GET', '/app/serveurs/admin/configuration');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('[data-testid="server-configuration"]', 'Novice');
+        self::assertSelectorTextContains('[data-testid="server-configuration"]', 'Guerrier');
+        self::assertSelectorTextContains('[data-testid="server-configuration"]', 'Force');
+        self::assertSelectorTextContains('[data-testid="server-configuration"]', 'Feu');
+        self::assertSelectorTextNotContains('[data-testid="server-configuration"]', 'Hors serveur');
+    }
+
+    public function testAdministratorCanCreateServerCatalogRows(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/ranks', [
+            'discord_id' => 'rank-created',
+            'name' => 'Étoile',
+            'percentage' => '25',
+            'bye_title' => 'Étoile filante',
+            'is_staff' => '1',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration');
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/roles', [
+            'name' => 'Alchimiste',
+            'percentage' => '40',
+            'image_url' => 'https://example.test/alchimiste.png',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration');
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/stats', [
+            'name' => 'Sagesse',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration');
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/elements', [
+            'name' => 'Lune',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration');
+
+        $serverId = $this->serverDatabaseId('admin');
+
+        self::assertSame([
+            'discord_id' => 'rank-created',
+            'name' => 'Étoile',
+            'percentage' => 25,
+            'bye_title' => 'Étoile filante',
+            'is_staff' => 1,
+        ], $this->connection()->fetchAssociative(
+            'SELECT discord_id, name, percentage, bye_title, is_staff FROM ranks WHERE server_id = ?',
+            [$serverId],
+        ));
+        self::assertSame([
+            'name' => 'Alchimiste',
+            'percentage' => 40,
+            'image_url' => 'https://example.test/alchimiste.png',
+        ], $this->connection()->fetchAssociative(
+            'SELECT name, percentage, image_url FROM roles WHERE server_id = ?',
+            [$serverId],
+        ));
+        self::assertSame('Sagesse', $this->connection()->fetchOne('SELECT name FROM stats WHERE server_id = ?', [$serverId]));
+        self::assertSame('Lune', $this->connection()->fetchOne('SELECT name FROM elements WHERE server_id = ?', [$serverId]));
+    }
+
+    public function testMemberCannotCreateServerCatalogRows(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+
+        $client->request('POST', '/app/serveurs/member/catalogue/stats', [
+            'name' => 'Interdit',
+        ]);
+
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM stats'));
+    }
+
+    public function testCharacterSheetPageIsAvailableToEveryDatabaseAccessibleGuildMember(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
 
         $client->request('GET', '/app/serveurs/admin/fiche-personnage');
 
@@ -124,43 +299,76 @@ final class DiscordBackofficeControllerTest extends WebTestCase
     public function testUnknownServerReturnsNotFound(): void
     {
         $client = static::createClient();
-        $this->seedBackofficeSession($client);
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
 
         $client->request('GET', '/app/serveurs/unknown/fiche-personnage');
 
         self::assertResponseStatusCodeSame(404);
     }
 
-    private function seedBackofficeSession(KernelBrowser $client): void
+    private function seedKnownDiscordServer(string $discordId, string $name, ?string $icon): int
     {
-        $session = static::getContainer()->get('session.factory')->createSession();
-        $session->set('gachamelia.discord_profile', [
-            'id' => '42',
-            'username' => 'Melaine',
+        $this->connection()->insert('discord_servers', [
+            'discord_id' => $discordId,
+            'name' => $name,
+            'icon' => $icon,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+
+        return (int) $this->connection()->lastInsertId();
+    }
+
+    private function seedPersistentBackofficeAccess(KernelBrowser $client): void
+    {
+        $adminServerId = $this->seedKnownDiscordServer('admin', 'Serveur Admin', null);
+        $memberServerId = $this->seedKnownDiscordServer('member', 'Serveur Membre', null);
+        $this->seedKnownDiscordServer('unrelated', 'Serveur Non Lié', null);
+
+        $this->connection()->insert('discord_users', [
+            'discord_id' => '42',
+            'username' => 'melaine',
             'global_name' => 'Melaine',
             'avatar' => null,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
         ]);
-        $session->set('gachamelia.discord_guilds', [
-            [
-                'id' => 'admin',
-                'name' => 'Serveur Admin',
-                'icon' => null,
-                'owner' => false,
-                'permissions' => '8',
-                'canManageConfiguration' => true,
-            ],
-            [
-                'id' => 'member',
-                'name' => 'Serveur Membre',
-                'icon' => null,
-                'owner' => false,
-                'permissions' => '0',
-                'canManageConfiguration' => false,
-            ],
+        $userId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('discord_server_members', [
+            'user_id' => $userId,
+            'server_id' => $adminServerId,
+            'owner' => 0,
+            'permissions' => '8',
+            'can_manage_configuration' => 1,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
         ]);
+        $this->connection()->insert('discord_server_members', [
+            'user_id' => $userId,
+            'server_id' => $memberServerId,
+            'owner' => 0,
+            'permissions' => '0',
+            'can_manage_configuration' => 0,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+
+        $session = static::getContainer()->get('session.factory')->createSession();
+        $session->set('gachamelia.discord_user_id', $userId);
         $session->save();
 
         $client->getCookieJar()->set(new Cookie($session->getName(), $session->getId()));
+    }
+
+    private function serverDatabaseId(string $discordId): int
+    {
+        $serverId = $this->connection()->fetchOne('SELECT id FROM discord_servers WHERE discord_id = ?', [$discordId]);
+
+        self::assertIsNumeric($serverId);
+
+        return (int) $serverId;
     }
 }
 
@@ -175,26 +383,18 @@ final class FakeDiscordApiClient implements DiscordApiClientInterface
     {
         return [
             'id' => '42',
-            'username' => 'Melaine',
+            'username' => 'melaine',
             'global_name' => 'Melaine',
-            'avatar' => null,
+            'avatar' => 'avatar-hash',
         ];
     }
 
     public function fetchCurrentUserGuilds(string $accessToken): array
     {
         return [
-            ['id' => 'admin', 'name' => 'Serveur Admin', 'icon' => null, 'owner' => false, 'permissions' => '8'],
+            ['id' => 'admin', 'name' => 'Serveur Admin', 'icon' => 'fresh-icon', 'owner' => false, 'permissions' => '8'],
             ['id' => 'member', 'name' => 'Serveur Membre', 'icon' => null, 'owner' => false, 'permissions' => '0'],
             ['id' => 'without-bot', 'name' => 'Serveur Sans Bot', 'icon' => null, 'owner' => true, 'permissions' => '8'],
-        ];
-    }
-
-    public function fetchBotGuilds(): array
-    {
-        return [
-            ['id' => 'admin', 'name' => 'Serveur Admin', 'icon' => null],
-            ['id' => 'member', 'name' => 'Serveur Membre', 'icon' => null],
         ];
     }
 }
