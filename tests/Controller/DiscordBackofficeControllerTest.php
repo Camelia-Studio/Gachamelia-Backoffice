@@ -160,6 +160,9 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('[data-testid="configuration-overview-card-roles"] a[href="/app/serveurs/admin/configuration/roles"]');
         self::assertSelectorExists('[data-testid="configuration-overview-card-stats"] a[href="/app/serveurs/admin/configuration/stats"]');
         self::assertSelectorExists('[data-testid="configuration-overview-card-elements"] a[href="/app/serveurs/admin/configuration/elements"]');
+        self::assertSelectorExists('[data-testid="configuration-overview-card-rank-stats"] a[href="/app/serveurs/admin/configuration/rank-stats"]');
+        self::assertSelectorExists('[data-testid="configuration-overview-card-welcome-messages"] a[href="/app/serveurs/admin/configuration/welcome-messages"]');
+        self::assertSelectorExists('[data-testid="configuration-overview-card-bye-messages"] a[href="/app/serveurs/admin/configuration/bye-messages"]');
 
         $client->request('GET', '/app/serveurs/member/configuration');
 
@@ -243,11 +246,15 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('[data-testid="configuration-nav-roles"][href="/app/serveurs/admin/configuration/roles"]');
         self::assertSelectorExists('[data-testid="configuration-nav-stats"][href="/app/serveurs/admin/configuration/stats"]');
         self::assertSelectorExists('[data-testid="configuration-nav-elements"][href="/app/serveurs/admin/configuration/elements"]');
+        self::assertSelectorExists('[data-testid="configuration-nav-rank-stats"][href="/app/serveurs/admin/configuration/rank-stats"]');
+        self::assertSelectorExists('[data-testid="configuration-nav-welcome-messages"][href="/app/serveurs/admin/configuration/welcome-messages"]');
+        self::assertSelectorExists('[data-testid="configuration-nav-bye-messages"][href="/app/serveurs/admin/configuration/bye-messages"]');
         self::assertSelectorExists('[data-testid="catalog-create-panel"]');
         self::assertSelectorExists('[data-testid="catalog-list-panel"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Novice');
-        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Probabilités de stats');
-        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Force');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Probabilités de stats');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Messages d’arrivée');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Force');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Guerrier');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Feu');
         self::assertSelectorTextNotContains('[data-testid="server-configuration"]', 'Hors serveur');
@@ -290,6 +297,103 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorTextContains('[data-testid="element-card"]', '🔥');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Feu');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Force');
+    }
+
+    public function testDedicatedRankRelationPagesAreAvailableFromSidebarAndEditable(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+
+        $adminServerId = $this->serverDatabaseId('admin');
+        $otherServerId = $this->serverDatabaseId('unrelated');
+
+        $this->connection()->insert('ranks', [
+            'server_id' => $adminServerId,
+            'discord_id' => 'rank-admin',
+            'name' => 'Novice',
+            'percentage' => 30,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $rankId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('ranks', [
+            'server_id' => $otherServerId,
+            'discord_id' => 'rank-other',
+            'name' => 'Rang externe',
+            'percentage' => 100,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $otherRankId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('stats', [
+            'server_id' => $adminServerId,
+            'name' => 'Force',
+        ]);
+        $statId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('stats', [
+            'server_id' => $otherServerId,
+            'name' => 'Stat externe',
+        ]);
+        $otherStatId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('rank_stats', [
+            'rank_id' => $rankId,
+            'stat_id' => $statId,
+            'percentage' => 70,
+        ]);
+        $this->connection()->insert('rank_stats', [
+            'rank_id' => $otherRankId,
+            'stat_id' => $otherStatId,
+            'percentage' => 99,
+        ]);
+
+        $this->connection()->insert('welcome_messages', [
+            'server_id' => $adminServerId,
+            'rank_id' => $rankId,
+            'message' => 'Bienvenue parmi nous.',
+        ]);
+        $welcomeMessageId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('bye_messages', [
+            'server_id' => $adminServerId,
+            'rank_id' => $rankId,
+            'message' => 'À bientôt.',
+        ]);
+        $byeMessageId = (int) $this->connection()->lastInsertId();
+
+        $client->request('GET', '/app/serveurs/admin/configuration/rank-stats');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="configuration-nav-rank-stats"][aria-current="page"]');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Novice');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Force');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', '70%');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Rang externe');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Stat externe');
+
+        $client->request('GET', '/app/serveurs/admin/configuration/welcome-messages');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="configuration-nav-welcome-messages"][aria-current="page"]');
+        self::assertSelectorExists('form[action="/app/serveurs/admin/catalogue/welcome-messages/'.$welcomeMessageId.'"] textarea[name="message"]');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Bienvenue parmi nous.');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Novice');
+
+        $client->request('GET', '/app/serveurs/admin/configuration/bye-messages');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="configuration-nav-bye-messages"][aria-current="page"]');
+        self::assertSelectorExists('form[action="/app/serveurs/admin/catalogue/bye-messages/'.$byeMessageId.'"] textarea[name="message"]');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'À bientôt.');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Novice');
     }
 
     public function testAdministratorCanCreateServerCatalogRows(): void
@@ -627,6 +731,68 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM bye_messages WHERE rank_id = ?', [$rankId]));
     }
 
+    public function testAdministratorCanManageMessagesFromDedicatedPages(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+
+        $adminServerId = $this->serverDatabaseId('admin');
+
+        $this->connection()->insert('ranks', [
+            'server_id' => $adminServerId,
+            'discord_id' => 'rank-admin',
+            'name' => 'Novice',
+            'percentage' => 30,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $rankId = (int) $this->connection()->lastInsertId();
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/welcome-messages', [
+            'rank_id' => (string) $rankId,
+            'message' => 'Bienvenue initial.',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/welcome-messages');
+        $welcomeMessageId = (int) $this->connection()->fetchOne('SELECT id FROM welcome_messages WHERE rank_id = ?', [$rankId]);
+        self::assertSame('Bienvenue initial.', $this->connection()->fetchOne('SELECT message FROM welcome_messages WHERE id = ?', [$welcomeMessageId]));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/welcome-messages/'.$welcomeMessageId, [
+            'message' => 'Bienvenue édité.',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/welcome-messages');
+        self::assertSame('Bienvenue édité.', $this->connection()->fetchOne('SELECT message FROM welcome_messages WHERE id = ?', [$welcomeMessageId]));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/bye-messages', [
+            'rank_id' => (string) $rankId,
+            'message' => 'Départ initial.',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/bye-messages');
+        $byeMessageId = (int) $this->connection()->fetchOne('SELECT id FROM bye_messages WHERE rank_id = ?', [$rankId]);
+        self::assertSame('Départ initial.', $this->connection()->fetchOne('SELECT message FROM bye_messages WHERE id = ?', [$byeMessageId]));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/bye-messages/'.$byeMessageId, [
+            'message' => 'Départ édité.',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/bye-messages');
+        self::assertSame('Départ édité.', $this->connection()->fetchOne('SELECT message FROM bye_messages WHERE id = ?', [$byeMessageId]));
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/welcome-messages/'.$welcomeMessageId.'/supprimer');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/welcome-messages');
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/bye-messages/'.$byeMessageId.'/supprimer');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/bye-messages');
+
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM welcome_messages WHERE rank_id = ?', [$rankId]));
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM bye_messages WHERE rank_id = ?', [$rankId]));
+    }
+
     public function testMemberCannotCreateServerCatalogRows(): void
     {
         $client = static::createClient();
@@ -639,6 +805,22 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(403);
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM stats'));
+
+        $client->request('POST', '/app/serveurs/member/catalogue/welcome-messages', [
+            'rank_id' => '1',
+            'message' => 'Interdit',
+        ]);
+
+        self::assertResponseStatusCodeSame(403);
+
+        $client->request('POST', '/app/serveurs/member/catalogue/bye-messages', [
+            'rank_id' => '1',
+            'message' => 'Interdit',
+        ]);
+
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM welcome_messages'));
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM bye_messages'));
     }
 
     public function testCharacterSheetPageIsAvailableToEveryDatabaseAccessibleGuildMember(): void

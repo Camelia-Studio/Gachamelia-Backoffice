@@ -295,79 +295,6 @@
                                                             </div>
                                                         </form>
 
-                                                        <section class="grid gap-4 border border-camelia-ink/10 bg-camelia-blush/30 p-4">
-                                                            <div class="flex flex-wrap items-center justify-between gap-3">
-                                                                <h3 class="font-black">Probabilités de stats</h3>
-                                                                <span class="text-xs font-black text-camelia-rose">{{ rank.rank_stats|length }} stats</span>
-                                                            </div>
-                                                            <form method="post" action="{{ path('app_server_catalog_rank_stat_upsert', { guildId: guild.id, rankId: rank.id }) }}" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem_auto] md:items-end">
-                                                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                                                                    Stat
-                                                                    <select name="stat_id" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                                                                        {% for stat in catalog.stats %}
-                                                                            <option value="{{ stat.id }}">{{ stat.name }}</option>
-                                                                        {% else %}
-                                                                            <option value="">Ajoute une stat d’abord</option>
-                                                                        {% endfor %}
-                                                                    </select>
-                                                                </label>
-                                                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                                                                    %
-                                                                    <input name="percentage" type="number" min="0" max="100" value="0" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                                                                </label>
-                                                                <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
-                                                                    Lier
-                                                                </button>
-                                                            </form>
-                                                            <div class="grid gap-2">
-                                                                {% for rank_stat in rank.rank_stats %}
-                                                                    <div class="grid gap-3 border border-camelia-ink/10 bg-white p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-                                                                        <p class="font-bold">{{ rank_stat.stat_name }} <span class="text-camelia-muted">· {{ rank_stat.percentage }}%</span></p>
-                                                                        <form method="post" action="{{ path('app_server_catalog_rank_stat_delete', { guildId: guild.id, rankId: rank.id, statId: rank_stat.stat_id }) }}">
-                                                                            <button type="submit" class="text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Supprimer</button>
-                                                                        </form>
-                                                                    </div>
-                                                                {% else %}
-                                                                    <p class="border border-dashed border-camelia-ink/20 bg-white p-3 text-sm font-bold text-camelia-muted">Aucune stat liée à ce rang.</p>
-                                                                {% endfor %}
-                                                            </div>
-                                                        </section>
-
-                                                        <div class="grid gap-4 2xl:grid-cols-2">
-                                                            {% for message_group in [
-                                                                { title: 'Messages d’arrivée', items: rank.welcome_messages, route_create: 'app_server_catalog_rank_welcome_message_create', route_delete: 'app_server_catalog_rank_welcome_message_delete' },
-                                                                { title: 'Messages de départ', items: rank.bye_messages, route_create: 'app_server_catalog_rank_bye_message_create', route_delete: 'app_server_catalog_rank_bye_message_delete' },
-                                                            ] %}
-                                                                <section class="grid gap-4 border border-camelia-ink/10 bg-camelia-ivory p-4">
-                                                                    <div class="flex items-center justify-between gap-3">
-                                                                        <h3 class="font-black">{{ message_group.title }}</h3>
-                                                                        <span class="text-xs font-black text-camelia-rose">{{ message_group.items|length }}</span>
-                                                                    </div>
-                                                                    <form method="post" action="{{ path(message_group.route_create, { guildId: guild.id, rankId: rank.id }) }}" class="grid gap-3">
-                                                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                                                                            Message
-                                                                            <input name="message" required maxlength="255" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                                                                        </label>
-                                                                        <button type="submit" class="inline-flex min-h-10 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
-                                                                            Ajouter
-                                                                        </button>
-                                                                    </form>
-                                                                    <div class="grid gap-2">
-                                                                        {% for message in message_group.items %}
-                                                                            <div class="grid gap-3 border border-camelia-ink/10 bg-white p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-                                                                                <p class="break-words font-semibold text-camelia-muted">{{ message.message }}</p>
-                                                                                <form method="post" action="{{ path(message_group.route_delete, { guildId: guild.id, rankId: rank.id, messageId: message.id }) }}">
-                                                                                    <button type="submit" class="text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Supprimer</button>
-                                                                                </form>
-                                                                            </div>
-                                                                        {% else %}
-                                                                            <p class="border border-dashed border-camelia-ink/20 bg-white p-3 text-sm font-bold text-camelia-muted">Aucun message enregistré.</p>
-                                                                        {% endfor %}
-                                                                    </div>
-                                                                </section>
-                                                            {% endfor %}
-                                                        </div>
-
                                                         <form method="post" action="{{ path('app_server_catalog_rank_delete', { guildId: guild.id, rankId: rank.id }) }}" class="justify-self-start">
                                                             <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                                                 Supprimer le rang
@@ -378,6 +305,173 @@
                                             </article>
                                         {% else %}
                                             <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted">Aucun rang pour l’instant. Ajoute le premier rang de ce serveur.</p>
+                                        {% endfor %}
+                                    </div>
+                                </section>
+                            </div>
+                        {% elseif active_section == 'rank-stats' %}
+                            <div class="grid gap-8 xl:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] xl:items-start">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
+                                        <h2 class="text-lg font-black">Lier une stat à un rang</h2>
+                                        <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Cette probabilité nourrit le catalogue du rang sans encombrer sa fiche principale.</p>
+                                    </div>
+                                    <form method="post" action="{{ path('app_server_catalog_rank_stat_upsert_dedicated', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Rang
+                                            <select name="rank_id" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                {% for rank in catalog.ranks %}
+                                                    <option value="{{ rank.id }}">{{ rank.name }}</option>
+                                                {% else %}
+                                                    <option value="">Ajoute un rang d’abord</option>
+                                                {% endfor %}
+                                            </select>
+                                        </label>
+                                        <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem]">
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                Stat
+                                                <select name="stat_id" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                    {% for stat in catalog.stats %}
+                                                        <option value="{{ stat.id }}">{{ stat.name }}</option>
+                                                    {% else %}
+                                                        <option value="">Ajoute une stat d’abord</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </label>
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                %
+                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                            </label>
+                                        </div>
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                            Enregistrer la probabilité
+                                        </button>
+                                    </form>
+                                </section>
+
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                                        <div>
+                                            <h2 class="text-lg font-black">Stats liées aux rangs</h2>
+                                            <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Chaque ligne associe une caractéristique à un rang de ce serveur.</p>
+                                        </div>
+                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ catalog.rank_stats|length }} entrées</span>
+                                    </div>
+                                    <div class="grid gap-4 p-6">
+                                        {% for rank_stat in catalog.rank_stats %}
+                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="rank-stat-card">
+                                                <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                                                    <div class="min-w-0">
+                                                        <strong class="block truncate">{{ rank_stat.rank_name }}</strong>
+                                                        <p class="mt-1 font-semibold text-camelia-muted">{{ rank_stat.stat_name }}</p>
+                                                    </div>
+                                                    <span class="inline-flex min-h-8 items-center rounded-full bg-camelia-gold/20 px-4 text-sm font-black text-[#7a5415] md:justify-self-end">{{ rank_stat.percentage }}%</span>
+                                                </div>
+                                                <details class="group border-t border-camelia-ink/10 pt-3">
+                                                    <summary class="cursor-pointer text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Modifier</summary>
+                                                    <div class="mt-4 grid gap-4">
+                                                        <form method="post" action="{{ path('app_server_catalog_rank_stat_upsert_dedicated', { guildId: guild.id }) }}" class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem_auto] sm:items-end">
+                                                            <input type="hidden" name="rank_id" value="{{ rank_stat.rank_id }}">
+                                                            <input type="hidden" name="stat_id" value="{{ rank_stat.stat_id }}">
+                                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                Association
+                                                                <input value="{{ rank_stat.rank_name }} · {{ rank_stat.stat_name }}" disabled class="min-h-11 border border-camelia-ink/10 bg-camelia-ivory px-3 font-semibold text-camelia-muted">
+                                                            </label>
+                                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                %
+                                                                <input name="percentage" type="number" min="0" max="100" value="{{ rank_stat.percentage }}" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                            </label>
+                                                            <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                Enregistrer
+                                                            </button>
+                                                        </form>
+                                                        <form method="post" action="{{ path('app_server_catalog_rank_stat_delete_dedicated', { guildId: guild.id, rankId: rank_stat.rank_id, statId: rank_stat.stat_id }) }}">
+                                                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                Supprimer
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </details>
+                                            </article>
+                                        {% else %}
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted">Aucune stat n’est liée à un rang pour l’instant.</p>
+                                        {% endfor %}
+                                    </div>
+                                </section>
+                            </div>
+                        {% elseif active_section in ['welcome-messages', 'bye-messages'] %}
+                            {% set is_welcome_messages = active_section == 'welcome-messages' %}
+                            {% set messages = is_welcome_messages ? catalog.welcome_messages : catalog.bye_messages %}
+                            {% set create_route = is_welcome_messages ? 'app_server_catalog_welcome_message_create' : 'app_server_catalog_bye_message_create' %}
+                            {% set update_route = is_welcome_messages ? 'app_server_catalog_welcome_message_update' : 'app_server_catalog_bye_message_update' %}
+                            {% set delete_route = is_welcome_messages ? 'app_server_catalog_welcome_message_delete' : 'app_server_catalog_bye_message_delete' %}
+                            {% set create_title = is_welcome_messages ? 'Ajouter un message d’arrivée' : 'Ajouter un message de départ' %}
+                            {% set list_title = is_welcome_messages ? 'Messages d’arrivée' : 'Messages de départ' %}
+                            {% set submit_label = is_welcome_messages ? 'Ajouter le message d’arrivée' : 'Ajouter le message de départ' %}
+                            <div class="grid gap-8 xl:grid-cols-[minmax(23rem,30rem)_minmax(0,1fr)] xl:items-start">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
+                                        <h2 class="text-lg font-black">{{ create_title }}</h2>
+                                        <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Le message reste rattaché au rang sélectionné et uniquement à ce serveur.</p>
+                                    </div>
+                                    <form method="post" action="{{ path(create_route, { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Rang
+                                            <select name="rank_id" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                {% for rank in catalog.ranks %}
+                                                    <option value="{{ rank.id }}">{{ rank.name }}</option>
+                                                {% else %}
+                                                    <option value="">Ajoute un rang d’abord</option>
+                                                {% endfor %}
+                                            </select>
+                                        </label>
+                                        <label class="grid gap-2 text-sm font-bold text-camelia-muted">
+                                            Message
+                                            <textarea name="message" required maxlength="255" rows="5" class="min-h-32 resize-y border border-camelia-ink/10 bg-white px-3 py-3 font-semibold leading-relaxed text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50"></textarea>
+                                        </label>
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                            {{ submit_label }}
+                                        </button>
+                                    </form>
+                                </section>
+
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                                        <div>
+                                            <h2 class="text-lg font-black">{{ list_title }}</h2>
+                                            <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Une page dédiée pour relire, corriger et supprimer les variantes.</p>
+                                        </div>
+                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-blush px-3 text-xs font-black text-camelia-rose">{{ messages|length }} entrées</span>
+                                    </div>
+                                    <div class="grid gap-4 p-6">
+                                        {% for message in messages %}
+                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="message-card">
+                                                <div class="flex flex-wrap items-center justify-between gap-3">
+                                                    <div class="min-w-0">
+                                                        <strong class="block truncate">{{ message.rank_name }}</strong>
+                                                        <p class="mt-1 text-xs font-black tracking-[0.14em] text-camelia-rose uppercase">Rang lié</p>
+                                                    </div>
+                                                    <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">#{{ message.id }}</span>
+                                                </div>
+                                                <form method="post" action="{{ path(update_route, { guildId: guild.id, messageId: message.id }) }}" class="grid gap-4">
+                                                    <label class="grid gap-2 text-sm font-bold text-camelia-muted">
+                                                        Message
+                                                        <textarea name="message" required maxlength="255" rows="4" class="min-h-28 resize-y border border-camelia-ink/10 bg-camelia-ivory px-3 py-3 font-semibold leading-relaxed text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">{{ message.message }}</textarea>
+                                                    </label>
+                                                    <div class="flex flex-wrap gap-3">
+                                                        <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                            Enregistrer
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                                <form method="post" action="{{ path(delete_route, { guildId: guild.id, messageId: message.id }) }}">
+                                                    <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                        Supprimer
+                                                    </button>
+                                                </form>
+                                            </article>
+                                        {% else %}
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted">Aucun message enregistré pour l’instant.</p>
                                         {% endfor %}
                                     </div>
                                 </section>

@@ -53,4 +53,9 @@ class ByeMessage
     {
         return $this->message;
     }
+
+    public function updateMessage(string $message): void
+    {
+        $this->message = $message;
+    }
 }
