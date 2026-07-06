@@ -130,9 +130,9 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorTextContains('[data-testid="backoffice-dashboard"]', 'Serveur Membre');
         self::assertSelectorExists('[data-testid="guild-admin"] img[alt="Logo Serveur Admin"][src="https://cdn.discordapp.com/icons/admin/static-icon-hash.webp?size=64"]');
         self::assertSelectorExists('[data-testid="guild-member"] [data-testid="guild-icon-fallback"]');
-        self::assertSelectorExists('[data-testid="guild-admin"] a[href="/app/serveurs/admin/configuration/ranks"]');
+        self::assertSelectorExists('[data-testid="guild-admin"] a[href="/app/serveurs/admin/configuration"]');
         self::assertSelectorExists('[data-testid="guild-admin"] a[href="/app/serveurs/admin/fiche-personnage"]');
-        self::assertSelectorNotExists('[data-testid="guild-member"] a[href="/app/serveurs/member/configuration/ranks"]');
+        self::assertSelectorNotExists('[data-testid="guild-member"] a[href="/app/serveurs/member/configuration"]');
         self::assertSelectorExists('[data-testid="guild-member"] a[href="/app/serveurs/member/fiche-personnage"]');
         self::assertStringContainsString(
             'cursor-pointer',
@@ -140,7 +140,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         );
     }
 
-    public function testConfigurationRootRedirectsToRanksAndSectionRequiresAdministratorAccess(): void
+    public function testConfigurationRootDisplaysModuleCardsAndRequiresAdministratorAccess(): void
     {
         $client = static::createClient();
         $this->resetDatabase();
@@ -148,17 +148,18 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         $client->request('GET', '/app/serveurs/admin/configuration');
 
-        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
-
-        $client->request('GET', '/app/serveurs/admin/configuration/ranks');
-
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Configuration du serveur');
         self::assertSelectorTextContains('body', 'Serveur Admin');
         self::assertSelectorExists('[data-testid="server-configuration"] img[alt="Logo Serveur Admin"][src="https://cdn.discordapp.com/icons/admin/static-icon-hash.webp?size=64"]');
-        self::assertSelectorExists('[data-testid="configuration-nav-ranks"][aria-current="page"]');
+        self::assertSelectorExists('[data-testid="configuration-nav-overview"][aria-current="page"]');
+        self::assertSelectorExists('[data-testid="configuration-overview"]');
+        self::assertSelectorExists('[data-testid="configuration-overview-card-ranks"] a[href="/app/serveurs/admin/configuration/ranks"]');
+        self::assertSelectorExists('[data-testid="configuration-overview-card-roles"] a[href="/app/serveurs/admin/configuration/roles"]');
+        self::assertSelectorExists('[data-testid="configuration-overview-card-stats"] a[href="/app/serveurs/admin/configuration/stats"]');
+        self::assertSelectorExists('[data-testid="configuration-overview-card-elements"] a[href="/app/serveurs/admin/configuration/elements"]');
 
-        $client->request('GET', '/app/serveurs/member/configuration/ranks');
+        $client->request('GET', '/app/serveurs/member/configuration');
 
         self::assertResponseStatusCodeSame(403);
     }
@@ -204,10 +205,13 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $client->request('GET', '/app/serveurs/admin/configuration/ranks');
 
         self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="configuration-nav-overview"][href="/app/serveurs/admin/configuration"]');
         self::assertSelectorExists('[data-testid="configuration-nav-ranks"][aria-current="page"]');
         self::assertSelectorExists('[data-testid="configuration-nav-roles"][href="/app/serveurs/admin/configuration/roles"]');
         self::assertSelectorExists('[data-testid="configuration-nav-stats"][href="/app/serveurs/admin/configuration/stats"]');
         self::assertSelectorExists('[data-testid="configuration-nav-elements"][href="/app/serveurs/admin/configuration/elements"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"]');
+        self::assertSelectorExists('[data-testid="catalog-list-panel"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Novice');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Guerrier');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Force');
@@ -218,6 +222,8 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-roles"][aria-current="page"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] [data-testid="role-image-preview"]');
+        self::assertSelectorExists('[data-testid="catalog-list-panel"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Guerrier');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Novice');
 
@@ -225,6 +231,8 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-stats"][aria-current="page"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"]');
+        self::assertSelectorExists('[data-testid="catalog-list-panel"] [data-testid="stat-card"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Force');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Feu');
 
@@ -232,6 +240,8 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-elements"][aria-current="page"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"]');
+        self::assertSelectorExists('[data-testid="catalog-list-panel"] [data-testid="element-card"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Feu');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Force');
     }

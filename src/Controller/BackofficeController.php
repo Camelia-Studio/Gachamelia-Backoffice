@@ -19,31 +19,33 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class BackofficeController extends AbstractController
 {
-    private const string DEFAULT_CONFIGURATION_SECTION = 'ranks';
-
     /**
-     * @var array<string, array{label: string, description: string, catalog_key: string}>
+     * @var array<string, array{label: string, description: string, catalog_key: string, icon: string}>
      */
     private const array CONFIGURATION_SECTIONS = [
         'ranks' => [
             'label' => 'Rangs',
             'description' => 'Les rangs Discord qui portent les probabilités principales.',
             'catalog_key' => 'ranks',
+            'icon' => 'R',
         ],
         'roles' => [
             'label' => 'Rôles',
             'description' => 'Les rôles de personnage utilisés dans les tirages.',
             'catalog_key' => 'roles',
+            'icon' => 'RO',
         ],
         'stats' => [
             'label' => 'Stats',
             'description' => 'Les caractéristiques disponibles sur les fiches personnage.',
             'catalog_key' => 'stats',
+            'icon' => 'S',
         ],
         'elements' => [
             'label' => 'Éléments',
             'description' => 'Les affinités élémentaires que le bot peut attribuer.',
             'catalog_key' => 'elements',
+            'icon' => 'E',
         ],
     ];
 
@@ -72,6 +74,7 @@ final class BackofficeController extends AbstractController
         string $guildId,
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
     ): Response {
         if (!$backofficeSession->isAuthenticated()) {
             return $this->redirectToRoute('app_discord_login');
@@ -81,10 +84,15 @@ final class BackofficeController extends AbstractController
         if (true !== ($guild['canManageConfiguration'] ?? false)) {
             throw new AccessDeniedHttpException('Administrator permission required for this server.');
         }
+        $server = $this->findServerEntityOr404($entityManager, $guild['id']);
+        $catalog = $this->catalogPayload($entityManager, $server);
 
-        return $this->redirectToRoute('app_server_configuration_section', [
-            'guildId' => $guildId,
-            'section' => self::DEFAULT_CONFIGURATION_SECTION,
+        return $this->render('backoffice/server_configuration.html.twig', [
+            'guild' => $guild,
+            'catalog' => $catalog,
+            'configuration_sections' => $this->configurationSections($catalog),
+            'active_section' => 'overview',
+            'active_configuration_section' => null,
         ]);
     }
 
@@ -114,6 +122,7 @@ final class BackofficeController extends AbstractController
             'catalog' => $catalog,
             'configuration_sections' => $this->configurationSections($catalog),
             'active_section' => $section,
+            'active_configuration_section' => $this->configurationSectionPayload($catalog, $section),
         ]);
     }
 
@@ -314,7 +323,7 @@ final class BackofficeController extends AbstractController
      *     elements: list<array{name: string}>
      * } $catalog
      *
-     * @return list<array{id: string, label: string, description: string, count: int}>
+     * @return list<array{id: string, label: string, description: string, icon: string, count: int}>
      */
     private function configurationSections(array $catalog): array
     {
@@ -326,11 +335,36 @@ final class BackofficeController extends AbstractController
                 'id' => $id,
                 'label' => $section['label'],
                 'description' => $section['description'],
+                'icon' => $section['icon'],
                 'count' => \count($catalog[$catalogKey]),
             ];
         }
 
         return $sections;
+    }
+
+    /**
+     * @param array{
+     *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
+     *     roles: list<array{name: string, percentage: int, image_url: string}>,
+     *     stats: list<array{name: string}>,
+     *     elements: list<array{name: string}>
+     * } $catalog
+     *
+     * @return array{id: string, label: string, description: string, icon: string, count: int}
+     */
+    private function configurationSectionPayload(array $catalog, string $id): array
+    {
+        $section = self::CONFIGURATION_SECTIONS[$id];
+        $catalogKey = $section['catalog_key'];
+
+        return [
+            'id' => $id,
+            'label' => $section['label'],
+            'description' => $section['description'],
+            'icon' => $section['icon'],
+            'count' => \count($catalog[$catalogKey]),
+        ];
     }
 
     private function requiredRequestString(Request $request, string $key): ?string
