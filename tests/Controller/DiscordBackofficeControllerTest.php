@@ -224,9 +224,14 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-roles"][aria-current="page"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] [data-testid="role-image-preview"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] form[data-controller="role-preview"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="image_url"][data-role-preview-target="input"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] [data-testid="role-image-preview"] img[data-role-preview-target="image"]');
         self::assertSelectorExists('[data-testid="catalog-list-panel"]');
+        self::assertSelectorExists('[data-testid="role-card"] img[alt="Image du rôle Guerrier"][src="https://example.test/guerrier.png"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Guerrier');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Image configurée');
+        self::assertSelectorTextNotContains('[data-testid="catalog-list-panel"]', 'https://example.test/guerrier.png');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Novice');
 
         $client->request('GET', '/app/serveurs/admin/configuration/stats');

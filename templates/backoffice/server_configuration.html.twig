@@ -196,13 +196,13 @@
                                 </section>
                             </div>
                         {% elseif active_section == 'roles' %}
-                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]">
+                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)] xl:items-start">
                                 <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
                                     <div class="border-b border-camelia-ink/10 p-6">
                                         <h2 class="text-lg font-black">Ajouter un rôle</h2>
                                         <p class="mt-1 text-sm font-bold text-camelia-muted">Les images serviront aux fiches et aux tirages.</p>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                    <form method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="grid gap-5 p-6" data-controller="role-preview">
                                         <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
                                             <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                 Nom
@@ -215,13 +215,21 @@
                                         </div>
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Image
-                                            <input name="image_url" type="url" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                            <input name="image_url" type="url" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50" data-role-preview-target="input" data-action="input->role-preview#update change->role-preview#update">
                                         </label>
-                                        <div class="flex items-center gap-4 border border-camelia-ink/10 bg-camelia-blush/50 p-4" data-testid="role-image-preview">
-                                            <span class="flex size-12 shrink-0 items-center justify-center bg-camelia-gold/20 font-display text-lg font-black text-[#7a5415]">R</span>
+                                        <div class="grid gap-4 border border-camelia-ink/10 bg-camelia-blush/50 p-4 sm:grid-cols-[5rem_minmax(0,1fr)] sm:items-center" data-testid="role-image-preview">
+                                            <span class="relative flex size-20 shrink-0 items-center justify-center overflow-hidden bg-camelia-gold/20">
+                                                <img
+                                                    alt=""
+                                                    class="hidden size-full object-cover"
+                                                    data-role-preview-target="image"
+                                                    data-action="load->role-preview#imageLoaded error->role-preview#imageError"
+                                                >
+                                                <span class="flex size-full items-center justify-center font-display text-2xl font-black text-[#7a5415]" data-role-preview-target="placeholder">R</span>
+                                            </span>
                                             <div>
                                                 <strong class="text-sm">Prévisualisation</strong>
-                                                <p class="mt-1 text-xs font-bold text-camelia-muted">Image ou placeholder du rôle</p>
+                                                <p class="mt-1 text-xs font-bold leading-relaxed text-camelia-muted" data-role-preview-target="status">Aucune image renseignée pour le moment.</p>
                                             </div>
                                         </div>
                                         <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
@@ -240,12 +248,18 @@
                                     </div>
                                     <div class="grid gap-4 p-6">
                                         {% for role in catalog.roles %}
-                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5 text-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-                                                <div class="flex min-w-0 items-center gap-3">
-                                                    <span class="flex size-10 shrink-0 items-center justify-center bg-camelia-gold/20 font-display text-lg font-black text-[#7a5415]">{{ role.name|slice(0, 1)|upper }}</span>
+                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-4 text-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center" data-testid="role-card">
+                                                <div class="flex min-w-0 items-center gap-4">
+                                                    <span class="flex size-16 shrink-0 items-center justify-center overflow-hidden bg-camelia-gold/20">
+                                                        {% if role.image_url %}
+                                                            <img src="{{ role.image_url }}" alt="Image du rôle {{ role.name }}" class="size-full object-cover" loading="lazy">
+                                                        {% else %}
+                                                            <span class="font-display text-xl font-black text-[#7a5415]">{{ role.name|slice(0, 1)|upper }}</span>
+                                                        {% endif %}
+                                                    </span>
                                                     <div class="min-w-0">
                                                         <strong class="block truncate">{{ role.name }}</strong>
-                                                        <p class="mt-1 truncate font-semibold text-camelia-muted">{{ role.image_url }}</p>
+                                                        <p class="mt-1 truncate font-semibold text-camelia-muted">{{ role.image_url ? 'Image configurée' : 'Aucune image configurée' }}</p>
                                                     </div>
                                                 </div>
                                                 <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415] md:justify-self-end">{{ role.percentage }}%</span>
