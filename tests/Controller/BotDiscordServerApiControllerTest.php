@@ -353,6 +353,130 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         $this->assertJsonPayloadContains(['error' => 'server_not_found']);
     }
 
+    public function testBotCanEnsureRuntimeUserWithDefaultAssignmentsAndStats(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $catalogue = $this->seedRuntimeCatalogue();
+
+        $client->request('PUT', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->requestAccessToken($client),
+            'CONTENT_TYPE' => 'application/json',
+        ], content: '{}');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+        $payload = $this->jsonPayload($client);
+
+        self::assertSame('42', $payload['user']['discord_id'] ?? null);
+        self::assertSame([
+            'id' => $catalogue['rank_id'],
+            'discord_id' => 'rank-novice',
+            'name' => 'Novice',
+            'is_staff' => false,
+        ], $payload['user']['rank']);
+        self::assertSame([
+            'id' => $catalogue['role_id'],
+            'name' => 'Comète',
+        ], $payload['user']['role']);
+        self::assertSame([[
+            'id' => $catalogue['element_id'],
+            'name' => 'Ambre',
+        ]], $payload['user']['elements']);
+        self::assertSame([
+            ['id' => $catalogue['aura_stat_id'], 'name' => 'Aura', 'value' => 0],
+            ['id' => $catalogue['force_stat_id'], 'name' => 'Force', 'value' => 0],
+        ], $payload['user']['stats']);
+
+        $userRow = $this->connection()->fetchAssociative('SELECT id, discord_id, rank_id, role_id FROM users WHERE server_id = ?', [$catalogue['server_id']]);
+        self::assertSame('42', $userRow['discord_id']);
+        self::assertSame($catalogue['rank_id'], (int) $userRow['rank_id']);
+        self::assertSame($catalogue['role_id'], (int) $userRow['role_id']);
+        self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM users_elements WHERE user_id = ? AND element_id = ?', [$userRow['id'], $catalogue['element_id']]));
+        self::assertSame(2, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM user_stats WHERE user_id = ? AND value = 0', [$userRow['id']]));
+    }
+
+    public function testBotCanForceStaffRankAndPatchRuntimeAssignments(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $catalogue = $this->seedRuntimeCatalogue();
+
+        $token = $this->requestAccessToken($client);
+        $client->request('PUT', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: '{}');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+
+        $client->request('PUT', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode([
+            'staff' => true,
+        ], JSON_THROW_ON_ERROR));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame('Staff', $this->jsonPayload($client)['user']['rank']['name']);
+        self::assertSame($catalogue['staff_rank_id'], (int) $this->connection()->fetchOne('SELECT rank_id FROM users WHERE discord_id = ?', ['42']));
+
+        $client->request('PATCH', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode([
+            'rank_id' => $catalogue['rank_id'],
+            'role_id' => $catalogue['second_role_id'],
+            'element_ids' => [$catalogue['second_element_id']],
+        ], JSON_THROW_ON_ERROR));
+
+        self::assertResponseIsSuccessful();
+        $payload = $this->jsonPayload($client);
+
+        self::assertSame('Novice', $payload['user']['rank']['name']);
+        self::assertSame('Oracle', $payload['user']['role']['name']);
+        self::assertSame([[
+            'id' => $catalogue['second_element_id'],
+            'name' => 'Lune',
+        ]], $payload['user']['elements']);
+        self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM users_elements WHERE element_id = ?', [$catalogue['second_element_id']]));
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM users_elements WHERE element_id = ?', [$catalogue['element_id']]));
+    }
+
+    public function testBotCanUpsertRuntimeUserStats(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $catalogue = $this->seedRuntimeCatalogue();
+
+        $token = $this->requestAccessToken($client);
+        $client->request('PUT', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: '{}');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+
+        $client->request('PUT', '/api/discord-servers/123456789/users/42/stats', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode([
+            'stats' => [
+                ['id' => $catalogue['force_stat_id'], 'value' => 12],
+                ['id' => $catalogue['aura_stat_id'], 'value' => 7],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame([
+            ['id' => $catalogue['aura_stat_id'], 'name' => 'Aura', 'value' => 7],
+            ['id' => $catalogue['force_stat_id'], 'name' => 'Force', 'value' => 12],
+        ], $this->jsonPayload($client)['user']['stats']);
+
+        $userId = (int) $this->connection()->fetchOne('SELECT id FROM users WHERE discord_id = ?', ['42']);
+        self::assertSame(12, (int) $this->connection()->fetchOne('SELECT value FROM user_stats WHERE user_id = ? AND stat_id = ?', [$userId, $catalogue['force_stat_id']]));
+        self::assertSame(7, (int) $this->connection()->fetchOne('SELECT value FROM user_stats WHERE user_id = ? AND stat_id = ?', [$userId, $catalogue['aura_stat_id']]));
+    }
+
     private function requestAccessToken(KernelBrowser $client): string
     {
         $client->request('POST', '/api/auth/token', server: [
@@ -365,6 +489,115 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         self::assertIsString($payload['access_token'] ?? null);
 
         return $payload['access_token'];
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function seedRuntimeCatalogue(): array
+    {
+        $this->connection()->insert('discord_servers', [
+            'discord_id' => '123456789',
+            'name' => 'Serveur Test',
+            'icon' => 'server-icon',
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $serverId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('ranks', [
+            'server_id' => $serverId,
+            'discord_id' => 'rank-novice',
+            'name' => 'Novice',
+            'percentage' => 100,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $rankId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('ranks', [
+            'server_id' => $serverId,
+            'discord_id' => 'rank-staff',
+            'name' => 'Staff',
+            'percentage' => 0,
+            'bye_title' => null,
+            'is_staff' => 1,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $staffRankId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('roles', [
+            'server_id' => $serverId,
+            'name' => 'Comète',
+            'percentage' => 100,
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '🎭',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
+        ]);
+        $roleId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('roles', [
+            'server_id' => $serverId,
+            'name' => 'Oracle',
+            'percentage' => 0,
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '🔮',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
+        ]);
+        $secondRoleId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('elements', [
+            'server_id' => $serverId,
+            'name' => 'Ambre',
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '🌘',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
+        ]);
+        $elementId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('elements', [
+            'server_id' => $serverId,
+            'name' => 'Lune',
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '🌙',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
+        ]);
+        $secondElementId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('stats', [
+            'server_id' => $serverId,
+            'name' => 'Force',
+        ]);
+        $forceStatId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('stats', [
+            'server_id' => $serverId,
+            'name' => 'Aura',
+        ]);
+        $auraStatId = (int) $this->connection()->lastInsertId();
+
+        return [
+            'server_id' => $serverId,
+            'rank_id' => $rankId,
+            'staff_rank_id' => $staffRankId,
+            'role_id' => $roleId,
+            'second_role_id' => $secondRoleId,
+            'element_id' => $elementId,
+            'second_element_id' => $secondElementId,
+            'force_stat_id' => $forceStatId,
+            'aura_stat_id' => $auraStatId,
+        ];
     }
 
     /**

@@ -72,10 +72,63 @@ class GachaUser
         return $this->server;
     }
 
+    public function discordId(): string
+    {
+        return $this->discordId;
+    }
+
+    public function rank(): ?Rank
+    {
+        return $this->rank;
+    }
+
+    public function role(): ?CharacterRole
+    {
+        return $this->role;
+    }
+
+    /**
+     * @return Collection<int, Element>
+     */
+    public function elements(): Collection
+    {
+        return $this->elements;
+    }
+
+    public function updateRank(?Rank $rank): void
+    {
+        $this->rank = $rank;
+        $this->touch();
+    }
+
+    public function updateRole(?CharacterRole $role): void
+    {
+        $this->role = $role;
+        $this->touch();
+    }
+
     public function addElement(Element $element): void
     {
         if (!$this->elements->contains($element)) {
             $this->elements->add($element);
+            $this->touch();
         }
+    }
+
+    /**
+     * @param iterable<Element> $elements
+     */
+    public function replaceElements(iterable $elements): void
+    {
+        $this->elements->clear();
+        foreach ($elements as $element) {
+            $this->elements->add($element);
+        }
+        $this->touch();
+    }
+
+    private function touch(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
     }
 }

@@ -29,4 +29,24 @@ class UserStat
         $this->stat = $stat;
         $this->value = $value;
     }
+
+    public function user(): GachaUser
+    {
+        return $this->user;
+    }
+
+    public function stat(): Stat
+    {
+        return $this->stat;
+    }
+
+    public function value(): int
+    {
+        return $this->value;
+    }
+
+    public function updateValue(int $value): void
+    {
+        $this->value = $value;
+    }
 }

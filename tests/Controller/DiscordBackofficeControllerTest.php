@@ -252,6 +252,8 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('[data-testid="catalog-create-panel"]');
         self::assertSelectorExists('[data-testid="catalog-list-panel"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Novice');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Titre du message de départ');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Titre de départ');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Probabilités de stats');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Messages d’arrivée');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Force');
