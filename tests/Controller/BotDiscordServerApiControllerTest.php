@@ -51,6 +51,11 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
                 'discord_id' => '123456789',
                 'name' => 'Serveur Test',
                 'icon' => 'server-icon',
+                'settings' => [
+                    'welcome_channel_id' => null,
+                    'bye_channel_id' => null,
+                    'staff_role_id' => null,
+                ],
             ],
         ]);
 
@@ -91,6 +96,11 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
                 'discord_id' => '123456789',
                 'name' => 'Nouveau nom',
                 'icon' => null,
+                'settings' => [
+                    'welcome_channel_id' => null,
+                    'bye_channel_id' => null,
+                    'staff_role_id' => null,
+                ],
             ],
         ]);
 
@@ -288,6 +298,11 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
                 'discord_id' => '123456789',
                 'name' => 'Serveur Test',
                 'icon' => 'server-icon',
+                'settings' => [
+                    'welcome_channel_id' => null,
+                    'bye_channel_id' => null,
+                    'staff_role_id' => null,
+                ],
             ],
             'catalogue' => [
                 'ranks' => [[
@@ -351,6 +366,72 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(Response::HTTP_NOT_FOUND);
         $this->assertJsonPayloadContains(['error' => 'server_not_found']);
+    }
+
+    public function testBotCanUpdateServerSettingsAndReadThemInCatalogue(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+
+        $this->connection()->insert('discord_servers', [
+            'discord_id' => '123456789',
+            'name' => 'Serveur Test',
+            'icon' => 'server-icon',
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+
+        $token = $this->requestAccessToken($client);
+
+        $client->request('PATCH', '/api/discord-servers/123456789/settings', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode([
+            'welcome_channel_id' => '111111111111111111',
+            'bye_channel_id' => '222222222222222222',
+            'staff_role_id' => '333333333333333333',
+        ], JSON_THROW_ON_ERROR));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame([
+            'welcome_channel_id' => '111111111111111111',
+            'bye_channel_id' => '222222222222222222',
+            'staff_role_id' => '333333333333333333',
+        ], $this->jsonPayload($client)['server']['settings']);
+
+        self::assertSame([
+            'welcome_channel_id' => '111111111111111111',
+            'bye_channel_id' => '222222222222222222',
+            'staff_role_id' => '333333333333333333',
+        ], $this->connection()->fetchAssociative(
+            'SELECT welcome_channel_id, bye_channel_id, staff_role_id FROM discord_servers WHERE discord_id = ?',
+            ['123456789'],
+        ));
+
+        $client->request('PATCH', '/api/discord-servers/123456789/settings', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode([
+            'bye_channel_id' => null,
+        ], JSON_THROW_ON_ERROR));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame([
+            'welcome_channel_id' => '111111111111111111',
+            'bye_channel_id' => null,
+            'staff_role_id' => '333333333333333333',
+        ], $this->jsonPayload($client)['server']['settings']);
+
+        $client->request('GET', '/api/discord-servers/123456789/catalogue', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame([
+            'welcome_channel_id' => '111111111111111111',
+            'bye_channel_id' => null,
+            'staff_role_id' => '333333333333333333',
+        ], $this->jsonPayload($client)['server']['settings']);
     }
 
     public function testBotCanEnsureRuntimeUserWithDefaultAssignmentsAndStats(): void

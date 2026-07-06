@@ -155,6 +155,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('[data-testid="configuration-nav-overview"][aria-current="page"]');
         self::assertSelectorExists('[data-testid="configuration-overview"]');
         self::assertStringContainsString('xl:grid-cols-3', $crawler->filter('[data-testid="configuration-overview"] > div')->attr('class') ?? '');
+        self::assertSelectorExists('[data-testid="configuration-overview-card-settings"] a[href="/app/serveurs/admin/configuration/settings"]');
         self::assertStringContainsString('min-h-72', $crawler->filter('[data-testid="configuration-overview-card-ranks"]')->attr('class') ?? '');
         self::assertSelectorExists('[data-testid="configuration-overview-card-ranks"] a[href="/app/serveurs/admin/configuration/ranks"]');
         self::assertSelectorExists('[data-testid="configuration-overview-card-roles"] a[href="/app/serveurs/admin/configuration/roles"]');
@@ -242,6 +243,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-overview"][href="/app/serveurs/admin/configuration"]');
+        self::assertSelectorExists('[data-testid="configuration-nav-settings"][href="/app/serveurs/admin/configuration/settings"]');
         self::assertSelectorExists('[data-testid="configuration-nav-ranks"][aria-current="page"]');
         self::assertSelectorExists('[data-testid="configuration-nav-roles"][href="/app/serveurs/admin/configuration/roles"]');
         self::assertSelectorExists('[data-testid="configuration-nav-stats"][href="/app/serveurs/admin/configuration/stats"]');
@@ -396,6 +398,46 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('form[action="/app/serveurs/admin/catalogue/bye-messages/'.$byeMessageId.'"] textarea[name="message"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'À bientôt.');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Novice');
+    }
+
+    public function testAdministratorCanDisplayAndUpdateServerSettings(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+
+        $this->connection()->update('discord_servers', [
+            'welcome_channel_id' => '111111111111111111',
+            'bye_channel_id' => null,
+            'staff_role_id' => '333333333333333333',
+        ], [
+            'discord_id' => 'admin',
+        ]);
+
+        $client->request('GET', '/app/serveurs/admin/configuration/settings');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="configuration-nav-settings"][aria-current="page"]');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Canaux et rôle staff');
+        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] input[name="welcome_channel_id"][value="111111111111111111"]');
+        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] input[name="bye_channel_id"]');
+        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] input[name="staff_role_id"][value="333333333333333333"]');
+
+        $client->request('POST', '/app/serveurs/admin/configuration/settings', [
+            'welcome_channel_id' => '444444444444444444',
+            'bye_channel_id' => '555555555555555555',
+            'staff_role_id' => '666666666666666666',
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/settings');
+        self::assertSame([
+            'welcome_channel_id' => '444444444444444444',
+            'bye_channel_id' => '555555555555555555',
+            'staff_role_id' => '666666666666666666',
+        ], $this->connection()->fetchAssociative(
+            'SELECT welcome_channel_id, bye_channel_id, staff_role_id FROM discord_servers WHERE discord_id = ?',
+            ['admin'],
+        ));
     }
 
     public function testAdministratorCanCreateServerCatalogRows(): void

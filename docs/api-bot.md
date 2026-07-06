@@ -101,9 +101,11 @@ Au démarrage :
 
 1. Récupérer un token via `POST /api/auth/token`.
 2. Pour chaque serveur où le bot est présent, appeler `POST /api/discord-servers`.
-3. Rafraîchir le cache des emojis du bot via `PUT /api/discord-emojis`.
-4. Rafraîchir le cache des emojis de chaque serveur via `PUT /api/discord-emojis`.
-5. Charger le catalogue serveur via `GET /api/discord-servers/{discordId}/catalogue`.
+3. Si le bot pilote aussi la configuration serveur, synchroniser les IDs de
+   canaux/rôle via `PATCH /api/discord-servers/{discordId}/settings`.
+4. Rafraîchir le cache des emojis du bot via `PUT /api/discord-emojis`.
+5. Rafraîchir le cache des emojis de chaque serveur via `PUT /api/discord-emojis`.
+6. Charger le catalogue serveur via `GET /api/discord-servers/{discordId}/catalogue`.
 
 À l'arrivée d'un membre, au ready/load des membres, sur `/ficheperso`, ou avant
 un message de départ :
@@ -149,10 +151,59 @@ Réponses :
   "server": {
     "discord_id": "123456789012345678",
     "name": "Dev-Bots",
-    "icon": "discord-icon-hash"
+    "icon": "discord-icon-hash",
+    "settings": {
+      "welcome_channel_id": null,
+      "bye_channel_id": null,
+      "staff_role_id": null
+    }
   }
 }
 ```
+
+### Configurer les IDs runtime du serveur
+
+```http
+PATCH /api/discord-servers/{discordId}/settings
+Authorization: Bearer <access_token>
+Content-Type: application/json
+```
+
+Payload :
+
+```json
+{
+  "welcome_channel_id": "111111111111111111",
+  "bye_channel_id": "222222222222222222",
+  "staff_role_id": "333333333333333333"
+}
+```
+
+Un champ absent conserve sa valeur actuelle. Un champ présent avec `null`
+désactive la valeur correspondante.
+
+Réponse :
+
+```json
+{
+  "server": {
+    "discord_id": "123456789012345678",
+    "name": "Dev-Bots",
+    "icon": "discord-icon-hash",
+    "settings": {
+      "welcome_channel_id": "111111111111111111",
+      "bye_channel_id": "222222222222222222",
+      "staff_role_id": "333333333333333333"
+    }
+  }
+}
+```
+
+Erreurs spécifiques :
+
+- `400 invalid_json` si le body n'est pas un JSON objet.
+- `401 unauthorized` si le token Bearer est absent ou invalide.
+- `404 server_not_found` si le serveur n'existe pas dans le backoffice.
 
 ## Cache emojis
 
@@ -234,7 +285,12 @@ Réponse :
   "server": {
     "discord_id": "123456789012345678",
     "name": "Dev-Bots",
-    "icon": "discord-icon-hash"
+    "icon": "discord-icon-hash",
+    "settings": {
+      "welcome_channel_id": "111111111111111111",
+      "bye_channel_id": "222222222222222222",
+      "staff_role_id": "333333333333333333"
+    }
   },
   "catalogue": {
     "ranks": [
@@ -302,6 +358,10 @@ Utilisation actuelle côté bot :
 - `stats` remplace `StatRepository.findAll()`.
 - `rank.welcome_messages` remplace `getRandomWelcomeMessage(rank)`.
 - `rank.bye_messages` remplace `getRandomByeMessage(rank)`.
+- `server.settings.welcome_channel_id` indique le salon d'arrivée.
+- `server.settings.bye_channel_id` indique le salon de départ.
+- `server.settings.staff_role_id` indique le rôle Discord qui doit déclencher le
+  rang staff côté bot.
 
 Le bot doit gérer le cas d'un catalogue incomplet : sans rang, rôle ou élément,
 les routes runtime ne peuvent pas initialiser une fiche complète.
@@ -451,6 +511,7 @@ Réponse : même format `user` que la route `PUT`.
 | `UserRepository.update(user)` pour rang/rôle/éléments | `PATCH /api/discord-servers/{guildId}/users/{discordId}` |
 | `StatRepository.saveUserStat(userStat)` | `PUT /api/discord-servers/{guildId}/users/{discordId}/stats` |
 | `StatRepository.getUserStats(user)` | champ `user.stats` retourné par `PUT` ou `PUT /stats` |
+| Configuration welcome/bye/staff serveur | `PATCH /api/discord-servers/{guildId}/settings` ou `server.settings` du catalogue |
 | `RankRepository.findAll()` | `GET /api/discord-servers/{guildId}/catalogue`, champ `catalogue.ranks` |
 | `RoleRepository.findAll()` | `catalogue.roles` |
 | `ElementRepository.findAll()` | `catalogue.elements` |
@@ -465,12 +526,13 @@ Réponse : même format `user` que la route `PUT`.
 
 1. Token.
 2. Upsert serveur.
-3. Refresh emojis bot et serveur.
-4. Lire catalogue.
-5. Pour chaque membre chargé : `PUT /users/{discordId}`.
-6. Si le membre a le rôle Discord staff : `PUT /users/{discordId}` avec
+3. Optionnel : synchroniser `welcome_channel_id`, `bye_channel_id` et `staff_role_id`.
+4. Refresh emojis bot et serveur.
+5. Lire catalogue.
+6. Pour chaque membre chargé : `PUT /users/{discordId}`.
+7. Si le membre a `server.settings.staff_role_id` : `PUT /users/{discordId}` avec
    `{"staff": true}`.
-7. Ajouter côté Discord le rôle lié au `user.rank.discord_id` retourné.
+8. Ajouter côté Discord le rôle lié au `user.rank.discord_id` retourné.
 
 ### Arrivée membre
 
@@ -478,7 +540,8 @@ Réponse : même format `user` que la route `PUT`.
 2. Ajouter le rôle Discord `user.rank.discord_id`.
 3. Retrouver le rang complet dans le catalogue par `user.rank.id`.
 4. Tirer un message dans `rank.welcome_messages`.
-5. Construire l'embed avec `user.rank`, `user.role`, `user.elements`.
+5. Poster dans `server.settings.welcome_channel_id`.
+6. Construire l'embed avec `user.rank`, `user.role`, `user.elements`.
 
 ### Départ membre
 
@@ -486,11 +549,13 @@ Réponse : même format `user` que la route `PUT`.
    elle n'existait pas.
 2. Retrouver le rang complet dans le catalogue par `user.rank.id`.
 3. Tirer un message dans `rank.bye_messages`.
-4. Utiliser `rank.bye_title` comme titre si non-null, sinon le fallback bot.
+4. Poster dans `server.settings.bye_channel_id`.
+5. Utiliser `rank.bye_title` comme titre si non-null, sinon le fallback bot.
 
 ### Ajout du rôle staff
 
-1. `PUT /users/{discordId}` avec `{"staff": true}`.
+1. Si le rôle ajouté correspond à `server.settings.staff_role_id`, appeler
+   `PUT /users/{discordId}` avec `{"staff": true}`.
 2. Ajouter côté Discord le rôle `user.rank.discord_id` retourné.
 
 ### Commande `/ficheperso`

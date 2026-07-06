@@ -50,6 +50,12 @@ final class BackofficeController extends AbstractController
      * @var array<string, array{label: string, description: string, catalog_key: string, icon: string}>
      */
     private const array CONFIGURATION_SECTIONS = [
+        'settings' => [
+            'label' => 'Réglages',
+            'description' => 'Les canaux Discord et le rôle staff utilisés par le bot.',
+            'catalog_key' => 'settings',
+            'icon' => 'RG',
+        ],
         'ranks' => [
             'label' => 'Rangs',
             'description' => 'Les rangs Discord qui portent les probabilités principales.',
@@ -744,6 +750,26 @@ final class BackofficeController extends AbstractController
         return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'elements']);
     }
 
+    #[Route('/app/serveurs/{guildId}/configuration/settings', name: 'app_server_settings_update', methods: ['POST'])]
+    public function updateServerSettings(
+        string $guildId,
+        Request $request,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+
+        $server->updateSettings(
+            $this->optionalDiscordReferenceString($request, 'welcome_channel_id'),
+            $this->optionalDiscordReferenceString($request, 'bye_channel_id'),
+            $this->optionalDiscordReferenceString($request, 'staff_role_id'),
+        );
+        $entityManager->flush();
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'settings']);
+    }
+
     #[Route('/app/serveurs/{guildId}/fiche-personnage', name: 'app_character_sheet', methods: ['GET'])]
     public function characterSheet(string $guildId, BackofficeSession $backofficeSession, BackofficeAccess $backofficeAccess): Response
     {
@@ -901,13 +927,14 @@ final class BackofficeController extends AbstractController
     }
 
     /**
-     * @return array<string, list<array<string, mixed>>>
+     * @return array<string, mixed>
      */
     private function catalogPayload(EntityManagerInterface $entityManager, DiscordServer $server): array
     {
         $ranks = $entityManager->getRepository(Rank::class)->findBy(['server' => $server], ['percentage' => 'ASC', 'name' => 'ASC']);
 
         return [
+            'settings' => $this->serverSettingsPayload($server),
             'ranks' => array_map(
                 fn (Rank $rank): array => [
                     'id' => (int) $rank->id(),
@@ -963,6 +990,18 @@ final class BackofficeController extends AbstractController
                 ],
                 $entityManager->getRepository(Element::class)->findBy(['server' => $server], ['name' => 'ASC']),
             ),
+        ];
+    }
+
+    /**
+     * @return array{welcome_channel_id: ?string, bye_channel_id: ?string, staff_role_id: ?string}
+     */
+    private function serverSettingsPayload(DiscordServer $server): array
+    {
+        return [
+            'welcome_channel_id' => $server->welcomeChannelId(),
+            'bye_channel_id' => $server->byeChannelId(),
+            'staff_role_id' => $server->staffRoleId(),
         ];
     }
 
@@ -1102,7 +1141,7 @@ final class BackofficeController extends AbstractController
     }
 
     /**
-     * @param array<string, list<array<string, mixed>>> $catalog
+     * @param array<string, mixed> $catalog
      *
      * @return list<array{id: string, label: string, description: string, icon: string, count: int}>
      */
@@ -1117,7 +1156,7 @@ final class BackofficeController extends AbstractController
                 'label' => $section['label'],
                 'description' => $section['description'],
                 'icon' => $section['icon'],
-                'count' => \count($catalog[$catalogKey]),
+                'count' => $this->configurationSectionCount($catalog, $catalogKey),
             ];
         }
 
@@ -1125,7 +1164,7 @@ final class BackofficeController extends AbstractController
     }
 
     /**
-     * @param array<string, list<array<string, mixed>>> $catalog
+     * @param array<string, mixed> $catalog
      *
      * @return array{id: string, label: string, description: string, icon: string, count: int}
      */
@@ -1139,8 +1178,23 @@ final class BackofficeController extends AbstractController
             'label' => $section['label'],
             'description' => $section['description'],
             'icon' => $section['icon'],
-            'count' => \count($catalog[$catalogKey]),
+            'count' => $this->configurationSectionCount($catalog, $catalogKey),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $catalog
+     */
+    private function configurationSectionCount(array $catalog, string $catalogKey): int
+    {
+        if ('settings' === $catalogKey) {
+            return \count(array_filter(
+                $catalog['settings'],
+                static fn (?string $value): bool => null !== $value,
+            ));
+        }
+
+        return \count($catalog[$catalogKey]);
     }
 
     /**
@@ -1212,6 +1266,24 @@ final class BackofficeController extends AbstractController
         $value = trim($value);
 
         return '' !== $value ? $value : null;
+    }
+
+    private function optionalDiscordReferenceString(Request $request, string $key): ?string
+    {
+        $value = $this->optionalRequestString($request, $key);
+        if (null === $value) {
+            return null;
+        }
+
+        if (1 === preg_match('/^<#(?P<id>\d{17,22})>$/', $value, $matches)) {
+            return $matches['id'];
+        }
+
+        if (1 === preg_match('/^<@&(?P<id>\d{17,22})>$/', $value, $matches)) {
+            return $matches['id'];
+        }
+
+        return $value;
     }
 
     private function requestPercentage(Request $request): int

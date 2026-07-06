@@ -28,11 +28,7 @@ final class ApiDiscordServerController extends AbstractController
         }
 
         return $this->json([
-            'server' => [
-                'discord_id' => $server->discordId(),
-                'name' => $server->name(),
-                'icon' => $server->icon(),
-            ],
+            'server' => $this->serverPayload($server),
             'catalogue' => $this->cataloguePayload($entityManager, $server),
         ]);
     }
@@ -67,12 +63,33 @@ final class ApiDiscordServerController extends AbstractController
         $entityManager->flush();
 
         return $this->json([
-            'server' => [
-                'discord_id' => $server->discordId(),
-                'name' => $server->name(),
-                'icon' => $server->icon(),
-            ],
+            'server' => $this->serverPayload($server),
         ], $created ? Response::HTTP_CREATED : Response::HTTP_OK);
+    }
+
+    #[Route('/api/discord-servers/{discordId}/settings', name: 'api_discord_servers_settings_update', methods: ['PATCH'])]
+    public function updateSettings(string $discordId, Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $payload = $this->jsonPayload($request);
+        if (null === $payload) {
+            return $this->json(['error' => 'invalid_json'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $server = $entityManager->getRepository(DiscordServer::class)->findOneBy(['discordId' => $discordId]);
+        if (!$server instanceof DiscordServer) {
+            return $this->json(['error' => 'server_not_found'], Response::HTTP_NOT_FOUND);
+        }
+
+        $server->updateSettings(
+            $this->nullablePayloadStringOrCurrent($payload, 'welcome_channel_id', $server->welcomeChannelId()),
+            $this->nullablePayloadStringOrCurrent($payload, 'bye_channel_id', $server->byeChannelId()),
+            $this->nullablePayloadStringOrCurrent($payload, 'staff_role_id', $server->staffRoleId()),
+        );
+        $entityManager->flush();
+
+        return $this->json([
+            'server' => $this->serverPayload($server),
+        ]);
     }
 
     /**
@@ -123,6 +140,35 @@ final class ApiDiscordServerController extends AbstractController
         $value = trim($value);
 
         return '' !== $value ? $value : null;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function nullablePayloadStringOrCurrent(array $payload, string $key, ?string $current): ?string
+    {
+        if (!\array_key_exists($key, $payload)) {
+            return $current;
+        }
+
+        return $this->nullableString($payload, $key);
+    }
+
+    /**
+     * @return array{discord_id: string, name: string, icon: ?string, settings: array{welcome_channel_id: ?string, bye_channel_id: ?string, staff_role_id: ?string}}
+     */
+    private function serverPayload(DiscordServer $server): array
+    {
+        return [
+            'discord_id' => $server->discordId(),
+            'name' => $server->name(),
+            'icon' => $server->icon(),
+            'settings' => [
+                'welcome_channel_id' => $server->welcomeChannelId(),
+                'bye_channel_id' => $server->byeChannelId(),
+                'staff_role_id' => $server->staffRoleId(),
+            ],
+        ];
     }
 
     /**

@@ -26,6 +26,15 @@ class DiscordServer
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $icon;
 
+    #[ORM\Column(name: 'welcome_channel_id', length: 32, nullable: true)]
+    private ?string $welcomeChannelId = null;
+
+    #[ORM\Column(name: 'bye_channel_id', length: 32, nullable: true)]
+    private ?string $byeChannelId = null;
+
+    #[ORM\Column(name: 'staff_role_id', length: 32, nullable: true)]
+    private ?string $staffRoleId = null;
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -61,6 +70,21 @@ class DiscordServer
         return $this->icon;
     }
 
+    public function welcomeChannelId(): ?string
+    {
+        return $this->welcomeChannelId;
+    }
+
+    public function byeChannelId(): ?string
+    {
+        return $this->byeChannelId;
+    }
+
+    public function staffRoleId(): ?string
+    {
+        return $this->staffRoleId;
+    }
+
     public function refreshCache(string $name, ?string $icon): void
     {
         if ($this->name === $name && $this->icon === $icon) {
@@ -69,6 +93,22 @@ class DiscordServer
 
         $this->name = $name;
         $this->icon = $icon;
+        $this->updatedAt = new \DateTimeImmutable();
+    }
+
+    public function updateSettings(?string $welcomeChannelId, ?string $byeChannelId, ?string $staffRoleId): void
+    {
+        if (
+            $this->welcomeChannelId === $welcomeChannelId
+            && $this->byeChannelId === $byeChannelId
+            && $this->staffRoleId === $staffRoleId
+        ) {
+            return;
+        }
+
+        $this->welcomeChannelId = $welcomeChannelId;
+        $this->byeChannelId = $byeChannelId;
+        $this->staffRoleId = $staffRoleId;
         $this->updatedAt = new \DateTimeImmutable();
     }
 }

@@ -198,7 +198,60 @@
                     </section>
                 {% else %}
                     <div data-testid="configuration-panel">
-                        {% if active_section == 'ranks' %}
+                        {% if active_section == 'settings' %}
+                            <div class="grid gap-8 xl:grid-cols-[minmax(24rem,32rem)_minmax(0,1fr)] xl:items-start">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
+                                        <h2 class="text-lg font-black">Canaux et rôle staff</h2>
+                                        <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Ces IDs Discord sont utilisés par le bot pour poster les messages et reconnaître le staff.</p>
+                                    </div>
+                                    <form method="post" action="{{ path('app_server_settings_update', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Salon d’arrivée
+                                            <input name="welcome_channel_id" value="{{ catalog.settings.welcome_channel_id }}" inputmode="numeric" placeholder="ID du salon welcome" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                        </label>
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Salon de départ
+                                            <input name="bye_channel_id" value="{{ catalog.settings.bye_channel_id }}" inputmode="numeric" placeholder="ID du salon bye" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                        </label>
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Rôle staff Discord
+                                            <input name="staff_role_id" value="{{ catalog.settings.staff_role_id }}" inputmode="numeric" placeholder="ID du rôle staff" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                        </label>
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                            Enregistrer les réglages
+                                        </button>
+                                    </form>
+                                </section>
+
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                                        <div>
+                                            <h2 class="text-lg font-black">Réglages actuels</h2>
+                                            <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Le catalogue API expose ces valeurs au bot avec les autres données du serveur.</p>
+                                        </div>
+                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ active_configuration_section.count }} configurés</span>
+                                    </div>
+                                    <div class="grid gap-4 p-6">
+                                        {% set setting_rows = [
+                                            { label: 'Salon d’arrivée', value: catalog.settings.welcome_channel_id, empty: 'Aucun salon d’arrivée configuré' },
+                                            { label: 'Salon de départ', value: catalog.settings.bye_channel_id, empty: 'Aucun salon de départ configuré' },
+                                            { label: 'Rôle staff Discord', value: catalog.settings.staff_role_id, empty: 'Aucun rôle staff configuré' },
+                                        ] %}
+                                        {% for setting in setting_rows %}
+                                            <article class="grid gap-3 border border-camelia-ink/10 bg-white p-5" data-testid="server-setting-card">
+                                                <p class="text-sm font-black text-camelia-muted">{{ setting.label }}</p>
+                                                {% if setting.value %}
+                                                    <strong class="break-all text-lg">{{ setting.value }}</strong>
+                                                {% else %}
+                                                    <p class="text-sm font-bold leading-relaxed text-camelia-muted">{{ setting.empty }}</p>
+                                                {% endif %}
+                                            </article>
+                                        {% endfor %}
+                                    </div>
+                                </section>
+                            </div>
+                        {% elseif active_section == 'ranks' %}
                             <div class="grid gap-7 xl:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]">
                                 <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
                                     <div class="border-b border-camelia-ink/10 p-6">
