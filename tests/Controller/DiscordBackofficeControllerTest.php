@@ -130,9 +130,9 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorTextContains('[data-testid="backoffice-dashboard"]', 'Serveur Membre');
         self::assertSelectorExists('[data-testid="guild-admin"] img[alt="Logo Serveur Admin"][src="https://cdn.discordapp.com/icons/admin/static-icon-hash.webp?size=64"]');
         self::assertSelectorExists('[data-testid="guild-member"] [data-testid="guild-icon-fallback"]');
-        self::assertSelectorExists('[data-testid="guild-admin"] a[href="/app/serveurs/admin/configuration"]');
+        self::assertSelectorExists('[data-testid="guild-admin"] a[href="/app/serveurs/admin/configuration/ranks"]');
         self::assertSelectorExists('[data-testid="guild-admin"] a[href="/app/serveurs/admin/fiche-personnage"]');
-        self::assertSelectorNotExists('[data-testid="guild-member"] a[href="/app/serveurs/member/configuration"]');
+        self::assertSelectorNotExists('[data-testid="guild-member"] a[href="/app/serveurs/member/configuration/ranks"]');
         self::assertSelectorExists('[data-testid="guild-member"] a[href="/app/serveurs/member/fiche-personnage"]');
         self::assertStringContainsString(
             'cursor-pointer',
@@ -140,7 +140,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         );
     }
 
-    public function testConfigurationPageRequiresAdministratorAccessFromDatabaseMembership(): void
+    public function testConfigurationRootRedirectsToRanksAndSectionRequiresAdministratorAccess(): void
     {
         $client = static::createClient();
         $this->resetDatabase();
@@ -148,17 +148,22 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         $client->request('GET', '/app/serveurs/admin/configuration');
 
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+
+        $client->request('GET', '/app/serveurs/admin/configuration/ranks');
+
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Configuration du serveur');
         self::assertSelectorTextContains('body', 'Serveur Admin');
         self::assertSelectorExists('[data-testid="server-configuration"] img[alt="Logo Serveur Admin"][src="https://cdn.discordapp.com/icons/admin/static-icon-hash.webp?size=64"]');
+        self::assertSelectorExists('[data-testid="configuration-nav-ranks"][aria-current="page"]');
 
-        $client->request('GET', '/app/serveurs/member/configuration');
+        $client->request('GET', '/app/serveurs/member/configuration/ranks');
 
         self::assertResponseStatusCodeSame(403);
     }
 
-    public function testConfigurationPageDisplaysCurrentServerCatalogRows(): void
+    public function testConfigurationSectionPagesDisplayDedicatedServerCatalogRows(): void
     {
         $client = static::createClient();
         $this->resetDatabase();
@@ -196,14 +201,39 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             'name' => 'Hors serveur',
         ]);
 
-        $client->request('GET', '/app/serveurs/admin/configuration');
+        $client->request('GET', '/app/serveurs/admin/configuration/ranks');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorTextContains('[data-testid="server-configuration"]', 'Novice');
-        self::assertSelectorTextContains('[data-testid="server-configuration"]', 'Guerrier');
-        self::assertSelectorTextContains('[data-testid="server-configuration"]', 'Force');
-        self::assertSelectorTextContains('[data-testid="server-configuration"]', 'Feu');
+        self::assertSelectorExists('[data-testid="configuration-nav-ranks"][aria-current="page"]');
+        self::assertSelectorExists('[data-testid="configuration-nav-roles"][href="/app/serveurs/admin/configuration/roles"]');
+        self::assertSelectorExists('[data-testid="configuration-nav-stats"][href="/app/serveurs/admin/configuration/stats"]');
+        self::assertSelectorExists('[data-testid="configuration-nav-elements"][href="/app/serveurs/admin/configuration/elements"]');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Novice');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Guerrier');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Force');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Feu');
         self::assertSelectorTextNotContains('[data-testid="server-configuration"]', 'Hors serveur');
+
+        $client->request('GET', '/app/serveurs/admin/configuration/roles');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="configuration-nav-roles"][aria-current="page"]');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Guerrier');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Novice');
+
+        $client->request('GET', '/app/serveurs/admin/configuration/stats');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="configuration-nav-stats"][aria-current="page"]');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Force');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Feu');
+
+        $client->request('GET', '/app/serveurs/admin/configuration/elements');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="configuration-nav-elements"][aria-current="page"]');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Feu');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Force');
     }
 
     public function testAdministratorCanCreateServerCatalogRows(): void
@@ -220,7 +250,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             'is_staff' => '1',
         ]);
 
-        self::assertResponseRedirects('/app/serveurs/admin/configuration');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
 
         $client->request('POST', '/app/serveurs/admin/catalogue/roles', [
             'name' => 'Alchimiste',
@@ -228,19 +258,19 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             'image_url' => 'https://example.test/alchimiste.png',
         ]);
 
-        self::assertResponseRedirects('/app/serveurs/admin/configuration');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/roles');
 
         $client->request('POST', '/app/serveurs/admin/catalogue/stats', [
             'name' => 'Sagesse',
         ]);
 
-        self::assertResponseRedirects('/app/serveurs/admin/configuration');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/stats');
 
         $client->request('POST', '/app/serveurs/admin/catalogue/elements', [
             'name' => 'Lune',
         ]);
 
-        self::assertResponseRedirects('/app/serveurs/admin/configuration');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/elements');
 
         $serverId = $this->serverDatabaseId('admin');
 

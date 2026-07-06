@@ -38,148 +38,172 @@
             </div>
         </div>
 
-        <div class="grid gap-4 lg:grid-cols-2">
-            <section class="grid gap-5 border border-camelia-ink/10 bg-white p-5 shadow-sm" data-testid="rank-catalog">
-                <div class="flex items-center justify-between gap-4 border-b border-camelia-ink/10 pb-3">
-                    <h2 class="text-lg font-black">Rangs</h2>
-                    <span class="text-sm font-black text-camelia-muted">{{ catalog.ranks|length }}</span>
-                </div>
+        <div class="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
+            <aside class="lg:sticky lg:top-24 lg:self-start">
+                <nav class="grid gap-2" aria-label="Sections de configuration" data-testid="configuration-sidebar">
+                    {% for section in configuration_sections %}
+                        {% set is_active = section.id == active_section %}
+                        <a
+                            href="{{ path('app_server_configuration_section', { guildId: guild.id, section: section.id }) }}"
+                            class="grid gap-1 border px-4 py-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 {{ is_active ? 'border-camelia-rose/40 bg-white text-camelia-ink shadow-sm' : 'border-camelia-ink/10 bg-camelia-ivory text-camelia-muted hover:border-camelia-rose/30 hover:bg-white hover:text-camelia-ink' }}"
+                            data-testid="configuration-nav-{{ section.id }}"
+                            {% if is_active %}aria-current="page"{% endif %}
+                        >
+                            <span class="flex items-center justify-between gap-3">
+                                <span class="font-black">{{ section.label }}</span>
+                                <span class="text-sm font-black text-camelia-rose">{{ section.count }}</span>
+                            </span>
+                            <span class="text-xs font-semibold leading-snug">{{ section.description }}</span>
+                        </a>
+                    {% endfor %}
+                </nav>
+            </aside>
 
-                <form method="post" action="{{ path('app_server_catalog_rank_create', { guildId: guild.id }) }}" class="grid gap-3">
-                    <div class="grid gap-3 md:grid-cols-2">
-                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                            ID Discord
-                            <input name="discord_id" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                        </label>
-                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                            Nom
-                            <input name="name" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                        </label>
-                    </div>
-                    <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                            Titre de départ
-                            <input name="bye_title" class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                        </label>
-                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                            %
-                            <input name="percentage" type="number" min="0" max="100" value="0" required class="min-h-11 w-24 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                        </label>
-                    </div>
-                    <label class="flex items-center gap-2 text-sm font-black text-camelia-ink">
-                        <input name="is_staff" type="checkbox" value="1" class="size-4 accent-camelia-rose">
-                        Staff
-                    </label>
-                    <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
-                        Ajouter
-                    </button>
-                </form>
-
-                <div class="grid gap-2">
-                    {% for rank in catalog.ranks %}
-                        <div class="grid gap-1 border border-camelia-ink/10 bg-camelia-ivory p-3 text-sm">
-                            <div class="flex items-center justify-between gap-3">
-                                <strong>{{ rank.name }}</strong>
-                                <span class="font-black text-camelia-rose">{{ rank.percentage }}%</span>
-                            </div>
-                            <p class="font-semibold text-camelia-muted">{{ rank.discord_id }}{% if rank.bye_title %} · {{ rank.bye_title }}{% endif %}{% if rank.is_staff %} · Staff{% endif %}</p>
+            <div data-testid="configuration-panel">
+                {% if active_section == 'ranks' %}
+                    <section class="grid gap-5 border border-camelia-ink/10 bg-white p-5 shadow-sm" data-testid="rank-catalog">
+                        <div class="flex items-center justify-between gap-4 border-b border-camelia-ink/10 pb-3">
+                            <h2 class="text-lg font-black">Rangs</h2>
+                            <span class="text-sm font-black text-camelia-muted">{{ catalog.ranks|length }}</span>
                         </div>
-                    {% else %}
-                        <p class="text-sm font-semibold text-camelia-muted">Aucun rang</p>
-                    {% endfor %}
-                </div>
-            </section>
 
-            <section class="grid gap-5 border border-camelia-ink/10 bg-white p-5 shadow-sm" data-testid="role-catalog">
-                <div class="flex items-center justify-between gap-4 border-b border-camelia-ink/10 pb-3">
-                    <h2 class="text-lg font-black">Rôles</h2>
-                    <span class="text-sm font-black text-camelia-muted">{{ catalog.roles|length }}</span>
-                </div>
-
-                <form method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="grid gap-3">
-                    <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
-                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                            Nom
-                            <input name="name" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                        </label>
-                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                            %
-                            <input name="percentage" type="number" min="0" max="100" value="0" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                        </label>
-                    </div>
-                    <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                        Image
-                        <input name="image_url" type="url" class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                    </label>
-                    <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
-                        Ajouter
-                    </button>
-                </form>
-
-                <div class="grid gap-2">
-                    {% for role in catalog.roles %}
-                        <div class="grid gap-1 border border-camelia-ink/10 bg-camelia-ivory p-3 text-sm">
-                            <div class="flex items-center justify-between gap-3">
-                                <strong>{{ role.name }}</strong>
-                                <span class="font-black text-camelia-rose">{{ role.percentage }}%</span>
+                        <form method="post" action="{{ path('app_server_catalog_rank_create', { guildId: guild.id }) }}" class="grid gap-3">
+                            <div class="grid gap-3 md:grid-cols-2">
+                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                    ID Discord
+                                    <input name="discord_id" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                </label>
+                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                    Nom
+                                    <input name="name" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                </label>
                             </div>
-                            <p class="truncate font-semibold text-camelia-muted">{{ role.image_url }}</p>
+                            <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                    Titre de départ
+                                    <input name="bye_title" class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                </label>
+                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                    %
+                                    <input name="percentage" type="number" min="0" max="100" value="0" required class="min-h-11 w-24 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                </label>
+                            </div>
+                            <label class="flex items-center gap-2 text-sm font-black text-camelia-ink">
+                                <input name="is_staff" type="checkbox" value="1" class="size-4 accent-camelia-rose">
+                                Staff
+                            </label>
+                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                Ajouter
+                            </button>
+                        </form>
+
+                        <div class="grid gap-2">
+                            {% for rank in catalog.ranks %}
+                                <div class="grid gap-1 border border-camelia-ink/10 bg-camelia-ivory p-3 text-sm">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <strong>{{ rank.name }}</strong>
+                                        <span class="font-black text-camelia-rose">{{ rank.percentage }}%</span>
+                                    </div>
+                                    <p class="font-semibold text-camelia-muted">{{ rank.discord_id }}{% if rank.bye_title %} · {{ rank.bye_title }}{% endif %}{% if rank.is_staff %} · Staff{% endif %}</p>
+                                </div>
+                            {% else %}
+                                <p class="text-sm font-semibold text-camelia-muted">Aucun rang</p>
+                            {% endfor %}
                         </div>
-                    {% else %}
-                        <p class="text-sm font-semibold text-camelia-muted">Aucun rôle</p>
-                    {% endfor %}
-                </div>
-            </section>
+                    </section>
+                {% elseif active_section == 'roles' %}
+                    <section class="grid gap-5 border border-camelia-ink/10 bg-white p-5 shadow-sm" data-testid="role-catalog">
+                        <div class="flex items-center justify-between gap-4 border-b border-camelia-ink/10 pb-3">
+                            <h2 class="text-lg font-black">Rôles</h2>
+                            <span class="text-sm font-black text-camelia-muted">{{ catalog.roles|length }}</span>
+                        </div>
 
-            <section class="grid gap-5 border border-camelia-ink/10 bg-white p-5 shadow-sm" data-testid="stat-catalog">
-                <div class="flex items-center justify-between gap-4 border-b border-camelia-ink/10 pb-3">
-                    <h2 class="text-lg font-black">Stats</h2>
-                    <span class="text-sm font-black text-camelia-muted">{{ catalog.stats|length }}</span>
-                </div>
+                        <form method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="grid gap-3">
+                            <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
+                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                    Nom
+                                    <input name="name" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                </label>
+                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                    %
+                                    <input name="percentage" type="number" min="0" max="100" value="0" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                </label>
+                            </div>
+                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                Image
+                                <input name="image_url" type="url" class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                            </label>
+                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                Ajouter
+                            </button>
+                        </form>
 
-                <form method="post" action="{{ path('app_server_catalog_stat_create', { guildId: guild.id }) }}" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-                    <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                        Nom
-                        <input name="name" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                    </label>
-                    <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
-                        Ajouter
-                    </button>
-                </form>
+                        <div class="grid gap-2">
+                            {% for role in catalog.roles %}
+                                <div class="grid gap-1 border border-camelia-ink/10 bg-camelia-ivory p-3 text-sm">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <strong>{{ role.name }}</strong>
+                                        <span class="font-black text-camelia-rose">{{ role.percentage }}%</span>
+                                    </div>
+                                    <p class="truncate font-semibold text-camelia-muted">{{ role.image_url }}</p>
+                                </div>
+                            {% else %}
+                                <p class="text-sm font-semibold text-camelia-muted">Aucun rôle</p>
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% elseif active_section == 'stats' %}
+                    <section class="grid gap-5 border border-camelia-ink/10 bg-white p-5 shadow-sm" data-testid="stat-catalog">
+                        <div class="flex items-center justify-between gap-4 border-b border-camelia-ink/10 pb-3">
+                            <h2 class="text-lg font-black">Stats</h2>
+                            <span class="text-sm font-black text-camelia-muted">{{ catalog.stats|length }}</span>
+                        </div>
 
-                <div class="flex flex-wrap gap-2">
-                    {% for stat in catalog.stats %}
-                        <span class="border border-camelia-ink/10 bg-camelia-ivory px-3 py-2 text-sm font-black">{{ stat.name }}</span>
-                    {% else %}
-                        <p class="text-sm font-semibold text-camelia-muted">Aucune stat</p>
-                    {% endfor %}
-                </div>
-            </section>
+                        <form method="post" action="{{ path('app_server_catalog_stat_create', { guildId: guild.id }) }}" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                Nom
+                                <input name="name" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                            </label>
+                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                Ajouter
+                            </button>
+                        </form>
 
-            <section class="grid gap-5 border border-camelia-ink/10 bg-white p-5 shadow-sm" data-testid="element-catalog">
-                <div class="flex items-center justify-between gap-4 border-b border-camelia-ink/10 pb-3">
-                    <h2 class="text-lg font-black">Éléments</h2>
-                    <span class="text-sm font-black text-camelia-muted">{{ catalog.elements|length }}</span>
-                </div>
+                        <div class="flex flex-wrap gap-2">
+                            {% for stat in catalog.stats %}
+                                <span class="border border-camelia-ink/10 bg-camelia-ivory px-3 py-2 text-sm font-black">{{ stat.name }}</span>
+                            {% else %}
+                                <p class="text-sm font-semibold text-camelia-muted">Aucune stat</p>
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% elseif active_section == 'elements' %}
+                    <section class="grid gap-5 border border-camelia-ink/10 bg-white p-5 shadow-sm" data-testid="element-catalog">
+                        <div class="flex items-center justify-between gap-4 border-b border-camelia-ink/10 pb-3">
+                            <h2 class="text-lg font-black">Éléments</h2>
+                            <span class="text-sm font-black text-camelia-muted">{{ catalog.elements|length }}</span>
+                        </div>
 
-                <form method="post" action="{{ path('app_server_catalog_element_create', { guildId: guild.id }) }}" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
-                    <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                        Nom
-                        <input name="name" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                    </label>
-                    <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
-                        Ajouter
-                    </button>
-                </form>
+                        <form method="post" action="{{ path('app_server_catalog_element_create', { guildId: guild.id }) }}" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                Nom
+                                <input name="name" required class="min-h-11 border border-camelia-ink/10 px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                            </label>
+                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                Ajouter
+                            </button>
+                        </form>
 
-                <div class="flex flex-wrap gap-2">
-                    {% for element in catalog.elements %}
-                        <span class="border border-camelia-ink/10 bg-camelia-ivory px-3 py-2 text-sm font-black">{{ element.name }}</span>
-                    {% else %}
-                        <p class="text-sm font-semibold text-camelia-muted">Aucun élément</p>
-                    {% endfor %}
-                </div>
-            </section>
+                        <div class="flex flex-wrap gap-2">
+                            {% for element in catalog.elements %}
+                                <span class="border border-camelia-ink/10 bg-camelia-ivory px-3 py-2 text-sm font-black">{{ element.name }}</span>
+                            {% else %}
+                                <p class="text-sm font-semibold text-camelia-muted">Aucun élément</p>
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% endif %}
+            </div>
         </div>
     </section>
 {% endblock %}

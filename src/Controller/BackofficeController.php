@@ -19,6 +19,34 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class BackofficeController extends AbstractController
 {
+    private const string DEFAULT_CONFIGURATION_SECTION = 'ranks';
+
+    /**
+     * @var array<string, array{label: string, description: string, catalog_key: string}>
+     */
+    private const array CONFIGURATION_SECTIONS = [
+        'ranks' => [
+            'label' => 'Rangs',
+            'description' => 'Les rangs Discord qui portent les probabilités principales.',
+            'catalog_key' => 'ranks',
+        ],
+        'roles' => [
+            'label' => 'Rôles',
+            'description' => 'Les rôles de personnage utilisés dans les tirages.',
+            'catalog_key' => 'roles',
+        ],
+        'stats' => [
+            'label' => 'Stats',
+            'description' => 'Les caractéristiques disponibles sur les fiches personnage.',
+            'catalog_key' => 'stats',
+        ],
+        'elements' => [
+            'label' => 'Éléments',
+            'description' => 'Les affinités élémentaires que le bot peut attribuer.',
+            'catalog_key' => 'elements',
+        ],
+    ];
+
     #[Route('/app', name: 'app_dashboard', methods: ['GET'])]
     public function dashboard(BackofficeSession $backofficeSession, BackofficeAccess $backofficeAccess): Response
     {
@@ -44,7 +72,6 @@ final class BackofficeController extends AbstractController
         string $guildId,
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
-        EntityManagerInterface $entityManager,
     ): Response {
         if (!$backofficeSession->isAuthenticated()) {
             return $this->redirectToRoute('app_discord_login');
@@ -54,11 +81,39 @@ final class BackofficeController extends AbstractController
         if (true !== ($guild['canManageConfiguration'] ?? false)) {
             throw new AccessDeniedHttpException('Administrator permission required for this server.');
         }
+
+        return $this->redirectToRoute('app_server_configuration_section', [
+            'guildId' => $guildId,
+            'section' => self::DEFAULT_CONFIGURATION_SECTION,
+        ]);
+    }
+
+    #[Route('/app/serveurs/{guildId}/configuration/{section}', name: 'app_server_configuration_section', methods: ['GET'])]
+    public function configurationSection(
+        string $guildId,
+        string $section,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $this->configurationSectionOr404($section);
+
+        if (!$backofficeSession->isAuthenticated()) {
+            return $this->redirectToRoute('app_discord_login');
+        }
+
+        $guild = $this->findGuildOr404($backofficeSession, $backofficeAccess, $guildId);
+        if (true !== ($guild['canManageConfiguration'] ?? false)) {
+            throw new AccessDeniedHttpException('Administrator permission required for this server.');
+        }
         $server = $this->findServerEntityOr404($entityManager, $guild['id']);
+        $catalog = $this->catalogPayload($entityManager, $server);
 
         return $this->render('backoffice/server_configuration.html.twig', [
             'guild' => $guild,
-            'catalog' => $this->catalogPayload($entityManager, $server),
+            'catalog' => $catalog,
+            'configuration_sections' => $this->configurationSections($catalog),
+            'active_section' => $section,
         ]);
     }
 
@@ -86,7 +141,7 @@ final class BackofficeController extends AbstractController
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_server_configuration', ['guildId' => $guildId]);
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
     }
 
     #[Route('/app/serveurs/{guildId}/catalogue/roles', name: 'app_server_catalog_role_create', methods: ['POST'])]
@@ -110,7 +165,7 @@ final class BackofficeController extends AbstractController
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_server_configuration', ['guildId' => $guildId]);
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'roles']);
     }
 
     #[Route('/app/serveurs/{guildId}/catalogue/stats', name: 'app_server_catalog_stat_create', methods: ['POST'])]
@@ -129,7 +184,7 @@ final class BackofficeController extends AbstractController
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_server_configuration', ['guildId' => $guildId]);
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'stats']);
     }
 
     #[Route('/app/serveurs/{guildId}/catalogue/elements', name: 'app_server_catalog_element_create', methods: ['POST'])]
@@ -148,7 +203,7 @@ final class BackofficeController extends AbstractController
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_server_configuration', ['guildId' => $guildId]);
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'elements']);
     }
 
     #[Route('/app/serveurs/{guildId}/fiche-personnage', name: 'app_character_sheet', methods: ['GET'])]
@@ -204,6 +259,13 @@ final class BackofficeController extends AbstractController
         return $server;
     }
 
+    private function configurationSectionOr404(string $section): void
+    {
+        if (!isset(self::CONFIGURATION_SECTIONS[$section])) {
+            throw new NotFoundHttpException('Configuration section is not available.');
+        }
+    }
+
     /**
      * @return array{
      *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
@@ -242,6 +304,33 @@ final class BackofficeController extends AbstractController
                 $entityManager->getRepository(Element::class)->findBy(['server' => $server], ['name' => 'ASC']),
             ),
         ];
+    }
+
+    /**
+     * @param array{
+     *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
+     *     roles: list<array{name: string, percentage: int, image_url: string}>,
+     *     stats: list<array{name: string}>,
+     *     elements: list<array{name: string}>
+     * } $catalog
+     *
+     * @return list<array{id: string, label: string, description: string, count: int}>
+     */
+    private function configurationSections(array $catalog): array
+    {
+        $sections = [];
+
+        foreach (self::CONFIGURATION_SECTIONS as $id => $section) {
+            $catalogKey = $section['catalog_key'];
+            $sections[] = [
+                'id' => $id,
+                'label' => $section['label'],
+                'description' => $section['description'],
+                'count' => \count($catalog[$catalogKey]),
+            ];
+        }
+
+        return $sections;
     }
 
     private function requiredRequestString(Request $request, string $key): ?string

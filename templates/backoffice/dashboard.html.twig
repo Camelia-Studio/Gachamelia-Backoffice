@@ -68,7 +68,7 @@
                         <div class="flex flex-wrap gap-2">
                             {% if guild.canManageConfiguration %}
                                 <a
-                                    href="{{ path('app_server_configuration', { guildId: guild.id }) }}"
+                                    href="{{ path('app_server_configuration_section', { guildId: guild.id, section: 'ranks' }) }}"
                                     class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-leaf px-4 text-sm font-black text-white transition hover:bg-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-leaf/50"
                                 >
                                     Configuration
