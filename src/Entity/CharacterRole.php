@@ -84,6 +84,24 @@ class CharacterRole
         return $this->percentage;
     }
 
+    public function updateConfiguration(
+        string $name,
+        int $percentage,
+        string $emojiSource,
+        ?string $emojiUnicode,
+        ?string $emojiId,
+        ?string $emojiName,
+        bool $emojiAnimated,
+    ): void {
+        $this->name = $name;
+        $this->percentage = $percentage;
+        $this->emojiSource = $emojiSource;
+        $this->emojiUnicode = $emojiUnicode;
+        $this->emojiId = $emojiId;
+        $this->emojiName = $emojiName;
+        $this->emojiAnimated = $emojiAnimated;
+    }
+
     public function emojiSource(): string
     {
         return $this->emojiSource;

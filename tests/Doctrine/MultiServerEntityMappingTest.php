@@ -8,6 +8,7 @@ use App\Entity\CharacterRole;
 use App\Entity\ByeMessage;
 use App\Entity\DiscordServer;
 use App\Entity\DiscordServerMember;
+use App\Entity\DiscordEmoji;
 use App\Entity\DiscordUser;
 use App\Entity\Element;
 use App\Entity\GachaUser;
@@ -80,6 +81,23 @@ final class MultiServerEntityMappingTest extends KernelTestCase
         }
 
         $this->assertUniqueColumns($this->metadata(Rank::class), ['server_id', 'discord_id']);
+    }
+
+    public function testDiscordEmojiCacheMapping(): void
+    {
+        $metadata = $this->metadata(DiscordEmoji::class);
+
+        self::assertSame('discord_emojis', $metadata->getTableName());
+        self::assertTrue($metadata->hasAssociation('server'));
+        self::assertTrue($metadata->hasField('cacheKey'));
+        self::assertTrue($metadata->hasField('source'));
+        self::assertTrue($metadata->hasField('discordId'));
+        self::assertTrue($metadata->hasField('name'));
+        self::assertTrue($metadata->hasField('animated'));
+        self::assertTrue($metadata->hasField('available'));
+        self::assertTrue($metadata->hasField('lastSeenAt'));
+        self::assertTrue($metadata->hasField('updatedAt'));
+        $this->assertUniqueColumns($metadata, ['cache_key', 'source', 'discord_id']);
     }
 
     public function testUsersAreServerScopedAndReferenceCatalogRows(): void

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Backoffice\BackofficeAccess;
 use App\Backoffice\BackofficeSession;
 use App\Entity\CharacterRole;
+use App\Entity\DiscordEmoji;
 use App\Entity\DiscordServer;
 use App\Entity\Element;
 use App\Entity\Rank;
@@ -26,6 +27,20 @@ final class BackofficeController extends AbstractController
         'unicode' => 'Emoji standard',
         'bot' => 'Emoji du bot',
         'server' => 'Emoji serveur',
+    ];
+
+    /**
+     * @var list<array{value: string, name: string}>
+     */
+    private const array STANDARD_EMOJI_OPTIONS = [
+        ['value' => '🎭', 'name' => 'Rôle'],
+        ['value' => '✨', 'name' => 'Éclat'],
+        ['value' => '🔥', 'name' => 'Feu'],
+        ['value' => '🌙', 'name' => 'Lune'],
+        ['value' => '⭐', 'name' => 'Étoile'],
+        ['value' => '💧', 'name' => 'Eau'],
+        ['value' => '🌿', 'name' => 'Nature'],
+        ['value' => '💎', 'name' => 'Cristal'],
     ];
 
     /**
@@ -99,6 +114,7 @@ final class BackofficeController extends AbstractController
         return $this->render('backoffice/server_configuration.html.twig', [
             'guild' => $guild,
             'catalog' => $catalog,
+            'emoji_picker' => $this->emojiPickerPayload($entityManager, $server),
             'configuration_sections' => $this->configurationSections($catalog),
             'active_section' => 'overview',
             'active_configuration_section' => null,
@@ -129,6 +145,7 @@ final class BackofficeController extends AbstractController
         return $this->render('backoffice/server_configuration.html.twig', [
             'guild' => $guild,
             'catalog' => $catalog,
+            'emoji_picker' => $this->emojiPickerPayload($entityManager, $server),
             'configuration_sections' => $this->configurationSections($catalog),
             'active_section' => $section,
             'active_configuration_section' => $this->configurationSectionPayload($catalog, $section),
@@ -187,6 +204,53 @@ final class BackofficeController extends AbstractController
             ));
             $entityManager->flush();
         }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'roles']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/roles/{roleId}', name: 'app_server_catalog_role_update', requirements: ['roleId' => '\d+'], methods: ['POST'])]
+    public function updateRole(
+        string $guildId,
+        string $roleId,
+        Request $request,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $role = $this->roleForServerOr404($entityManager, $server, (int) $roleId);
+
+        $name = $this->requiredRequestString($request, 'name');
+        if (null !== $name) {
+            $emoji = $this->requestEmoji($request, CharacterRole::DEFAULT_EMOJI);
+            $role->updateConfiguration(
+                $name,
+                $this->requestPercentage($request),
+                $emoji['source'],
+                $emoji['unicode'],
+                $emoji['id'],
+                $emoji['name'],
+                $emoji['animated'],
+            );
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'roles']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/catalogue/roles/{roleId}/supprimer', name: 'app_server_catalog_role_delete', requirements: ['roleId' => '\d+'], methods: ['POST'])]
+    public function deleteRole(
+        string $guildId,
+        string $roleId,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $role = $this->roleForServerOr404($entityManager, $server, (int) $roleId);
+
+        $entityManager->remove($role);
+        $entityManager->flush();
 
         return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'roles']);
     }
@@ -291,6 +355,16 @@ final class BackofficeController extends AbstractController
         return $server;
     }
 
+    private function roleForServerOr404(EntityManagerInterface $entityManager, DiscordServer $server, int $roleId): CharacterRole
+    {
+        $role = $entityManager->getRepository(CharacterRole::class)->findOneBy(['id' => $roleId, 'server' => $server]);
+        if (!$role instanceof CharacterRole) {
+            throw new NotFoundHttpException('Role is not available on this server.');
+        }
+
+        return $role;
+    }
+
     private function configurationSectionOr404(string $section): void
     {
         if (!isset(self::CONFIGURATION_SECTIONS[$section])) {
@@ -301,7 +375,7 @@ final class BackofficeController extends AbstractController
     /**
      * @return array{
      *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
-     *     roles: list<array{name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
+     *     roles: list<array{id: int, name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
      *     stats: list<array{name: string}>,
      *     elements: list<array{name: string, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>
      * }
@@ -321,6 +395,7 @@ final class BackofficeController extends AbstractController
             ),
             'roles' => array_map(
                 static fn (CharacterRole $role): array => [
+                    'id' => (int) $role->id(),
                     'name' => $role->name(),
                     'percentage' => $role->percentage(),
                     'emoji_source' => $role->emojiSource(),
@@ -358,7 +433,7 @@ final class BackofficeController extends AbstractController
     /**
      * @param array{
      *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
-     *     roles: list<array{name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
+     *     roles: list<array{id: int, name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
      *     stats: list<array{name: string}>,
      *     elements: list<array{name: string, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>
      * } $catalog
@@ -386,7 +461,7 @@ final class BackofficeController extends AbstractController
     /**
      * @param array{
      *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
-     *     roles: list<array{name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
+     *     roles: list<array{id: int, name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
      *     stats: list<array{name: string}>,
      *     elements: list<array{name: string, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>
      * } $catalog
@@ -405,6 +480,53 @@ final class BackofficeController extends AbstractController
             'icon' => $section['icon'],
             'count' => \count($catalog[$catalogKey]),
         ];
+    }
+
+    /**
+     * @return array{
+     *     standard: list<array{source: string, value: string, name: string, markup: string, cdn_url: ?string, discord_id: ?string}>,
+     *     bot: list<array{source: string, value: string, name: string, markup: string, cdn_url: ?string, discord_id: ?string}>,
+     *     server: list<array{source: string, value: string, name: string, markup: string, cdn_url: ?string, discord_id: ?string}>
+     * }
+     */
+    private function emojiPickerPayload(EntityManagerInterface $entityManager, DiscordServer $server): array
+    {
+        return [
+            'standard' => array_map(
+                static fn (array $emoji): array => [
+                    'source' => 'unicode',
+                    'value' => $emoji['value'],
+                    'name' => $emoji['name'],
+                    'markup' => $emoji['value'],
+                    'cdn_url' => null,
+                    'discord_id' => null,
+                ],
+                self::STANDARD_EMOJI_OPTIONS,
+            ),
+            'bot' => $this->discordEmojiOptions($entityManager, DiscordEmoji::APPLICATION_CACHE_KEY, DiscordEmoji::SOURCE_BOT),
+            'server' => $this->discordEmojiOptions($entityManager, DiscordEmoji::serverCacheKey($server), DiscordEmoji::SOURCE_SERVER),
+        ];
+    }
+
+    /**
+     * @return list<array{source: string, value: string, name: string, markup: string, cdn_url: ?string, discord_id: ?string}>
+     */
+    private function discordEmojiOptions(EntityManagerInterface $entityManager, string $cacheKey, string $source): array
+    {
+        return array_map(
+            static fn (DiscordEmoji $emoji): array => [
+                'source' => $emoji->source(),
+                'value' => $emoji->markup(),
+                'name' => $emoji->name(),
+                'markup' => $emoji->markup(),
+                'cdn_url' => $emoji->cdnUrl(),
+                'discord_id' => $emoji->discordId(),
+            ],
+            $entityManager->getRepository(DiscordEmoji::class)->findBy(
+                ['cacheKey' => $cacheKey, 'source' => $source, 'available' => true],
+                ['name' => 'ASC'],
+            ),
+        );
     }
 
     private function requiredRequestString(Request $request, string $key): ?string

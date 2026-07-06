@@ -24,6 +24,7 @@ trait DatabaseResetter
             'stats',
             'roles',
             'ranks',
+            'discord_emojis',
             'discord_servers',
         ] as $table) {
             if ($this->tableExists($table)) {
