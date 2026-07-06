@@ -20,6 +20,15 @@ use Symfony\Component\Routing\Attribute\Route;
 final class BackofficeController extends AbstractController
 {
     /**
+     * @var array<string, string>
+     */
+    private const array EMOJI_SOURCE_LABELS = [
+        'unicode' => 'Emoji standard',
+        'bot' => 'Emoji du bot',
+        'server' => 'Emoji serveur',
+    ];
+
+    /**
      * @var array<string, array{label: string, description: string, catalog_key: string, icon: string}>
      */
     private const array CONFIGURATION_SECTIONS = [
@@ -165,11 +174,16 @@ final class BackofficeController extends AbstractController
 
         $name = $this->requiredRequestString($request, 'name');
         if (null !== $name) {
+            $emoji = $this->requestEmoji($request, CharacterRole::DEFAULT_EMOJI);
             $entityManager->persist(new CharacterRole(
                 $server,
                 $name,
                 $this->requestPercentage($request),
-                $this->optionalRequestString($request, 'image_url') ?? 'https://placehold.co/400',
+                $emoji['source'],
+                $emoji['unicode'],
+                $emoji['id'],
+                $emoji['name'],
+                $emoji['animated'],
             ));
             $entityManager->flush();
         }
@@ -208,7 +222,16 @@ final class BackofficeController extends AbstractController
 
         $name = $this->requiredRequestString($request, 'name');
         if (null !== $name) {
-            $entityManager->persist(new Element($server, $name));
+            $emoji = $this->requestEmoji($request, Element::DEFAULT_EMOJI);
+            $entityManager->persist(new Element(
+                $server,
+                $name,
+                $emoji['source'],
+                $emoji['unicode'],
+                $emoji['id'],
+                $emoji['name'],
+                $emoji['animated'],
+            ));
             $entityManager->flush();
         }
 
@@ -278,9 +301,9 @@ final class BackofficeController extends AbstractController
     /**
      * @return array{
      *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
-     *     roles: list<array{name: string, percentage: int, image_url: string}>,
+     *     roles: list<array{name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
      *     stats: list<array{name: string}>,
-     *     elements: list<array{name: string}>
+     *     elements: list<array{name: string, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>
      * }
      */
     private function catalogPayload(EntityManagerInterface $entityManager, DiscordServer $server): array
@@ -300,7 +323,14 @@ final class BackofficeController extends AbstractController
                 static fn (CharacterRole $role): array => [
                     'name' => $role->name(),
                     'percentage' => $role->percentage(),
-                    'image_url' => $role->imageUrl(),
+                    'emoji_source' => $role->emojiSource(),
+                    'emoji_source_label' => self::EMOJI_SOURCE_LABELS[$role->emojiSource()] ?? self::EMOJI_SOURCE_LABELS['unicode'],
+                    'emoji_unicode' => $role->emojiUnicode(),
+                    'emoji_id' => $role->emojiId(),
+                    'emoji_name' => $role->emojiName(),
+                    'emoji_animated' => $role->emojiAnimated(),
+                    'emoji_markup' => $role->emojiMarkup(),
+                    'emoji_cdn_url' => $role->emojiCdnUrl(),
                 ],
                 $entityManager->getRepository(CharacterRole::class)->findBy(['server' => $server], ['percentage' => 'ASC', 'name' => 'ASC']),
             ),
@@ -309,7 +339,17 @@ final class BackofficeController extends AbstractController
                 $entityManager->getRepository(Stat::class)->findBy(['server' => $server], ['name' => 'ASC']),
             ),
             'elements' => array_map(
-                static fn (Element $element): array => ['name' => $element->name()],
+                static fn (Element $element): array => [
+                    'name' => $element->name(),
+                    'emoji_source' => $element->emojiSource(),
+                    'emoji_source_label' => self::EMOJI_SOURCE_LABELS[$element->emojiSource()] ?? self::EMOJI_SOURCE_LABELS['unicode'],
+                    'emoji_unicode' => $element->emojiUnicode(),
+                    'emoji_id' => $element->emojiId(),
+                    'emoji_name' => $element->emojiName(),
+                    'emoji_animated' => $element->emojiAnimated(),
+                    'emoji_markup' => $element->emojiMarkup(),
+                    'emoji_cdn_url' => $element->emojiCdnUrl(),
+                ],
                 $entityManager->getRepository(Element::class)->findBy(['server' => $server], ['name' => 'ASC']),
             ),
         ];
@@ -318,9 +358,9 @@ final class BackofficeController extends AbstractController
     /**
      * @param array{
      *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
-     *     roles: list<array{name: string, percentage: int, image_url: string}>,
+     *     roles: list<array{name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
      *     stats: list<array{name: string}>,
-     *     elements: list<array{name: string}>
+     *     elements: list<array{name: string, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>
      * } $catalog
      *
      * @return list<array{id: string, label: string, description: string, icon: string, count: int}>
@@ -346,9 +386,9 @@ final class BackofficeController extends AbstractController
     /**
      * @param array{
      *     ranks: list<array{discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool}>,
-     *     roles: list<array{name: string, percentage: int, image_url: string}>,
+     *     roles: list<array{name: string, percentage: int, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>,
      *     stats: list<array{name: string}>,
-     *     elements: list<array{name: string}>
+     *     elements: list<array{name: string, emoji_source: string, emoji_source_label: string, emoji_unicode: ?string, emoji_id: ?string, emoji_name: ?string, emoji_animated: bool, emoji_markup: string, emoji_cdn_url: ?string}>
      * } $catalog
      *
      * @return array{id: string, label: string, description: string, icon: string, count: int}
@@ -396,5 +436,35 @@ final class BackofficeController extends AbstractController
         $percentage = (int) $request->request->get('percentage', 0);
 
         return max(0, min(100, $percentage));
+    }
+
+    /**
+     * @return array{source: string, unicode: ?string, id: ?string, name: ?string, animated: bool}
+     */
+    private function requestEmoji(Request $request, string $defaultUnicode): array
+    {
+        $source = $this->optionalRequestString($request, 'emoji_source') ?? 'unicode';
+        if (!isset(self::EMOJI_SOURCE_LABELS[$source])) {
+            $source = 'unicode';
+        }
+
+        $value = $this->optionalRequestString($request, 'emoji_value') ?? $defaultUnicode;
+        if (1 === preg_match('/^<(?P<animated>a?):(?P<name>[A-Za-z0-9_]{2,32}):(?P<id>\d{17,22})>$/', $value, $matches)) {
+            return [
+                'source' => 'unicode' === $source ? 'server' : $source,
+                'unicode' => null,
+                'id' => $matches['id'],
+                'name' => $matches['name'],
+                'animated' => 'a' === $matches['animated'],
+            ];
+        }
+
+        return [
+            'source' => $source,
+            'unicode' => $value,
+            'id' => null,
+            'name' => null,
+            'animated' => false,
+        ];
     }
 }

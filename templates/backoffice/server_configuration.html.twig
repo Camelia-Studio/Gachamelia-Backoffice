@@ -200,9 +200,9 @@
                                 <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
                                     <div class="border-b border-camelia-ink/10 p-6">
                                         <h2 class="text-lg font-black">Ajouter un rôle</h2>
-                                        <p class="mt-1 text-sm font-bold text-camelia-muted">Les images serviront aux fiches et aux tirages.</p>
+                                        <p class="mt-1 text-sm font-bold text-camelia-muted">L’emoji sera affiché sur les fiches Discord et les tirages.</p>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="grid gap-5 p-6" data-controller="role-preview">
+                                    <form method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="grid gap-5 p-6" data-controller="emoji-preview" data-emoji-preview-default-value="🎭">
                                         <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
                                             <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                 Nom
@@ -213,23 +213,33 @@
                                                 <input name="percentage" type="number" min="0" max="100" value="0" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
                                             </label>
                                         </div>
-                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                                            Image
-                                            <input name="image_url" type="url" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50" data-role-preview-target="input" data-action="input->role-preview#update change->role-preview#update">
-                                        </label>
-                                        <div class="grid gap-4 border border-camelia-ink/10 bg-camelia-blush/50 p-4 sm:grid-cols-[5rem_minmax(0,1fr)] sm:items-center" data-testid="role-image-preview">
+                                        <div class="grid gap-3 md:grid-cols-[10rem_minmax(0,1fr)]">
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                Source
+                                                <select name="emoji_source" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50" data-emoji-preview-target="source" data-action="change->emoji-preview#update">
+                                                    <option value="unicode">Standard</option>
+                                                    <option value="bot">Bot</option>
+                                                    <option value="server">Serveur</option>
+                                                </select>
+                                            </label>
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                Emoji
+                                                <input name="emoji_value" value="🎭" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50" data-emoji-preview-target="input" data-action="input->emoji-preview#update change->emoji-preview#update">
+                                            </label>
+                                        </div>
+                                        <div class="grid gap-4 border border-camelia-ink/10 bg-camelia-blush/50 p-4 sm:grid-cols-[5rem_minmax(0,1fr)] sm:items-center" data-testid="emoji-preview">
                                             <span class="relative flex size-20 shrink-0 items-center justify-center overflow-hidden bg-camelia-gold/20">
                                                 <img
                                                     alt=""
                                                     class="hidden size-full object-cover"
-                                                    data-role-preview-target="image"
-                                                    data-action="load->role-preview#imageLoaded error->role-preview#imageError"
+                                                    data-emoji-preview-target="image"
+                                                    data-action="load->emoji-preview#imageLoaded error->emoji-preview#imageError"
                                                 >
-                                                <span class="flex size-full items-center justify-center font-display text-2xl font-black text-[#7a5415]" data-role-preview-target="placeholder">R</span>
+                                                <span class="flex size-full items-center justify-center font-display text-2xl font-black text-[#7a5415]" data-emoji-preview-target="glyph">🎭</span>
                                             </span>
                                             <div>
-                                                <strong class="text-sm">Prévisualisation</strong>
-                                                <p class="mt-1 text-xs font-bold leading-relaxed text-camelia-muted" data-role-preview-target="status">Aucune image renseignée pour le moment.</p>
+                                                <strong class="text-sm">Prévisualisation Discord</strong>
+                                                <p class="mt-1 text-xs font-bold leading-relaxed text-camelia-muted" data-emoji-preview-target="status">Emoji standard utilisé dans les fiches.</p>
                                             </div>
                                         </div>
                                         <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
@@ -251,15 +261,15 @@
                                             <article class="grid gap-4 border border-camelia-ink/10 bg-white p-4 text-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center" data-testid="role-card">
                                                 <div class="flex min-w-0 items-center gap-4">
                                                     <span class="flex size-16 shrink-0 items-center justify-center overflow-hidden bg-camelia-gold/20">
-                                                        {% if role.image_url %}
-                                                            <img src="{{ role.image_url }}" alt="Image du rôle {{ role.name }}" class="size-full object-cover" loading="lazy">
+                                                        {% if role.emoji_cdn_url %}
+                                                            <img src="{{ role.emoji_cdn_url }}" alt="Emoji du rôle {{ role.name }}" class="size-full object-cover" loading="lazy">
                                                         {% else %}
-                                                            <span class="font-display text-xl font-black text-[#7a5415]">{{ role.name|slice(0, 1)|upper }}</span>
+                                                            <span class="font-display text-xl font-black text-[#7a5415]">{{ role.emoji_markup }}</span>
                                                         {% endif %}
                                                     </span>
                                                     <div class="min-w-0">
                                                         <strong class="block truncate">{{ role.name }}</strong>
-                                                        <p class="mt-1 truncate font-semibold text-camelia-muted">{{ role.image_url ? 'Image configurée' : 'Aucune image configurée' }}</p>
+                                                        <p class="mt-1 truncate font-semibold text-camelia-muted">{{ role.emoji_source_label }} · {{ role.emoji_markup }}</p>
                                                     </div>
                                                 </div>
                                                 <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415] md:justify-self-end">{{ role.percentage }}%</span>
@@ -316,13 +326,42 @@
                                 <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
                                     <div class="border-b border-camelia-ink/10 p-6">
                                         <h2 class="text-lg font-black">Ajouter un élément</h2>
-                                        <p class="mt-1 text-sm font-bold text-camelia-muted">Un élément est simplement un nom pour l’instant.</p>
+                                        <p class="mt-1 text-sm font-bold text-camelia-muted">L’emoji sera affiché dans les fiches Discord.</p>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_element_create', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                    <form method="post" action="{{ path('app_server_catalog_element_create', { guildId: guild.id }) }}" class="grid gap-5 p-6" data-controller="emoji-preview" data-emoji-preview-default-value="✨">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Nom
                                             <input name="name" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
                                         </label>
+                                        <div class="grid gap-3 md:grid-cols-[10rem_minmax(0,1fr)]">
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                Source
+                                                <select name="emoji_source" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50" data-emoji-preview-target="source" data-action="change->emoji-preview#update">
+                                                    <option value="unicode">Standard</option>
+                                                    <option value="bot">Bot</option>
+                                                    <option value="server">Serveur</option>
+                                                </select>
+                                            </label>
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                Emoji
+                                                <input name="emoji_value" value="✨" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50" data-emoji-preview-target="input" data-action="input->emoji-preview#update change->emoji-preview#update">
+                                            </label>
+                                        </div>
+                                        <div class="grid gap-4 border border-camelia-ink/10 bg-camelia-blush/50 p-4 sm:grid-cols-[5rem_minmax(0,1fr)] sm:items-center" data-testid="emoji-preview">
+                                            <span class="relative flex size-20 shrink-0 items-center justify-center overflow-hidden bg-camelia-blush">
+                                                <img
+                                                    alt=""
+                                                    class="hidden size-full object-cover"
+                                                    data-emoji-preview-target="image"
+                                                    data-action="load->emoji-preview#imageLoaded error->emoji-preview#imageError"
+                                                >
+                                                <span class="flex size-full items-center justify-center font-display text-2xl font-black text-camelia-rose" data-emoji-preview-target="glyph">✨</span>
+                                            </span>
+                                            <div>
+                                                <strong class="text-sm">Prévisualisation Discord</strong>
+                                                <p class="mt-1 text-xs font-bold leading-relaxed text-camelia-muted" data-emoji-preview-target="status">Emoji standard utilisé dans les fiches.</p>
+                                            </div>
+                                        </div>
                                         <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                             Ajouter l’élément
                                         </button>
@@ -341,10 +380,16 @@
                                         {% for element in catalog.elements %}
                                             <article class="grid min-h-32 gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="element-card">
                                                 <div class="flex items-center gap-3">
-                                                    <span class="flex size-10 shrink-0 items-center justify-center bg-camelia-blush font-display text-lg font-black text-camelia-rose">{{ element.name|slice(0, 1)|upper }}</span>
+                                                    <span class="flex size-12 shrink-0 items-center justify-center overflow-hidden bg-camelia-blush font-display text-lg font-black text-camelia-rose">
+                                                        {% if element.emoji_cdn_url %}
+                                                            <img src="{{ element.emoji_cdn_url }}" alt="Emoji de l’élément {{ element.name }}" class="size-full object-cover" loading="lazy">
+                                                        {% else %}
+                                                            {{ element.emoji_markup }}
+                                                        {% endif %}
+                                                    </span>
                                                     <strong>{{ element.name }}</strong>
                                                 </div>
-                                                <p class="text-sm font-semibold leading-relaxed text-camelia-muted">Affinité disponible pour les tirages et fiches.</p>
+                                                <p class="text-sm font-semibold leading-relaxed text-camelia-muted">{{ element.emoji_source_label }} · {{ element.emoji_markup }}</p>
                                             </article>
                                         {% else %}
                                             <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted sm:col-span-2 2xl:col-span-3">Aucun élément pour l’instant. Ajoute la première affinité du serveur.</p>

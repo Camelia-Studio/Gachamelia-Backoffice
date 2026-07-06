@@ -189,7 +189,11 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             'server_id' => $adminServerId,
             'name' => 'Guerrier',
             'percentage' => 45,
-            'image_url' => 'https://example.test/guerrier.png',
+            'emoji_source' => 'server',
+            'emoji_id' => '123456789012345678',
+            'emoji_name' => 'guerrier',
+            'emoji_animated' => 0,
+            'emoji_unicode' => null,
         ]);
         $this->connection()->insert('stats', [
             'server_id' => $adminServerId,
@@ -198,6 +202,11 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $this->connection()->insert('elements', [
             'server_id' => $adminServerId,
             'name' => 'Feu',
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '🔥',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
         ]);
         $this->connection()->insert('stats', [
             'server_id' => $otherServerId,
@@ -224,14 +233,15 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-roles"][aria-current="page"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] form[data-controller="role-preview"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="image_url"][data-role-preview-target="input"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] [data-testid="role-image-preview"] img[data-role-preview-target="image"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] form[data-controller="emoji-preview"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] select[name="emoji_source"][data-emoji-preview-target="source"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="emoji_value"][data-emoji-preview-target="input"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] [data-testid="emoji-preview"] img[data-emoji-preview-target="image"]');
         self::assertSelectorExists('[data-testid="catalog-list-panel"]');
-        self::assertSelectorExists('[data-testid="role-card"] img[alt="Image du rôle Guerrier"][src="https://example.test/guerrier.png"]');
+        self::assertSelectorExists('[data-testid="role-card"] img[alt="Emoji du rôle Guerrier"][src="https://cdn.discordapp.com/emojis/123456789012345678.webp?size=64&quality=lossless"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Guerrier');
-        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Image configurée');
-        self::assertSelectorTextNotContains('[data-testid="catalog-list-panel"]', 'https://example.test/guerrier.png');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Emoji serveur');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', '<:guerrier:123456789012345678>');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Novice');
 
         $client->request('GET', '/app/serveurs/admin/configuration/stats');
@@ -247,8 +257,10 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-elements"][aria-current="page"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] form[data-controller="emoji-preview"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="emoji_value"][data-emoji-preview-target="input"]');
         self::assertSelectorExists('[data-testid="catalog-list-panel"] [data-testid="element-card"]');
+        self::assertSelectorTextContains('[data-testid="element-card"]', '🔥');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Feu');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Force');
     }
@@ -272,7 +284,8 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $client->request('POST', '/app/serveurs/admin/catalogue/roles', [
             'name' => 'Alchimiste',
             'percentage' => '40',
-            'image_url' => 'https://example.test/alchimiste.png',
+            'emoji_source' => 'server',
+            'emoji_value' => '<:alchimiste:987654321098765432>',
         ]);
 
         self::assertResponseRedirects('/app/serveurs/admin/configuration/roles');
@@ -285,6 +298,8 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         $client->request('POST', '/app/serveurs/admin/catalogue/elements', [
             'name' => 'Lune',
+            'emoji_source' => 'unicode',
+            'emoji_value' => '🌙',
         ]);
 
         self::assertResponseRedirects('/app/serveurs/admin/configuration/elements');
@@ -304,13 +319,20 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSame([
             'name' => 'Alchimiste',
             'percentage' => 40,
-            'image_url' => 'https://example.test/alchimiste.png',
+            'emoji_source' => 'server',
+            'emoji_id' => '987654321098765432',
+            'emoji_name' => 'alchimiste',
+            'emoji_animated' => 0,
+            'emoji_unicode' => null,
         ], $this->connection()->fetchAssociative(
-            'SELECT name, percentage, image_url FROM roles WHERE server_id = ?',
+            'SELECT name, percentage, emoji_source, emoji_id, emoji_name, emoji_animated, emoji_unicode FROM roles WHERE server_id = ?',
             [$serverId],
         ));
         self::assertSame('Sagesse', $this->connection()->fetchOne('SELECT name FROM stats WHERE server_id = ?', [$serverId]));
-        self::assertSame('Lune', $this->connection()->fetchOne('SELECT name FROM elements WHERE server_id = ?', [$serverId]));
+        self::assertSame(
+            ['name' => 'Lune', 'emoji_source' => 'unicode', 'emoji_unicode' => '🌙'],
+            $this->connection()->fetchAssociative('SELECT name, emoji_source, emoji_unicode FROM elements WHERE server_id = ?', [$serverId]),
+        );
     }
 
     public function testMemberCannotCreateServerCatalogRows(): void

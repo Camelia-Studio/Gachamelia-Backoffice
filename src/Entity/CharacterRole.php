@@ -12,6 +12,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\UniqueConstraint(name: 'uniq_roles_server_name', columns: ['server_id', 'name'])]
 class CharacterRole
 {
+    public const string DEFAULT_EMOJI = '🎭';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: Types::BIGINT)]
@@ -27,15 +29,39 @@ class CharacterRole
     #[ORM\Column]
     private int $percentage;
 
-    #[ORM\Column(name: 'image_url', length: 255, options: ['default' => 'https://placehold.co/400'])]
-    private string $imageUrl;
+    #[ORM\Column(name: 'emoji_source', length: 16, options: ['default' => 'unicode'])]
+    private string $emojiSource;
 
-    public function __construct(DiscordServer $server, string $name, int $percentage, string $imageUrl = 'https://placehold.co/400')
-    {
+    #[ORM\Column(name: 'emoji_unicode', length: 64, nullable: true)]
+    private ?string $emojiUnicode;
+
+    #[ORM\Column(name: 'emoji_id', length: 32, nullable: true)]
+    private ?string $emojiId;
+
+    #[ORM\Column(name: 'emoji_name', length: 255, nullable: true)]
+    private ?string $emojiName;
+
+    #[ORM\Column(name: 'emoji_animated', options: ['default' => false])]
+    private bool $emojiAnimated;
+
+    public function __construct(
+        DiscordServer $server,
+        string $name,
+        int $percentage,
+        string $emojiSource = 'unicode',
+        ?string $emojiUnicode = self::DEFAULT_EMOJI,
+        ?string $emojiId = null,
+        ?string $emojiName = null,
+        bool $emojiAnimated = false,
+    ) {
         $this->server = $server;
         $this->name = $name;
         $this->percentage = $percentage;
-        $this->imageUrl = $imageUrl;
+        $this->emojiSource = $emojiSource;
+        $this->emojiUnicode = $emojiUnicode;
+        $this->emojiId = $emojiId;
+        $this->emojiName = $emojiName;
+        $this->emojiAnimated = $emojiAnimated;
     }
 
     public function id(): ?int
@@ -58,8 +84,48 @@ class CharacterRole
         return $this->percentage;
     }
 
-    public function imageUrl(): string
+    public function emojiSource(): string
     {
-        return $this->imageUrl;
+        return $this->emojiSource;
+    }
+
+    public function emojiUnicode(): ?string
+    {
+        return $this->emojiUnicode;
+    }
+
+    public function emojiId(): ?string
+    {
+        return $this->emojiId;
+    }
+
+    public function emojiName(): ?string
+    {
+        return $this->emojiName;
+    }
+
+    public function emojiAnimated(): bool
+    {
+        return $this->emojiAnimated;
+    }
+
+    public function emojiMarkup(): string
+    {
+        if (null !== $this->emojiId && null !== $this->emojiName) {
+            return sprintf('<%s:%s:%s>', $this->emojiAnimated ? 'a' : '', $this->emojiName, $this->emojiId);
+        }
+
+        return $this->emojiUnicode ?? self::DEFAULT_EMOJI;
+    }
+
+    public function emojiCdnUrl(): ?string
+    {
+        if (null === $this->emojiId) {
+            return null;
+        }
+
+        $extension = $this->emojiAnimated ? 'gif' : 'webp';
+
+        return sprintf('https://cdn.discordapp.com/emojis/%s.%s?size=64&quality=lossless', $this->emojiId, $extension);
     }
 }

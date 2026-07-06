@@ -69,6 +69,16 @@ final class MultiServerEntityMappingTest extends KernelTestCase
             $this->assertUniqueColumns($metadata, ['server_id', 'name']);
         }
 
+        foreach ([CharacterRole::class, Element::class] as $entityClass) {
+            $metadata = $this->metadata($entityClass);
+
+            self::assertTrue($metadata->hasField('emojiSource'));
+            self::assertTrue($metadata->hasField('emojiUnicode'));
+            self::assertTrue($metadata->hasField('emojiId'));
+            self::assertTrue($metadata->hasField('emojiName'));
+            self::assertTrue($metadata->hasField('emojiAnimated'));
+        }
+
         $this->assertUniqueColumns($this->metadata(Rank::class), ['server_id', 'discord_id']);
     }
 
