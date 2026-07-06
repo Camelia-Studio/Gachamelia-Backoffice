@@ -39,11 +39,31 @@
                         class="grid gap-4 border border-camelia-ink/10 bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
                         data-testid="guild-{{ guild.id }}"
                     >
-                        <div class="min-w-0">
-                            <h2 class="text-lg font-black leading-tight">{{ guild.name }}</h2>
-                            <p class="mt-1 text-sm font-semibold text-camelia-muted">
-                                {{ guild.canManageConfiguration ? 'Administration' : 'Membre' }}
-                            </p>
+                        <div class="flex min-w-0 items-center gap-4">
+                            {% if guild.icon_url %}
+                                <img
+                                    src="{{ guild.icon_url }}"
+                                    alt="Logo {{ guild.name }}"
+                                    width="48"
+                                    height="48"
+                                    class="size-12 shrink-0 rounded-full border border-camelia-ink/10 bg-camelia-blush object-cover"
+                                    loading="lazy"
+                                >
+                            {% else %}
+                                <span
+                                    class="flex size-12 shrink-0 items-center justify-center rounded-full border border-camelia-ink/10 bg-camelia-blush font-display text-2xl font-black text-camelia-rose"
+                                    data-testid="guild-icon-fallback"
+                                    aria-hidden="true"
+                                >
+                                    {{ guild.name|slice(0, 1)|upper }}
+                                </span>
+                            {% endif %}
+                            <div class="min-w-0">
+                                <h2 class="text-lg font-black leading-tight">{{ guild.name }}</h2>
+                                <p class="mt-1 text-sm font-semibold text-camelia-muted">
+                                    {{ guild.canManageConfiguration ? 'Administration' : 'Membre' }}
+                                </p>
+                            </div>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             {% if guild.canManageConfiguration %}

@@ -13,9 +13,29 @@
 
 {% block body %}
     <section class="grid gap-8" data-testid="server-configuration">
-        <div class="grid gap-3 border-b border-camelia-ink/10 pb-6">
-            <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">{{ guild.name }}</p>
-            <h1 class="font-display text-4xl leading-tight md:text-5xl">Configuration du serveur</h1>
+        <div class="flex items-center gap-4 border-b border-camelia-ink/10 pb-6">
+            {% if guild.icon_url %}
+                <img
+                    src="{{ guild.icon_url }}"
+                    alt="Logo {{ guild.name }}"
+                    width="56"
+                    height="56"
+                    class="size-14 shrink-0 rounded-full border border-camelia-ink/10 bg-camelia-blush object-cover"
+                    loading="lazy"
+                >
+            {% else %}
+                <span
+                    class="flex size-14 shrink-0 items-center justify-center rounded-full border border-camelia-ink/10 bg-camelia-blush font-display text-3xl font-black text-camelia-rose"
+                    data-testid="guild-icon-fallback"
+                    aria-hidden="true"
+                >
+                    {{ guild.name|slice(0, 1)|upper }}
+                </span>
+            {% endif %}
+            <div class="grid min-w-0 gap-3">
+                <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">{{ guild.name }}</p>
+                <h1 class="font-display text-4xl leading-tight md:text-5xl">Configuration du serveur</h1>
+            </div>
         </div>
 
         <div class="grid gap-4 lg:grid-cols-2">

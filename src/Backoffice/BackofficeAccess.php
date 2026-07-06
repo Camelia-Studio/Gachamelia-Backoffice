@@ -2,6 +2,7 @@
 
 namespace App\Backoffice;
 
+use App\Discord\DiscordCdnUrlGenerator;
 use App\Entity\DiscordServerMember;
 use App\Entity\DiscordUser;
 use Doctrine\ORM\EntityManagerInterface;
@@ -10,6 +11,7 @@ final readonly class BackofficeAccess
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
+        private DiscordCdnUrlGenerator $discordCdnUrlGenerator,
     ) {
     }
 
@@ -36,6 +38,7 @@ final readonly class BackofficeAccess
      *     id: string,
      *     name: string,
      *     icon: ?string,
+     *     icon_url: ?string,
      *     owner: bool,
      *     permissions: string,
      *     canManageConfiguration: bool
@@ -70,6 +73,7 @@ final readonly class BackofficeAccess
      *     id: string,
      *     name: string,
      *     icon: ?string,
+     *     icon_url: ?string,
      *     owner: bool,
      *     permissions: string,
      *     canManageConfiguration: bool
@@ -107,6 +111,7 @@ final readonly class BackofficeAccess
      *     id: string,
      *     name: string,
      *     icon: ?string,
+     *     icon_url: ?string,
      *     owner: bool,
      *     permissions: string,
      *     canManageConfiguration: bool
@@ -120,6 +125,7 @@ final readonly class BackofficeAccess
             'id' => $server->discordId(),
             'name' => $server->name(),
             'icon' => $server->icon(),
+            'icon_url' => $this->discordCdnUrlGenerator->guildIconUrl($server->discordId(), $server->icon()),
             'owner' => $membership->owner(),
             'permissions' => $membership->permissions(),
             'canManageConfiguration' => $membership->canManageConfiguration(),

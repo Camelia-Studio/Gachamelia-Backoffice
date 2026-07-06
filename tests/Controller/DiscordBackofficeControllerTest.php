@@ -128,6 +128,8 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('[data-testid="backoffice-dashboard"]', 'Serveur Admin');
         self::assertSelectorTextContains('[data-testid="backoffice-dashboard"]', 'Serveur Membre');
+        self::assertSelectorExists('[data-testid="guild-admin"] img[alt="Logo Serveur Admin"][src="https://cdn.discordapp.com/icons/admin/static-icon-hash.webp?size=64"]');
+        self::assertSelectorExists('[data-testid="guild-member"] [data-testid="guild-icon-fallback"]');
         self::assertSelectorExists('[data-testid="guild-admin"] a[href="/app/serveurs/admin/configuration"]');
         self::assertSelectorExists('[data-testid="guild-admin"] a[href="/app/serveurs/admin/fiche-personnage"]');
         self::assertSelectorNotExists('[data-testid="guild-member"] a[href="/app/serveurs/member/configuration"]');
@@ -149,6 +151,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Configuration du serveur');
         self::assertSelectorTextContains('body', 'Serveur Admin');
+        self::assertSelectorExists('[data-testid="server-configuration"] img[alt="Logo Serveur Admin"][src="https://cdn.discordapp.com/icons/admin/static-icon-hash.webp?size=64"]');
 
         $client->request('GET', '/app/serveurs/member/configuration');
 
@@ -322,7 +325,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     private function seedPersistentBackofficeAccess(KernelBrowser $client): void
     {
-        $adminServerId = $this->seedKnownDiscordServer('admin', 'Serveur Admin', null);
+        $adminServerId = $this->seedKnownDiscordServer('admin', 'Serveur Admin', 'static-icon-hash');
         $memberServerId = $this->seedKnownDiscordServer('member', 'Serveur Membre', null);
         $this->seedKnownDiscordServer('unrelated', 'Serveur Non Lié', null);
 
