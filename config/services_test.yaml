@@ -4,3 +4,7 @@ services:
     App\Discord\DiscordApiClientInterface:
         public: true
         alias: App\Discord\DiscordHttpApiClient
+
+    App\Discord\DiscordGuildResourcesProviderInterface:
+        public: true
+        alias: App\Discord\DiscordGuildResourcesProvider

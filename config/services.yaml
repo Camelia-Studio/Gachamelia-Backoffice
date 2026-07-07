@@ -35,12 +35,28 @@ services:
     App\Discord\DiscordApiClientInterface:
         alias: App\Discord\DiscordHttpApiClient
 
+    App\Discord\DiscordGuildResourcesClientInterface:
+        alias: App\Discord\DiscordHttpGuildResourcesClient
+
+    App\Discord\DiscordGuildResourcesProviderInterface:
+        alias: App\Discord\DiscordGuildResourcesProvider
+
     App\Discord\DiscordHttpApiClient:
         arguments:
             $apiBaseUri: '%env(DISCORD_API_BASE_URI)%'
             $clientId: '%env(DISCORD_CLIENT_ID)%'
             $clientSecret: '%env(DISCORD_CLIENT_SECRET)%'
             $redirectUri: '%env(DISCORD_REDIRECT_URI)%'
+
+    App\Discord\DiscordHttpGuildResourcesClient:
+        arguments:
+            $apiBaseUri: '%env(DISCORD_API_BASE_URI)%'
+            $botToken: '%env(DISCORD_BOT_TOKEN)%'
+
+    App\Discord\DiscordGuildResourcesProvider:
+        arguments:
+            $cache: '@cache.app'
+            $ttlSeconds: '%env(int:DISCORD_RESOURCE_CACHE_TTL)%'
 
     App\Controller\DiscordAuthController:
         arguments:

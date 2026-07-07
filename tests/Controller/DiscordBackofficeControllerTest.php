@@ -3,6 +3,7 @@
 namespace App\Tests\Controller;
 
 use App\Discord\DiscordApiClientInterface;
+use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Tests\Support\DatabaseResetter;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -403,8 +404,19 @@ final class DiscordBackofficeControllerTest extends WebTestCase
     public function testAdministratorCanDisplayAndUpdateServerSettings(): void
     {
         $client = static::createClient();
+        $client->disableReboot();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
+        static::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new FakeDiscordGuildResourcesProvider(
+            [
+                ['id' => '111111111111111111', 'name' => 'bienvenue', 'label' => '#bienvenue', 'type' => 0],
+                ['id' => '555555555555555555', 'name' => 'départs', 'label' => '#départs', 'type' => 0],
+            ],
+            [
+                ['id' => '333333333333333333', 'name' => 'Staff', 'label' => '@Staff', 'position' => 8, 'managed' => false],
+                ['id' => '666666666666666666', 'name' => 'Modération', 'label' => '@Modération', 'position' => 6, 'managed' => false],
+            ],
+        ));
 
         $this->connection()->update('discord_servers', [
             'welcome_channel_id' => '111111111111111111',
@@ -419,9 +431,11 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-settings"][aria-current="page"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Canaux et rôle staff');
-        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] input[name="welcome_channel_id"][value="111111111111111111"]');
-        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] input[name="bye_channel_id"]');
-        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] input[name="staff_role_id"][value="333333333333333333"]');
+        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] select[name="welcome_channel_id"] option[value="111111111111111111"][selected]');
+        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] select[name="bye_channel_id"] option[value=""][selected]');
+        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] select[name="staff_role_id"] option[value="333333333333333333"][selected]');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', '#bienvenue');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', '@Staff');
 
         $client->request('POST', '/app/serveurs/admin/configuration/settings', [
             'welcome_channel_id' => '444444444444444444',
@@ -438,6 +452,31 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             'SELECT welcome_channel_id, bye_channel_id, staff_role_id FROM discord_servers WHERE discord_id = ?',
             ['admin'],
         ));
+    }
+
+    public function testAdministratorCanKeepManualSettingsWhenDiscordResourcesAreUnavailable(): void
+    {
+        $client = static::createClient();
+        $client->disableReboot();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+        static::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new FakeDiscordGuildResourcesProvider([], []));
+
+        $this->connection()->update('discord_servers', [
+            'welcome_channel_id' => '111111111111111111',
+            'bye_channel_id' => '222222222222222222',
+            'staff_role_id' => '333333333333333333',
+        ], [
+            'discord_id' => 'admin',
+        ]);
+
+        $client->request('GET', '/app/serveurs/admin/configuration/settings');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] input[name="welcome_channel_id"][value="111111111111111111"]');
+        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] input[name="bye_channel_id"][value="222222222222222222"]');
+        self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/settings"] input[name="staff_role_id"][value="333333333333333333"]');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Ressources Discord temporairement indisponibles');
     }
 
     public function testAdministratorCanCreateServerCatalogRows(): void
@@ -985,6 +1024,27 @@ final class FakeDiscordApiClient implements DiscordApiClientInterface
             ['id' => 'admin', 'name' => 'Serveur Admin', 'icon' => 'fresh-icon', 'owner' => false, 'permissions' => '8'],
             ['id' => 'member', 'name' => 'Serveur Membre', 'icon' => null, 'owner' => false, 'permissions' => '0'],
             ['id' => 'without-bot', 'name' => 'Serveur Sans Bot', 'icon' => null, 'owner' => true, 'permissions' => '8'],
+        ];
+    }
+}
+
+final readonly class FakeDiscordGuildResourcesProvider implements DiscordGuildResourcesProviderInterface
+{
+    /**
+     * @param list<array{id: string, name: string, label: string, type: int}> $channels
+     * @param list<array{id: string, name: string, label: string, position: int, managed: bool}> $roles
+     */
+    public function __construct(
+        private array $channels,
+        private array $roles,
+    ) {
+    }
+
+    public function resourcesForGuild(string $guildId): array
+    {
+        return [
+            'channels' => $this->channels,
+            'roles' => $this->roles,
         ];
     }
 }

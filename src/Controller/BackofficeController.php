@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Backoffice\BackofficeAccess;
 use App\Backoffice\BackofficeSession;
+use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Entity\ByeMessage;
 use App\Entity\CharacterRole;
 use App\Entity\DiscordEmoji;
@@ -137,11 +138,15 @@ final class BackofficeController extends AbstractController
         }
         $server = $this->findServerEntityOr404($entityManager, $guild['id']);
         $catalog = $this->catalogPayload($entityManager, $server);
+        $discordResources = $this->emptyDiscordResourcesPayload();
 
         return $this->render('backoffice/server_configuration.html.twig', [
             'guild' => $guild,
             'catalog' => $catalog,
             'emoji_picker' => $this->emojiPickerPayload($entityManager, $server),
+            'discord_resources' => $discordResources,
+            'discord_resource_ids' => $this->discordResourceIdsPayload($discordResources),
+            'discord_settings_labels' => $this->discordSettingsLabelsPayload($catalog['settings'], $discordResources),
             'configuration_sections' => $this->configurationSections($catalog),
             'active_section' => 'overview',
             'active_configuration_section' => null,
@@ -155,6 +160,7 @@ final class BackofficeController extends AbstractController
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
+        DiscordGuildResourcesProviderInterface $discordGuildResourcesProvider,
     ): Response {
         $this->configurationSectionOr404($section);
 
@@ -168,11 +174,17 @@ final class BackofficeController extends AbstractController
         }
         $server = $this->findServerEntityOr404($entityManager, $guild['id']);
         $catalog = $this->catalogPayload($entityManager, $server);
+        $discordResources = 'settings' === $section
+            ? $discordGuildResourcesProvider->resourcesForGuild($guild['id'])
+            : $this->emptyDiscordResourcesPayload();
 
         return $this->render('backoffice/server_configuration.html.twig', [
             'guild' => $guild,
             'catalog' => $catalog,
             'emoji_picker' => $this->emojiPickerPayload($entityManager, $server),
+            'discord_resources' => $discordResources,
+            'discord_resource_ids' => $this->discordResourceIdsPayload($discordResources),
+            'discord_settings_labels' => $this->discordSettingsLabelsPayload($catalog['settings'], $discordResources),
             'configuration_sections' => $this->configurationSections($catalog),
             'active_section' => $section,
             'active_configuration_section' => $this->configurationSectionPayload($catalog, $section),
@@ -1003,6 +1015,81 @@ final class BackofficeController extends AbstractController
             'bye_channel_id' => $server->byeChannelId(),
             'staff_role_id' => $server->staffRoleId(),
         ];
+    }
+
+    /**
+     * @return array{channels: array{}, roles: array{}}
+     */
+    private function emptyDiscordResourcesPayload(): array
+    {
+        return [
+            'channels' => [],
+            'roles' => [],
+        ];
+    }
+
+    /**
+     * @param array{
+     *     channels: list<array{id: string, name: string, label: string, type: int}>,
+     *     roles: list<array{id: string, name: string, label: string, position: int, managed: bool}>
+     * } $discordResources
+     *
+     * @return array{channels: list<string>, roles: list<string>}
+     */
+    private function discordResourceIdsPayload(array $discordResources): array
+    {
+        return [
+            'channels' => array_map(static fn (array $channel): string => $channel['id'], $discordResources['channels']),
+            'roles' => array_map(static fn (array $role): string => $role['id'], $discordResources['roles']),
+        ];
+    }
+
+    /**
+     * @param array{welcome_channel_id: ?string, bye_channel_id: ?string, staff_role_id: ?string} $settings
+     * @param array{
+     *     channels: list<array{id: string, name: string, label: string, type: int}>,
+     *     roles: list<array{id: string, name: string, label: string, position: int, managed: bool}>
+     * } $discordResources
+     *
+     * @return array{welcome_channel_id: ?string, bye_channel_id: ?string, staff_role_id: ?string}
+     */
+    private function discordSettingsLabelsPayload(array $settings, array $discordResources): array
+    {
+        $channelLabels = $this->resourceLabelsById($discordResources['channels']);
+        $roleLabels = $this->resourceLabelsById($discordResources['roles']);
+
+        return [
+            'welcome_channel_id' => $this->discordSettingLabel($settings['welcome_channel_id'], $channelLabels),
+            'bye_channel_id' => $this->discordSettingLabel($settings['bye_channel_id'], $channelLabels),
+            'staff_role_id' => $this->discordSettingLabel($settings['staff_role_id'], $roleLabels),
+        ];
+    }
+
+    /**
+     * @param list<array{id: string, label: string}> $resources
+     *
+     * @return array<string, string>
+     */
+    private function resourceLabelsById(array $resources): array
+    {
+        $labels = [];
+        foreach ($resources as $resource) {
+            $labels[$resource['id']] = $resource['label'];
+        }
+
+        return $labels;
+    }
+
+    /**
+     * @param array<string, string> $labels
+     */
+    private function discordSettingLabel(?string $value, array $labels): ?string
+    {
+        if (null === $value) {
+            return null;
+        }
+
+        return $labels[$value] ?? $value;
     }
 
     /**

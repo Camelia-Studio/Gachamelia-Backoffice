@@ -199,24 +199,64 @@
                 {% else %}
                     <div data-testid="configuration-panel">
                         {% if active_section == 'settings' %}
+                            {% set settings_input_class = 'min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50' %}
                             <div class="grid gap-8 xl:grid-cols-[minmax(24rem,32rem)_minmax(0,1fr)] xl:items-start">
                                 <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
                                     <div class="border-b border-camelia-ink/10 p-6">
                                         <h2 class="text-lg font-black">Canaux et rôle staff</h2>
-                                        <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Ces IDs Discord sont utilisés par le bot pour poster les messages et reconnaître le staff.</p>
+                                        <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Ces valeurs Discord sont utilisées par le bot pour poster les messages et reconnaître le staff.</p>
                                     </div>
                                     <form method="post" action="{{ path('app_server_settings_update', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        {% if discord_resources.channels is empty and discord_resources.roles is empty %}
+                                            <p class="border border-camelia-rose/20 bg-camelia-blush/70 p-4 text-sm font-bold leading-relaxed text-camelia-muted">Ressources Discord temporairement indisponibles. Les IDs restent éditables manuellement.</p>
+                                        {% endif %}
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Salon d’arrivée
-                                            <input name="welcome_channel_id" value="{{ catalog.settings.welcome_channel_id }}" inputmode="numeric" placeholder="ID du salon welcome" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                            {% if discord_resources.channels is not empty %}
+                                                <select name="welcome_channel_id" class="{{ settings_input_class }}">
+                                                    <option value="" {% if not catalog.settings.welcome_channel_id %}selected{% endif %}>Non configuré</option>
+                                                    {% if catalog.settings.welcome_channel_id and catalog.settings.welcome_channel_id not in discord_resource_ids.channels %}
+                                                        <option value="{{ catalog.settings.welcome_channel_id }}" selected>ID actuel introuvable ({{ catalog.settings.welcome_channel_id }})</option>
+                                                    {% endif %}
+                                                    {% for channel in discord_resources.channels %}
+                                                        <option value="{{ channel.id }}" {% if catalog.settings.welcome_channel_id == channel.id %}selected{% endif %}>{{ channel.label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% else %}
+                                                <input name="welcome_channel_id" value="{{ catalog.settings.welcome_channel_id }}" inputmode="numeric" placeholder="ID du salon welcome" class="{{ settings_input_class }}">
+                                            {% endif %}
                                         </label>
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Salon de départ
-                                            <input name="bye_channel_id" value="{{ catalog.settings.bye_channel_id }}" inputmode="numeric" placeholder="ID du salon bye" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                            {% if discord_resources.channels is not empty %}
+                                                <select name="bye_channel_id" class="{{ settings_input_class }}">
+                                                    <option value="" {% if not catalog.settings.bye_channel_id %}selected{% endif %}>Non configuré</option>
+                                                    {% if catalog.settings.bye_channel_id and catalog.settings.bye_channel_id not in discord_resource_ids.channels %}
+                                                        <option value="{{ catalog.settings.bye_channel_id }}" selected>ID actuel introuvable ({{ catalog.settings.bye_channel_id }})</option>
+                                                    {% endif %}
+                                                    {% for channel in discord_resources.channels %}
+                                                        <option value="{{ channel.id }}" {% if catalog.settings.bye_channel_id == channel.id %}selected{% endif %}>{{ channel.label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% else %}
+                                                <input name="bye_channel_id" value="{{ catalog.settings.bye_channel_id }}" inputmode="numeric" placeholder="ID du salon bye" class="{{ settings_input_class }}">
+                                            {% endif %}
                                         </label>
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Rôle staff Discord
-                                            <input name="staff_role_id" value="{{ catalog.settings.staff_role_id }}" inputmode="numeric" placeholder="ID du rôle staff" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                            {% if discord_resources.roles is not empty %}
+                                                <select name="staff_role_id" class="{{ settings_input_class }}">
+                                                    <option value="" {% if not catalog.settings.staff_role_id %}selected{% endif %}>Non configuré</option>
+                                                    {% if catalog.settings.staff_role_id and catalog.settings.staff_role_id not in discord_resource_ids.roles %}
+                                                        <option value="{{ catalog.settings.staff_role_id }}" selected>ID actuel introuvable ({{ catalog.settings.staff_role_id }})</option>
+                                                    {% endif %}
+                                                    {% for role in discord_resources.roles %}
+                                                        <option value="{{ role.id }}" {% if catalog.settings.staff_role_id == role.id %}selected{% endif %}>{{ role.label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% else %}
+                                                <input name="staff_role_id" value="{{ catalog.settings.staff_role_id }}" inputmode="numeric" placeholder="ID du rôle staff" class="{{ settings_input_class }}">
+                                            {% endif %}
                                         </label>
                                         <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                             Enregistrer les réglages
@@ -234,15 +274,18 @@
                                     </div>
                                     <div class="grid gap-4 p-6">
                                         {% set setting_rows = [
-                                            { label: 'Salon d’arrivée', value: catalog.settings.welcome_channel_id, empty: 'Aucun salon d’arrivée configuré' },
-                                            { label: 'Salon de départ', value: catalog.settings.bye_channel_id, empty: 'Aucun salon de départ configuré' },
-                                            { label: 'Rôle staff Discord', value: catalog.settings.staff_role_id, empty: 'Aucun rôle staff configuré' },
+                                            { label: 'Salon d’arrivée', value: discord_settings_labels.welcome_channel_id, raw: catalog.settings.welcome_channel_id, empty: 'Aucun salon d’arrivée configuré' },
+                                            { label: 'Salon de départ', value: discord_settings_labels.bye_channel_id, raw: catalog.settings.bye_channel_id, empty: 'Aucun salon de départ configuré' },
+                                            { label: 'Rôle staff Discord', value: discord_settings_labels.staff_role_id, raw: catalog.settings.staff_role_id, empty: 'Aucun rôle staff configuré' },
                                         ] %}
                                         {% for setting in setting_rows %}
                                             <article class="grid gap-3 border border-camelia-ink/10 bg-white p-5" data-testid="server-setting-card">
                                                 <p class="text-sm font-black text-camelia-muted">{{ setting.label }}</p>
                                                 {% if setting.value %}
                                                     <strong class="break-all text-lg">{{ setting.value }}</strong>
+                                                    {% if setting.raw and setting.raw != setting.value %}
+                                                        <span class="break-all text-xs font-black uppercase tracking-[0.12em] text-camelia-muted">{{ setting.raw }}</span>
+                                                    {% endif %}
                                                 {% else %}
                                                     <p class="text-sm font-bold leading-relaxed text-camelia-muted">{{ setting.empty }}</p>
                                                 {% endif %}
