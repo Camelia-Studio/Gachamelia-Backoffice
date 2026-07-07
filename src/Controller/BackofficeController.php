@@ -146,6 +146,7 @@ final class BackofficeController extends AbstractController
             'emoji_picker' => $this->emojiPickerPayload($entityManager, $server),
             'discord_resources' => $discordResources,
             'discord_resource_ids' => $this->discordResourceIdsPayload($discordResources),
+            'discord_resource_labels' => $this->discordResourceLabelsPayload($discordResources),
             'discord_settings_labels' => $this->discordSettingsLabelsPayload($catalog['settings'], $discordResources),
             'configuration_sections' => $this->configurationSections($catalog),
             'active_section' => 'overview',
@@ -174,7 +175,7 @@ final class BackofficeController extends AbstractController
         }
         $server = $this->findServerEntityOr404($entityManager, $guild['id']);
         $catalog = $this->catalogPayload($entityManager, $server);
-        $discordResources = 'settings' === $section
+        $discordResources = \in_array($section, ['settings', 'ranks'], true)
             ? $discordGuildResourcesProvider->resourcesForGuild($guild['id'])
             : $this->emptyDiscordResourcesPayload();
 
@@ -184,6 +185,7 @@ final class BackofficeController extends AbstractController
             'emoji_picker' => $this->emojiPickerPayload($entityManager, $server),
             'discord_resources' => $discordResources,
             'discord_resource_ids' => $this->discordResourceIdsPayload($discordResources),
+            'discord_resource_labels' => $this->discordResourceLabelsPayload($discordResources),
             'discord_settings_labels' => $this->discordSettingsLabelsPayload($catalog['settings'], $discordResources),
             'configuration_sections' => $this->configurationSections($catalog),
             'active_section' => $section,
@@ -1041,6 +1043,22 @@ final class BackofficeController extends AbstractController
         return [
             'channels' => array_map(static fn (array $channel): string => $channel['id'], $discordResources['channels']),
             'roles' => array_map(static fn (array $role): string => $role['id'], $discordResources['roles']),
+        ];
+    }
+
+    /**
+     * @param array{
+     *     channels: list<array{id: string, name: string, label: string, type: int}>,
+     *     roles: list<array{id: string, name: string, label: string, position: int, managed: bool}>
+     * } $discordResources
+     *
+     * @return array{channels: array<string, string>, roles: array<string, string>}
+     */
+    private function discordResourceLabelsPayload(array $discordResources): array
+    {
+        return [
+            'channels' => $this->resourceLabelsById($discordResources['channels']),
+            'roles' => $this->resourceLabelsById($discordResources['roles']),
         ];
     }
 

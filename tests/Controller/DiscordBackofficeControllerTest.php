@@ -304,6 +304,41 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Force');
     }
 
+    public function testAdministratorCanSelectDiscordRoleWhenManagingRanks(): void
+    {
+        $client = static::createClient();
+        $client->disableReboot();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+        static::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new FakeDiscordGuildResourcesProvider(
+            [],
+            [
+                ['id' => '777777777777777777', 'name' => 'Comète', 'label' => '@Comète', 'position' => 9, 'managed' => false],
+                ['id' => '888888888888888888', 'name' => 'Staff', 'label' => '@Staff', 'position' => 8, 'managed' => false],
+            ],
+        ));
+
+        $adminServerId = $this->serverDatabaseId('admin');
+        $this->connection()->insert('ranks', [
+            'server_id' => $adminServerId,
+            'discord_id' => '777777777777777777',
+            'name' => 'Comète de l’Aube',
+            'percentage' => 30,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $rankId = (int) $this->connection()->lastInsertId();
+
+        $client->request('GET', '/app/serveurs/admin/configuration/ranks');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('form[action="/app/serveurs/admin/catalogue/ranks"] select[name="discord_id"] option[value="777777777777777777"]');
+        self::assertSelectorExists('form[action="/app/serveurs/admin/catalogue/ranks/'.$rankId.'"] select[name="discord_id"] option[value="777777777777777777"][selected]');
+        self::assertSelectorTextContains('[data-testid="rank-card"]', '@Comète');
+    }
+
     public function testDedicatedRankRelationPagesAreAvailableFromSidebarAndEditable(): void
     {
         $client = static::createClient();

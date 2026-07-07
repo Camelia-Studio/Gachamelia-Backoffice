@@ -295,6 +295,7 @@
                                 </section>
                             </div>
                         {% elseif active_section == 'ranks' %}
+                            {% set rank_input_class = 'min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50' %}
                             <div class="grid gap-7 xl:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]">
                                 <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
                                     <div class="border-b border-camelia-ink/10 p-6">
@@ -302,22 +303,34 @@
                                         <p class="mt-1 text-sm font-bold text-camelia-muted">Renseigne les infos minimales pour alimenter le bot.</p>
                                     </div>
                                     <form method="post" action="{{ path('app_server_catalog_rank_create', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        {% if discord_resources.roles is empty %}
+                                            <p class="border border-camelia-rose/20 bg-camelia-blush/70 p-4 text-sm font-bold leading-relaxed text-camelia-muted">Rôles Discord temporairement indisponibles. L’ID reste éditable manuellement.</p>
+                                        {% endif %}
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                                            ID Discord
-                                            <input name="discord_id" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                            Rôle Discord
+                                            {% if discord_resources.roles is not empty %}
+                                                <select name="discord_id" required class="{{ rank_input_class }}">
+                                                    <option value="">Choisis un rôle Discord</option>
+                                                    {% for role in discord_resources.roles %}
+                                                        <option value="{{ role.id }}">{{ role.label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% else %}
+                                                <input name="discord_id" required inputmode="numeric" placeholder="ID du rôle Discord" class="{{ rank_input_class }}">
+                                            {% endif %}
                                         </label>
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Nom
-                                            <input name="name" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                            <input name="name" required class="{{ rank_input_class }}">
                                         </label>
                                         <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
                                             <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                 Titre du message de départ
-                                                <input name="bye_title" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                <input name="bye_title" class="{{ rank_input_class }}">
                                             </label>
                                             <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                 %
-                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="{{ rank_input_class }}">
                                             </label>
                                         </div>
                                         <label class="flex items-center justify-between gap-3 border border-camelia-ink/10 bg-camelia-blush/60 px-3 py-3 text-sm font-black text-camelia-ink">
@@ -346,7 +359,8 @@
                                                         <span class="flex size-12 shrink-0 items-center justify-center bg-camelia-blush font-display text-lg font-black text-camelia-rose">{{ rank.name|slice(0, 1)|upper }}</span>
                                                         <div class="min-w-0">
                                                             <strong class="block truncate">{{ rank.name }}</strong>
-                                                            <p class="mt-1 truncate font-semibold text-camelia-muted">{{ rank.discord_id }}{% if rank.bye_title %} · {{ rank.bye_title }}{% endif %}</p>
+                                                            {% set rank_discord_label = discord_resource_labels.roles[rank.discord_id]|default(rank.discord_id) %}
+                                                            <p class="mt-1 truncate font-semibold text-camelia-muted">{{ rank_discord_label }}{% if rank.bye_title %} · {{ rank.bye_title }}{% endif %}</p>
                                                         </div>
                                                     </div>
                                                     <div class="flex flex-wrap gap-2 md:justify-end">
@@ -362,22 +376,33 @@
                                                         <form method="post" action="{{ path('app_server_catalog_rank_update', { guildId: guild.id, rankId: rank.id }) }}" class="grid gap-4 border border-camelia-ink/10 bg-camelia-ivory p-4">
                                                             <div class="grid gap-3 md:grid-cols-2">
                                                                 <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-                                                                    ID Discord
-                                                                    <input name="discord_id" value="{{ rank.discord_id }}" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                                    Rôle Discord
+                                                                    {% if discord_resources.roles is not empty %}
+                                                                        <select name="discord_id" required class="{{ rank_input_class }}">
+                                                                            {% if rank.discord_id not in discord_resource_ids.roles %}
+                                                                                <option value="{{ rank.discord_id }}" selected>ID actuel introuvable ({{ rank.discord_id }})</option>
+                                                                            {% endif %}
+                                                                            {% for role in discord_resources.roles %}
+                                                                                <option value="{{ role.id }}" {% if rank.discord_id == role.id %}selected{% endif %}>{{ role.label }}</option>
+                                                                            {% endfor %}
+                                                                        </select>
+                                                                    {% else %}
+                                                                        <input name="discord_id" value="{{ rank.discord_id }}" required inputmode="numeric" placeholder="ID du rôle Discord" class="{{ rank_input_class }}">
+                                                                    {% endif %}
                                                                 </label>
                                                                 <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                                     Nom
-                                                                    <input name="name" value="{{ rank.name }}" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                                    <input name="name" value="{{ rank.name }}" required class="{{ rank_input_class }}">
                                                                 </label>
                                                             </div>
                                                             <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
                                                                 <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                                     Titre du message de départ
-                                                                    <input name="bye_title" value="{{ rank.bye_title }}" class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                                    <input name="bye_title" value="{{ rank.bye_title }}" class="{{ rank_input_class }}">
                                                                 </label>
                                                                 <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                                     %
-                                                                    <input name="percentage" type="number" min="0" max="100" value="{{ rank.percentage }}" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                                    <input name="percentage" type="number" min="0" max="100" value="{{ rank.percentage }}" required class="{{ rank_input_class }}">
                                                                 </label>
                                                             </div>
                                                             <div class="flex flex-wrap items-center justify-between gap-3">
