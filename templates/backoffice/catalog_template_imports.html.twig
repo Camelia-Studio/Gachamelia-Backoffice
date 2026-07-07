@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Importer un modèle - {{ guild.name }} - Gachamélia Backoffice{% endblock %}
+
+{% block navbar_actions %}
+    <a
+        href="{{ path('app_server_configuration', { guildId: guild.id }) }}"
+        class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-ink/10 bg-white px-4 text-sm font-black text-camelia-ink shadow-sm transition hover:border-camelia-rose/30 hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+    >
+        Configuration
+    </a>
+{% endblock %}
+
+{% block body %}
+    <section class="grid gap-8" data-testid="template-imports">
+        <header class="grid gap-3 border-b border-camelia-ink/10 pb-6">
+            <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">{{ guild.name }} · Import</p>
+            <h1 class="font-display text-4xl leading-tight md:text-5xl">Importer un modèle</h1>
+            <p class="max-w-3xl text-sm font-bold leading-relaxed text-camelia-muted">
+                L’import remplacera le catalogue actuel du serveur après confirmation sur l’écran suivant.
+            </p>
+        </header>
+
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {% for template in templates %}
+                <article class="grid min-h-64 gap-5 border border-camelia-ink/10 bg-camelia-ivory p-6 shadow-sm" data-testid="importable-template-card">
+                    <div class="flex items-start justify-between gap-4">
+                        <span class="flex size-14 items-center justify-center bg-camelia-blush font-display text-xl font-black text-camelia-rose">MD</span>
+                        <span class="inline-flex min-h-8 items-center rounded-full bg-camelia-gold/20 px-4 text-xs font-black text-[#7a5415]">{{ template.total_count }} entrées</span>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-black">{{ template.name }}</h2>
+                        {% if template.description %}
+                            <p class="mt-3 text-sm font-bold leading-relaxed text-camelia-muted">{{ template.description }}</p>
+                        {% endif %}
+                    </div>
+                    <a
+                        href="{{ path('app_server_catalog_template_import', { guildId: guild.id, templateId: template.id }) }}"
+                        class="mt-auto inline-flex min-h-11 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+                    >
+                        Préparer l’import
+                    </a>
+                </article>
+            {% else %}
+                <p class="border border-dashed border-camelia-ink/15 bg-camelia-ivory p-6 text-sm font-bold leading-relaxed text-camelia-muted">
+                    Aucun modèle publié pour le moment.
+                </p>
+            {% endfor %}
+        </div>
+    </section>
+{% endblock %}

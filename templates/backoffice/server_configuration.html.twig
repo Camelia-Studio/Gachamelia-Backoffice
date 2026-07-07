@@ -195,6 +195,19 @@
                                 </article>
                             {% endfor %}
                         </div>
+
+                        <article class="grid gap-5 border border-camelia-rose/20 bg-camelia-blush/40 p-7 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center" data-testid="configuration-template-import-card">
+                            <div>
+                                <h2 class="text-xl font-black">Importer un modèle de catalogue</h2>
+                                <p class="mt-2 max-w-2xl text-base font-bold leading-relaxed text-camelia-muted">Démarre depuis un catalogue global préparé par les admins du bot. L’import demande une confirmation car il remplace le catalogue actuel.</p>
+                            </div>
+                            <a
+                                href="{{ path('app_server_catalog_template_imports', { guildId: guild.id }) }}"
+                                class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+                            >
+                                Importer
+                            </a>
+                        </article>
                     </section>
                 {% else %}
                     <div data-testid="configuration-panel">

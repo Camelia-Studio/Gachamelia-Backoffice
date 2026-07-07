@@ -6,6 +6,14 @@ namespace App\Tests\Doctrine;
 
 use App\Entity\CharacterRole;
 use App\Entity\ByeMessage;
+use App\Entity\CatalogTemplate;
+use App\Entity\CatalogTemplateByeMessage;
+use App\Entity\CatalogTemplateElement;
+use App\Entity\CatalogTemplateRank;
+use App\Entity\CatalogTemplateRankStat;
+use App\Entity\CatalogTemplateRole;
+use App\Entity\CatalogTemplateStat;
+use App\Entity\CatalogTemplateWelcomeMessage;
 use App\Entity\DiscordServer;
 use App\Entity\DiscordServerMember;
 use App\Entity\DiscordEmoji;
@@ -49,6 +57,8 @@ final class MultiServerEntityMappingTest extends KernelTestCase
         self::assertTrue($user->hasField('username'));
         self::assertTrue($user->hasField('globalName'));
         self::assertTrue($user->hasField('avatar'));
+        self::assertTrue($user->hasField('globalRoles'));
+        self::assertSame('json', $user->getTypeOfField('globalRoles'));
         $this->assertUniqueColumns($user, ['discord_id']);
 
         $membership = $this->metadata(DiscordServerMember::class);
@@ -130,6 +140,66 @@ final class MultiServerEntityMappingTest extends KernelTestCase
 
             self::assertSame($tableName, $metadata->getTableName());
             self::assertTrue($metadata->hasAssociation('server'));
+            self::assertTrue($metadata->hasAssociation('rank'));
+            self::assertTrue($metadata->hasField('message'));
+        }
+    }
+
+    public function testCatalogTemplateMappingsCoverTheFullImportableCatalog(): void
+    {
+        $template = $this->metadata(CatalogTemplate::class);
+        self::assertSame('catalog_templates', $template->getTableName());
+        self::assertTrue($template->hasField('name'));
+        self::assertTrue($template->hasField('description'));
+        self::assertTrue($template->hasField('published'));
+        self::assertTrue($template->hasAssociation('createdBy'));
+        $this->assertUniqueColumns($template, ['name']);
+
+        $rank = $this->metadata(CatalogTemplateRank::class);
+        self::assertSame('catalog_template_ranks', $rank->getTableName());
+        self::assertTrue($rank->hasAssociation('template'));
+        self::assertTrue($rank->hasField('roleKey'));
+        self::assertTrue($rank->hasField('name'));
+        self::assertTrue($rank->hasField('percentage'));
+        self::assertTrue($rank->hasField('byeTitle'));
+        self::assertTrue($rank->hasField('staff'));
+        $this->assertUniqueColumns($rank, ['template_id', 'role_key']);
+        $this->assertUniqueColumns($rank, ['template_id', 'name']);
+
+        foreach ([CatalogTemplateRole::class, CatalogTemplateElement::class] as $entityClass) {
+            $metadata = $this->metadata($entityClass);
+            self::assertTrue($metadata->hasAssociation('template'));
+            self::assertTrue($metadata->hasField('name'));
+            self::assertTrue($metadata->hasField('emojiSource'));
+            self::assertTrue($metadata->hasField('emojiUnicode'));
+            self::assertTrue($metadata->hasField('emojiId'));
+            self::assertTrue($metadata->hasField('emojiName'));
+            self::assertTrue($metadata->hasField('emojiAnimated'));
+            $this->assertUniqueColumns($metadata, ['template_id', 'name']);
+        }
+
+        $role = $this->metadata(CatalogTemplateRole::class);
+        self::assertSame('catalog_template_roles', $role->getTableName());
+        self::assertTrue($role->hasField('percentage'));
+
+        $stat = $this->metadata(CatalogTemplateStat::class);
+        self::assertSame('catalog_template_stats', $stat->getTableName());
+        self::assertTrue($stat->hasAssociation('template'));
+        self::assertTrue($stat->hasField('name'));
+        $this->assertUniqueColumns($stat, ['template_id', 'name']);
+
+        $element = $this->metadata(CatalogTemplateElement::class);
+        self::assertSame('catalog_template_elements', $element->getTableName());
+
+        $rankStat = $this->metadata(CatalogTemplateRankStat::class);
+        self::assertSame('catalog_template_rank_stats', $rankStat->getTableName());
+        self::assertSame(['rank', 'stat'], $rankStat->identifier);
+        self::assertTrue($rankStat->hasField('percentage'));
+
+        foreach ([CatalogTemplateWelcomeMessage::class => 'catalog_template_welcome_messages', CatalogTemplateByeMessage::class => 'catalog_template_bye_messages'] as $entityClass => $tableName) {
+            $metadata = $this->metadata($entityClass);
+            self::assertSame($tableName, $metadata->getTableName());
+            self::assertTrue($metadata->hasAssociation('template'));
             self::assertTrue($metadata->hasAssociation('rank'));
             self::assertTrue($metadata->hasField('message'));
         }

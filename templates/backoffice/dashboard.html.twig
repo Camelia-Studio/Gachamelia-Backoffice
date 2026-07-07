@@ -19,9 +19,20 @@
             <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">Serveurs Discord</p>
             <h1 class="font-display text-4xl leading-tight md:text-5xl">Choisir un serveur</h1>
             {% if profile %}
-                <p class="max-w-2xl text-sm font-semibold text-camelia-muted">
-                    {{ profile.global_name ?? profile.username }}
-                </p>
+                <div class="flex flex-wrap items-center gap-3">
+                    <p class="max-w-2xl text-sm font-semibold text-camelia-muted">
+                        {{ profile.global_name ?? profile.username }}
+                    </p>
+                    {% if profile.can_manage_catalog_templates %}
+                        <a
+                            href="{{ path('app_catalog_templates') }}"
+                            class="inline-flex min-h-9 items-center justify-center rounded-full border border-camelia-rose/20 bg-camelia-blush px-4 text-sm font-black text-camelia-rose transition hover:border-camelia-rose/50 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+                            data-testid="catalog-template-admin-link"
+                        >
+                            Modèles
+                        </a>
+                    {% endif %}
+                </div>
             {% endif %}
         </div>
 

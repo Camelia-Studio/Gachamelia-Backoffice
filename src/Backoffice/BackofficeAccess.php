@@ -16,7 +16,7 @@ final readonly class BackofficeAccess
     }
 
     /**
-     * @return array{id: string, username: string, global_name: ?string, avatar: ?string}|null
+     * @return array{id: string, username: string, global_name: ?string, avatar: ?string, global_roles: list<string>, can_manage_catalog_templates: bool}|null
      */
     public function profile(?int $userId): ?array
     {
@@ -30,7 +30,20 @@ final readonly class BackofficeAccess
             'username' => $user->username(),
             'global_name' => $user->globalName(),
             'avatar' => $user->avatar(),
+            'global_roles' => $user->globalRoles(),
+            'can_manage_catalog_templates' => $this->canManageCatalogTemplates($userId),
         ];
+    }
+
+    public function hasGlobalRole(?int $userId, string $role): bool
+    {
+        return $this->user($userId)?->hasGlobalRole($role) ?? false;
+    }
+
+    public function canManageCatalogTemplates(?int $userId): bool
+    {
+        return $this->hasGlobalRole($userId, DiscordUser::GLOBAL_ROLE_BOT_OWNER)
+            || $this->hasGlobalRole($userId, DiscordUser::GLOBAL_ROLE_TEMPLATE_ADMIN);
     }
 
     /**

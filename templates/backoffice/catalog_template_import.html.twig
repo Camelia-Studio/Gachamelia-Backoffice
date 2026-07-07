@@ -1,0 +1,101 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Importer {{ template.name }} - {{ guild.name }} - Gachamélia Backoffice{% endblock %}
+
+{% block navbar_actions %}
+    <a
+        href="{{ path('app_server_catalog_template_imports', { guildId: guild.id }) }}"
+        class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-ink/10 bg-white px-4 text-sm font-black text-camelia-ink shadow-sm transition hover:border-camelia-rose/30 hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+    >
+        Modèles
+    </a>
+    <a
+        href="{{ path('app_server_configuration', { guildId: guild.id }) }}"
+        class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-ink/10 bg-white px-4 text-sm font-black text-camelia-ink shadow-sm transition hover:border-camelia-rose/30 hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+    >
+        Configuration
+    </a>
+{% endblock %}
+
+{% block body %}
+    {% set input_class = 'min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50' %}
+
+    <section class="grid gap-8" data-testid="template-import-panel">
+        <header class="grid gap-3 border-b border-camelia-ink/10 pb-6">
+            <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">{{ guild.name }} · Import</p>
+            <h1 class="font-display text-4xl leading-tight md:text-5xl">{{ template.name }}</h1>
+            <p class="max-w-3xl text-sm font-bold leading-relaxed text-camelia-muted">
+                Cet import écrasera le catalogue actuel du serveur : rangs, rôles, stats, éléments, probabilités et messages seront remplacés.
+            </p>
+        </header>
+
+        <div class="grid gap-7 xl:grid-cols-[minmax(20rem,32rem)_minmax(0,1fr)] xl:items-start">
+            <section class="grid gap-6 border border-camelia-rose/20 bg-camelia-blush/50 shadow-sm">
+                <div class="border-b border-camelia-rose/20 p-6">
+                    <h2 class="text-lg font-black">Correction des rôles Discord</h2>
+                    <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">
+                        Chaque rang du modèle doit pointer vers un rôle Discord existant sur ce serveur.
+                    </p>
+                </div>
+                <form method="post" action="{{ path('app_server_catalog_template_import_apply', { guildId: guild.id, templateId: template.id }) }}" class="grid gap-5 p-6">
+                    {% if discord_resources.roles is empty %}
+                        <p class="border border-camelia-rose/20 bg-camelia-ivory p-4 text-sm font-bold leading-relaxed text-camelia-muted">
+                            Rôles Discord temporairement indisponibles. Les IDs restent éditables manuellement.
+                        </p>
+                    {% endif %}
+
+                    {% for rank in catalog.ranks %}
+                        <label class="grid gap-2 text-sm font-bold text-camelia-muted">
+                            <span>{{ rank.name }} <span class="font-black text-camelia-rose">({{ rank.role_key }})</span></span>
+                            {% if discord_resources.roles is not empty %}
+                                <select name="rank_roles[{{ rank.id }}]" required class="{{ input_class }}">
+                                    <option value="">Choisis un rôle Discord</option>
+                                    {% for role in discord_resources.roles %}
+                                        <option value="{{ role.id }}">{{ role.label }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                <input name="rank_roles[{{ rank.id }}]" required inputmode="numeric" placeholder="ID du rôle Discord" class="{{ input_class }}">
+                            {% endif %}
+                        </label>
+                    {% else %}
+                        <p class="border border-dashed border-camelia-ink/15 bg-camelia-ivory p-4 text-sm font-bold leading-relaxed text-camelia-muted">
+                            Ce modèle ne contient aucun rang à relier.
+                        </p>
+                    {% endfor %}
+
+                    <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-rose px-5 text-sm font-black text-white transition hover:bg-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                        Écraser et importer
+                    </button>
+                </form>
+            </section>
+
+            <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="template-import-preview">
+                <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                    <div>
+                        <h2 class="text-lg font-black">Contenu importé</h2>
+                        <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Aperçu du catalogue global avant remplacement.</p>
+                    </div>
+                    <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ template.total_count }} entrées</span>
+                </div>
+                <div class="grid gap-4 p-6">
+                    {% set rows = [
+                        { label: 'Rangs', count: catalog.ranks|length },
+                        { label: 'Stats de rang', count: catalog.rank_stats|length },
+                        { label: 'Messages d’arrivée', count: catalog.welcome_messages|length },
+                        { label: 'Messages de départ', count: catalog.bye_messages|length },
+                        { label: 'Rôles', count: catalog.roles|length },
+                        { label: 'Stats', count: catalog.stats|length },
+                        { label: 'Éléments', count: catalog.elements|length },
+                    ] %}
+                    {% for row in rows %}
+                        <article class="flex items-center justify-between gap-4 border border-camelia-ink/10 bg-white p-4">
+                            <span class="text-sm font-black">{{ row.label }}</span>
+                            <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ row.count }}</span>
+                        </article>
+                    {% endfor %}
+                </div>
+            </section>
+        </div>
+    </section>
+{% endblock %}

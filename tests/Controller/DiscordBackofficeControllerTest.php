@@ -995,6 +995,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             'username' => 'melaine',
             'global_name' => 'Melaine',
             'avatar' => null,
+            'global_roles' => '[]',
             'created_at' => '2026-07-06 10:00:00',
             'updated_at' => '2026-07-06 10:00:00',
         ]);
