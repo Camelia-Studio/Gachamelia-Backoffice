@@ -149,6 +149,8 @@
                     </div>
                 </header>
 
+                {% include 'backoffice/_catalog_validation.html.twig' with { validation: validation } only %}
+
                 {% if is_overview %}
                     <section class="grid gap-7" data-testid="template-configuration-overview">
                         <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -177,6 +179,7 @@
                         </div>
 
                         <form method="post" action="{{ path('app_catalog_template_publish', { templateId: template.id }) }}" class="flex flex-wrap items-center justify-between gap-4 border border-camelia-ink/10 bg-camelia-ivory p-6 shadow-sm">
+                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                             <div>
                                 <h2 class="text-lg font-black">Publication</h2>
                                 <p class="mt-1 text-sm font-bold leading-relaxed text-camelia-muted">Un modèle publié apparaît dans l’écran d’import des serveurs.</p>
@@ -201,6 +204,7 @@
                                         <p class="mt-1 text-sm font-bold text-camelia-muted">La clé de rôle servira de repère au mapping Discord pendant l’import.</p>
                                     </div>
                                     <form method="post" action="{{ path('app_catalog_template_rank_create', { templateId: template.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Clé de rôle
                                             <input name="role_key" required placeholder="Comète" class="{{ input_class }}">
@@ -241,6 +245,7 @@
                                         {% for rank in catalog.ranks %}
                                             <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="template-rank-card">
                                                 <form method="post" action="{{ path('app_catalog_template_rank_update', { templateId: template.id, rankId: rank.id }) }}" class="grid gap-4">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_6rem]">
                                                         <label class="grid gap-1 text-xs font-black text-camelia-muted">
                                                             Clé
@@ -266,6 +271,7 @@
                                                     <button type="submit" class="inline-flex min-h-10 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">Enregistrer</button>
                                                 </form>
                                                 <form method="post" action="{{ path('app_catalog_template_rank_delete', { templateId: template.id, rankId: rank.id }) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <button type="submit" class="text-sm font-black text-camelia-rose">Supprimer</button>
                                                 </form>
                                             </article>
@@ -282,6 +288,7 @@
                                         <h2 class="text-lg font-black">Associer une stat</h2>
                                     </div>
                                     <form method="post" action="{{ path('app_catalog_template_rank_stat_upsert', { templateId: template.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Rang
                                             <select name="rank_id" required class="{{ input_class }}">
@@ -319,6 +326,7 @@
                                         {% for rank_stat in catalog.rank_stats %}
                                             <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="template-rank-stat-card">
                                                 <form method="post" action="{{ path('app_catalog_template_rank_stat_upsert', { templateId: template.id }) }}" class="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_6rem_auto] md:items-end">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <input type="hidden" name="rank_id" value="{{ rank_stat.rank_id }}">
                                                     <input type="hidden" name="stat_id" value="{{ rank_stat.stat_id }}">
                                                     <p class="font-black">{{ rank_stat.rank_name }}</p>
@@ -327,6 +335,7 @@
                                                     <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white">OK</button>
                                                 </form>
                                                 <form method="post" action="{{ path('app_catalog_template_rank_stat_delete', { templateId: template.id, rankId: rank_stat.rank_id, statId: rank_stat.stat_id }) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <button type="submit" class="text-sm font-black text-camelia-rose">Supprimer</button>
                                                 </form>
                                             </article>
@@ -348,6 +357,7 @@
                                         <h2 class="text-lg font-black">{{ is_welcome ? 'Ajouter un message d’arrivée' : 'Ajouter un message de départ' }}</h2>
                                     </div>
                                     <form method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Rang
                                             <select name="rank_id" required class="{{ input_class }}">
@@ -377,10 +387,12 @@
                                             <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="template-message-card">
                                                 <p class="text-xs font-black uppercase tracking-[0.12em] text-camelia-muted">{{ message.rank_name }}</p>
                                                 <form method="post" action="{{ path(update_route, { templateId: template.id, messageId: message.id }) }}" class="grid gap-3">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <textarea name="message" rows="3" required class="min-h-20 border border-camelia-ink/10 bg-camelia-ivory px-3 py-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">{{ message.message }}</textarea>
                                                     <button type="submit" class="inline-flex min-h-10 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-4 text-sm font-black text-white">Enregistrer</button>
                                                 </form>
                                                 <form method="post" action="{{ path(delete_route, { templateId: template.id, messageId: message.id }) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <button type="submit" class="text-sm font-black text-camelia-rose">Supprimer</button>
                                                 </form>
                                             </article>
@@ -404,6 +416,7 @@
                                         <h2 class="text-lg font-black">{{ is_roles ? 'Ajouter un rôle' : 'Ajouter un élément' }}</h2>
                                     </div>
                                     <form method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="grid gap-5 p-6" data-controller="emoji-picker" data-emoji-picker-default-value="{{ default_emoji }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Nom
                                             <input name="name" required class="{{ input_class }}">
@@ -447,6 +460,7 @@
                                                     {% endif %}
                                                 </div>
                                                 <form method="post" action="{{ path(update_route, route_params) }}" class="grid gap-4" data-controller="emoji-picker" data-emoji-picker-default-value="{{ entry.emoji_markup }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
                                                         <label class="grid gap-1 text-xs font-black text-camelia-muted">
                                                             Nom
@@ -463,6 +477,7 @@
                                                     <button type="submit" class="inline-flex min-h-10 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-4 text-sm font-black text-white">Enregistrer</button>
                                                 </form>
                                                 <form method="post" action="{{ path(delete_route, route_params) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <button type="submit" class="text-sm font-black text-camelia-rose">Supprimer</button>
                                                 </form>
                                             </article>
@@ -479,6 +494,7 @@
                                         <h2 class="text-lg font-black">Ajouter une stat</h2>
                                     </div>
                                     <form method="post" action="{{ path('app_catalog_template_stat_create', { templateId: template.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Nom
                                             <input name="name" required class="{{ input_class }}">
@@ -496,10 +512,12 @@
                                         {% for stat in catalog.stats %}
                                             <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="template-stat-card">
                                                 <form method="post" action="{{ path('app_catalog_template_stat_update', { templateId: template.id, statId: stat.id }) }}" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <input name="name" value="{{ stat.name }}" required class="{{ input_class }}">
                                                     <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white">Enregistrer</button>
                                                 </form>
                                                 <form method="post" action="{{ path('app_catalog_template_stat_delete', { templateId: template.id, statId: stat.id }) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <button type="submit" class="text-sm font-black text-camelia-rose">Supprimer</button>
                                                 </form>
                                             </article>

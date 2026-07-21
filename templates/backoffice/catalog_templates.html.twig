@@ -28,6 +28,7 @@
                     <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Le contenu se configure ensuite section par section.</p>
                 </div>
                 <form method="post" action="{{ path('app_catalog_template_create') }}" class="grid gap-5 p-6">
+                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                     <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                         Nom
                         <input name="name" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">

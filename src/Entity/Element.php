@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: 'elements')]
 #[ORM\UniqueConstraint(name: 'uniq_elements_server_name', columns: ['server_id', 'name'])]
+#[ORM\UniqueConstraint(name: 'uniq_elements_id_server', columns: ['id', 'server_id'])]
 class Element
 {
     public const string DEFAULT_EMOJI = '✨';

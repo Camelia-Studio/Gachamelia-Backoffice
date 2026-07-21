@@ -5,13 +5,41 @@ namespace App\Tests\Controller;
 use App\Discord\DiscordApiClientInterface;
 use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Tests\Support\DatabaseResetter;
+use App\Tests\Support\BackofficeCsrfRequest;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\BrowserKit\Cookie;
+use Symfony\Component\HttpFoundation\Response;
 
 final class DiscordBackofficeControllerTest extends WebTestCase
 {
     use DatabaseResetter;
+    use BackofficeCsrfRequest;
+
+    public function testBackofficeMutationsRequireCsrfToken(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+
+        $client->request('POST', '/app/serveurs/admin/catalogue/stats', [
+            'name' => 'Éther',
+        ]);
+
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM stats'));
+    }
+
+    public function testLogoutRequiresCsrfToken(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+
+        $client->request('POST', '/deconnexion');
+
+        self::assertResponseStatusCodeSame(403);
+    }
 
     public function testBackofficeDashboardRedirectsAnonymousUserToDiscordLogin(): void
     {
@@ -154,6 +182,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Serveur Admin');
         self::assertSelectorExists('[data-testid="server-configuration"] img[alt="Logo Serveur Admin"][src="https://cdn.discordapp.com/icons/admin/static-icon-hash.webp?size=64"]');
         self::assertSelectorExists('[data-testid="configuration-nav-overview"][aria-current="page"]');
+        self::assertSelectorExists('[data-testid="catalog-validation"][data-ready="false"]');
         self::assertSelectorExists('[data-testid="configuration-overview"]');
         self::assertStringContainsString('xl:grid-cols-3', $crawler->filter('[data-testid="configuration-overview"] > div')->attr('class') ?? '');
         self::assertSelectorExists('[data-testid="configuration-overview-card-settings"] a[href="/app/serveurs/admin/configuration/settings"]');
@@ -169,6 +198,34 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $client->request('GET', '/app/serveurs/member/configuration');
 
         self::assertResponseStatusCodeSame(403);
+    }
+
+    public function testInactiveServerRemainsVisibleAndConfigurationIsReadOnly(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+        $this->connection()->update('discord_servers', [
+            'active' => 0,
+            'inactive_at' => '2026-07-22 10:00:00',
+        ], ['discord_id' => 'admin']);
+
+        $client->request('GET', '/app');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="active-guilds"] [data-testid="guild-member"]');
+        self::assertSelectorExists('[data-testid="inactive-guilds"] [data-testid="guild-admin"]');
+
+        $client->request('GET', '/app/serveurs/admin/configuration');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="inactive-server-notice"]');
+        self::assertSelectorExists('fieldset[data-testid="configuration-read-only"][disabled]');
+
+        $this->post($client, '/app/serveurs/admin/catalogue/stats', ['name' => 'Interdite']);
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM stats'));
     }
 
     public function testConfigurationSectionPagesDisplayDedicatedServerCatalogRows(): void
@@ -385,11 +442,13 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $otherStatId = (int) $this->connection()->lastInsertId();
 
         $this->connection()->insert('rank_stats', [
+            'server_id' => $adminServerId,
             'rank_id' => $rankId,
             'stat_id' => $statId,
             'percentage' => 70,
         ]);
         $this->connection()->insert('rank_stats', [
+            'server_id' => $otherServerId,
             'rank_id' => $otherRankId,
             'stat_id' => $otherStatId,
             'percentage' => 99,
@@ -472,7 +531,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', '#bienvenue');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', '@Staff');
 
-        $client->request('POST', '/app/serveurs/admin/configuration/settings', [
+        $this->post($client, '/app/serveurs/admin/configuration/settings', [
             'welcome_channel_id' => '444444444444444444',
             'bye_channel_id' => '555555555555555555',
             'staff_role_id' => '666666666666666666',
@@ -520,7 +579,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/ranks', [
+        $this->post($client, '/app/serveurs/admin/catalogue/ranks', [
             'discord_id' => 'rank-created',
             'name' => 'Étoile',
             'percentage' => '25',
@@ -530,7 +589,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/roles', [
+        $this->post($client, '/app/serveurs/admin/catalogue/roles', [
             'name' => 'Alchimiste',
             'percentage' => '40',
             'emoji_source' => 'server',
@@ -539,13 +598,13 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseRedirects('/app/serveurs/admin/configuration/roles');
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/stats', [
+        $this->post($client, '/app/serveurs/admin/catalogue/stats', [
             'name' => 'Sagesse',
         ]);
 
         self::assertResponseRedirects('/app/serveurs/admin/configuration/stats');
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/elements', [
+        $this->post($client, '/app/serveurs/admin/catalogue/elements', [
             'name' => 'Lune',
             'emoji_source' => 'unicode',
             'emoji_value' => '🌙',
@@ -616,7 +675,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             'emoji_animated' => 0,
         ]);
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/roles/'.$roleId, [
+        $this->post($client, '/app/serveurs/admin/catalogue/roles/'.$roleId, [
             'name' => 'Nouveau rôle',
             'percentage' => '35',
             'emoji_source' => 'server',
@@ -637,7 +696,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             [$roleId],
         ));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/roles/'.$roleId.'/supprimer');
+        $this->post($client, '/app/serveurs/admin/catalogue/roles/'.$roleId.'/supprimer');
 
         self::assertResponseRedirects('/app/serveurs/admin/configuration/roles');
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM roles WHERE server_id = ?', [$adminServerId]));
@@ -705,7 +764,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             'emoji_animated' => 0,
         ]);
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId, [
+        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId, [
             'discord_id' => 'rank-new',
             'name' => 'Nouveau rang',
             'percentage' => '42',
@@ -725,14 +784,14 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             [$rankId],
         ));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/stats/'.$statId, [
+        $this->post($client, '/app/serveurs/admin/catalogue/stats/'.$statId, [
             'name' => 'Nouvelle stat',
         ]);
 
         self::assertResponseRedirects('/app/serveurs/admin/configuration/stats');
         self::assertSame('Nouvelle stat', $this->connection()->fetchOne('SELECT name FROM stats WHERE id = ?', [$statId]));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/elements/'.$elementId, [
+        $this->post($client, '/app/serveurs/admin/catalogue/elements/'.$elementId, [
             'name' => 'Nouvel élément',
             'emoji_source' => 'bot',
             'emoji_value' => '<a:cristal:555555555555555555>',
@@ -751,13 +810,13 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             [$elementId],
         ));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/supprimer');
+        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/supprimer');
         self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/stats/'.$statId.'/supprimer');
+        $this->post($client, '/app/serveurs/admin/catalogue/stats/'.$statId.'/supprimer');
         self::assertResponseRedirects('/app/serveurs/admin/configuration/stats');
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/elements/'.$elementId.'/supprimer');
+        $this->post($client, '/app/serveurs/admin/catalogue/elements/'.$elementId.'/supprimer');
         self::assertResponseRedirects('/app/serveurs/admin/configuration/elements');
 
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM ranks WHERE server_id = ?', [$adminServerId]));
@@ -794,7 +853,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         ]);
         $statId = (int) $this->connection()->lastInsertId();
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats', [
+        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats', [
             'stat_id' => (string) $statId,
             'percentage' => '80',
         ]);
@@ -805,7 +864,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             [$rankId, $statId],
         ));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats', [
+        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats', [
             'stat_id' => (string) $statId,
             'percentage' => '25',
         ]);
@@ -820,7 +879,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             [$rankId, $statId],
         ));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/welcome-messages', [
+        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/welcome-messages', [
             'message' => 'Bienvenue dans la guilde.',
         ]);
 
@@ -828,7 +887,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $welcomeMessageId = (int) $this->connection()->fetchOne('SELECT id FROM welcome_messages WHERE rank_id = ?', [$rankId]);
         self::assertSame('Bienvenue dans la guilde.', $this->connection()->fetchOne('SELECT message FROM welcome_messages WHERE id = ?', [$welcomeMessageId]));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/bye-messages', [
+        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/bye-messages', [
             'message' => 'À la prochaine.',
         ]);
 
@@ -836,15 +895,15 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $byeMessageId = (int) $this->connection()->fetchOne('SELECT id FROM bye_messages WHERE rank_id = ?', [$rankId]);
         self::assertSame('À la prochaine.', $this->connection()->fetchOne('SELECT message FROM bye_messages WHERE id = ?', [$byeMessageId]));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats/'.$statId.'/supprimer');
+        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats/'.$statId.'/supprimer');
         self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM rank_stats WHERE rank_id = ?', [$rankId]));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/welcome-messages/'.$welcomeMessageId.'/supprimer');
+        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/welcome-messages/'.$welcomeMessageId.'/supprimer');
         self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM welcome_messages WHERE rank_id = ?', [$rankId]));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/bye-messages/'.$byeMessageId.'/supprimer');
+        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/bye-messages/'.$byeMessageId.'/supprimer');
         self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM bye_messages WHERE rank_id = ?', [$rankId]));
     }
@@ -869,7 +928,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         ]);
         $rankId = (int) $this->connection()->lastInsertId();
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/welcome-messages', [
+        $this->post($client, '/app/serveurs/admin/catalogue/welcome-messages', [
             'rank_id' => (string) $rankId,
             'message' => 'Bienvenue initial.',
         ]);
@@ -878,14 +937,14 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $welcomeMessageId = (int) $this->connection()->fetchOne('SELECT id FROM welcome_messages WHERE rank_id = ?', [$rankId]);
         self::assertSame('Bienvenue initial.', $this->connection()->fetchOne('SELECT message FROM welcome_messages WHERE id = ?', [$welcomeMessageId]));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/welcome-messages/'.$welcomeMessageId, [
+        $this->post($client, '/app/serveurs/admin/catalogue/welcome-messages/'.$welcomeMessageId, [
             'message' => 'Bienvenue édité.',
         ]);
 
         self::assertResponseRedirects('/app/serveurs/admin/configuration/welcome-messages');
         self::assertSame('Bienvenue édité.', $this->connection()->fetchOne('SELECT message FROM welcome_messages WHERE id = ?', [$welcomeMessageId]));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/bye-messages', [
+        $this->post($client, '/app/serveurs/admin/catalogue/bye-messages', [
             'rank_id' => (string) $rankId,
             'message' => 'Départ initial.',
         ]);
@@ -894,17 +953,17 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $byeMessageId = (int) $this->connection()->fetchOne('SELECT id FROM bye_messages WHERE rank_id = ?', [$rankId]);
         self::assertSame('Départ initial.', $this->connection()->fetchOne('SELECT message FROM bye_messages WHERE id = ?', [$byeMessageId]));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/bye-messages/'.$byeMessageId, [
+        $this->post($client, '/app/serveurs/admin/catalogue/bye-messages/'.$byeMessageId, [
             'message' => 'Départ édité.',
         ]);
 
         self::assertResponseRedirects('/app/serveurs/admin/configuration/bye-messages');
         self::assertSame('Départ édité.', $this->connection()->fetchOne('SELECT message FROM bye_messages WHERE id = ?', [$byeMessageId]));
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/welcome-messages/'.$welcomeMessageId.'/supprimer');
+        $this->post($client, '/app/serveurs/admin/catalogue/welcome-messages/'.$welcomeMessageId.'/supprimer');
         self::assertResponseRedirects('/app/serveurs/admin/configuration/welcome-messages');
 
-        $client->request('POST', '/app/serveurs/admin/catalogue/bye-messages/'.$byeMessageId.'/supprimer');
+        $this->post($client, '/app/serveurs/admin/catalogue/bye-messages/'.$byeMessageId.'/supprimer');
         self::assertResponseRedirects('/app/serveurs/admin/configuration/bye-messages');
 
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM welcome_messages WHERE rank_id = ?', [$rankId]));
@@ -917,21 +976,21 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
-        $client->request('POST', '/app/serveurs/member/catalogue/stats', [
+        $this->post($client, '/app/serveurs/member/catalogue/stats', [
             'name' => 'Interdit',
         ]);
 
         self::assertResponseStatusCodeSame(403);
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM stats'));
 
-        $client->request('POST', '/app/serveurs/member/catalogue/welcome-messages', [
+        $this->post($client, '/app/serveurs/member/catalogue/welcome-messages', [
             'rank_id' => '1',
             'message' => 'Interdit',
         ]);
 
         self::assertResponseStatusCodeSame(403);
 
-        $client->request('POST', '/app/serveurs/member/catalogue/bye-messages', [
+        $this->post($client, '/app/serveurs/member/catalogue/bye-messages', [
             'rank_id' => '1',
             'message' => 'Interdit',
         ]);

@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Backoffice\BackofficeAccess;
 use App\Backoffice\BackofficeSession;
+use App\Backoffice\CatalogValidator;
 use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Entity\ByeMessage;
 use App\Entity\CharacterRole;
@@ -19,9 +20,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 
+#[IsCsrfTokenValid('backoffice', tokenKey: '_token', methods: ['POST'])]
 final class BackofficeController extends AbstractController
 {
     /**
@@ -115,9 +119,13 @@ final class BackofficeController extends AbstractController
             return $this->redirectToRoute('app_discord_login');
         }
 
+        $guilds = $backofficeAccess->guilds($backofficeSession->discordUserId());
+
         return $this->render('backoffice/dashboard.html.twig', [
             'profile' => $profile,
-            'guilds' => $backofficeAccess->guilds($backofficeSession->discordUserId()),
+            'guilds' => $guilds,
+            'active_guilds' => array_values(array_filter($guilds, static fn (array $guild): bool => $guild['active'])),
+            'inactive_guilds' => array_values(array_filter($guilds, static fn (array $guild): bool => !$guild['active'])),
         ]);
     }
 
@@ -127,6 +135,7 @@ final class BackofficeController extends AbstractController
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
+        CatalogValidator $catalogValidator,
     ): Response {
         if (!$backofficeSession->isAuthenticated()) {
             return $this->redirectToRoute('app_discord_login');
@@ -143,6 +152,7 @@ final class BackofficeController extends AbstractController
         return $this->render('backoffice/server_configuration.html.twig', [
             'guild' => $guild,
             'catalog' => $catalog,
+            'validation' => $catalogValidator->validateServer($server)->toArray(),
             'emoji_picker' => $this->emojiPickerPayload($entityManager, $server),
             'discord_resources' => $discordResources,
             'discord_resource_ids' => $this->discordResourceIdsPayload($discordResources),
@@ -151,6 +161,7 @@ final class BackofficeController extends AbstractController
             'configuration_sections' => $this->configurationSections($catalog),
             'active_section' => 'overview',
             'active_configuration_section' => null,
+            'read_only' => !$server->active(),
         ]);
     }
 
@@ -162,6 +173,7 @@ final class BackofficeController extends AbstractController
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
         DiscordGuildResourcesProviderInterface $discordGuildResourcesProvider,
+        CatalogValidator $catalogValidator,
     ): Response {
         $this->configurationSectionOr404($section);
 
@@ -175,13 +187,14 @@ final class BackofficeController extends AbstractController
         }
         $server = $this->findServerEntityOr404($entityManager, $guild['id']);
         $catalog = $this->catalogPayload($entityManager, $server);
-        $discordResources = \in_array($section, ['settings', 'ranks'], true)
+        $discordResources = $server->active() && \in_array($section, ['settings', 'ranks'], true)
             ? $discordGuildResourcesProvider->resourcesForGuild($guild['id'])
             : $this->emptyDiscordResourcesPayload();
 
         return $this->render('backoffice/server_configuration.html.twig', [
             'guild' => $guild,
             'catalog' => $catalog,
+            'validation' => $catalogValidator->validateServer($server)->toArray(),
             'emoji_picker' => $this->emojiPickerPayload($entityManager, $server),
             'discord_resources' => $discordResources,
             'discord_resource_ids' => $this->discordResourceIdsPayload($discordResources),
@@ -190,6 +203,7 @@ final class BackofficeController extends AbstractController
             'configuration_sections' => $this->configurationSections($catalog),
             'active_section' => $section,
             'active_configuration_section' => $this->configurationSectionPayload($catalog, $section),
+            'read_only' => !$server->active(),
         ]);
     }
 
@@ -259,6 +273,10 @@ final class BackofficeController extends AbstractController
         $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
         $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
 
+        $entityManager->getConnection()->update('users', ['rank_id' => null], [
+            'server_id' => $server->id(),
+            'rank_id' => $rank->id(),
+        ]);
         $entityManager->remove($rank);
         $entityManager->flush();
 
@@ -627,6 +645,10 @@ final class BackofficeController extends AbstractController
         $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
         $role = $this->roleForServerOr404($entityManager, $server, (int) $roleId);
 
+        $entityManager->getConnection()->update('users', ['role_id' => null], [
+            'server_id' => $server->id(),
+            'role_id' => $role->id(),
+        ]);
         $entityManager->remove($role);
         $entityManager->flush();
 
@@ -824,7 +846,12 @@ final class BackofficeController extends AbstractController
             throw new AccessDeniedHttpException('Administrator permission required for this server.');
         }
 
-        return $this->findServerEntityOr404($entityManager, $guild['id']);
+        $server = $this->findServerEntityOr404($entityManager, $guild['id']);
+        if (!$server->active()) {
+            throw new ConflictHttpException('Server is inactive.');
+        }
+
+        return $server;
     }
 
     private function findServerEntityOr404(EntityManagerInterface $entityManager, string $guildId): DiscordServer

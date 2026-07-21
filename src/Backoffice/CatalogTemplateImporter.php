@@ -26,6 +26,7 @@ final readonly class CatalogTemplateImporter
     public function __construct(
         private EntityManagerInterface $entityManager,
         private Connection $connection,
+        private CatalogValidator $catalogValidator,
     ) {
     }
 
@@ -34,6 +35,14 @@ final readonly class CatalogTemplateImporter
      */
     public function import(DiscordServer $server, CatalogTemplate $template, array $rankDiscordRoleIds): void
     {
+        if (!$server->active()) {
+            throw new \InvalidArgumentException('Cannot import a catalog into an inactive server.');
+        }
+
+        if (!$this->catalogValidator->validateTemplate($template)->ready()) {
+            throw new \InvalidArgumentException('Catalog template is not ready for import.');
+        }
+
         $templateRanks = $this->templateRanks($template);
         $this->assertRankMappings($templateRanks, $rankDiscordRoleIds);
 
@@ -113,6 +122,49 @@ final readonly class CatalogTemplateImporter
     }
 
     /**
+     * @return array{
+     *     current: array{ranks: int, rank_stats: int, welcome_messages: int, bye_messages: int, roles: int, stats: int, elements: int, total: int},
+     *     incoming: array{ranks: int, rank_stats: int, welcome_messages: int, bye_messages: int, roles: int, stats: int, elements: int, total: int},
+     *     affected_user_count: int,
+     *     validation: array{ready: bool, errors: list<string>, warnings: list<string>}
+     * }
+     */
+    public function preview(DiscordServer $server, CatalogTemplate $template): array
+    {
+        $serverId = $server->id();
+        $templateId = $template->id();
+        if (null === $serverId || null === $templateId) {
+            throw new \InvalidArgumentException('Cannot preview an import with unpersisted data.');
+        }
+
+        $current = [
+            'ranks' => $this->tableCount('ranks', 'server_id', $serverId),
+            'rank_stats' => (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rank_stats rs INNER JOIN ranks r ON r.id = rs.rank_id WHERE r.server_id = ?', [$serverId]),
+            'welcome_messages' => $this->tableCount('welcome_messages', 'server_id', $serverId),
+            'bye_messages' => $this->tableCount('bye_messages', 'server_id', $serverId),
+            'roles' => $this->tableCount('roles', 'server_id', $serverId),
+            'stats' => $this->tableCount('stats', 'server_id', $serverId),
+            'elements' => $this->tableCount('elements', 'server_id', $serverId),
+        ];
+        $incoming = [
+            'ranks' => $this->tableCount('catalog_template_ranks', 'template_id', $templateId),
+            'rank_stats' => (int) $this->connection->fetchOne('SELECT COUNT(*) FROM catalog_template_rank_stats rs INNER JOIN catalog_template_ranks r ON r.id = rs.rank_id WHERE r.template_id = ?', [$templateId]),
+            'welcome_messages' => $this->tableCount('catalog_template_welcome_messages', 'template_id', $templateId),
+            'bye_messages' => $this->tableCount('catalog_template_bye_messages', 'template_id', $templateId),
+            'roles' => $this->tableCount('catalog_template_roles', 'template_id', $templateId),
+            'stats' => $this->tableCount('catalog_template_stats', 'template_id', $templateId),
+            'elements' => $this->tableCount('catalog_template_elements', 'template_id', $templateId),
+        ];
+
+        return [
+            'current' => [...$current, 'total' => array_sum($current)],
+            'incoming' => [...$incoming, 'total' => array_sum($incoming)],
+            'affected_user_count' => $this->tableCount('users', 'server_id', $serverId),
+            'validation' => $this->catalogValidator->validateTemplate($template)->toArray(),
+        ];
+    }
+
+    /**
      * @param list<CatalogTemplateRank> $templateRanks
      * @param array<string, string>     $rankDiscordRoleIds
      */
@@ -151,6 +203,14 @@ final readonly class CatalogTemplateImporter
         $this->connection->delete('roles', ['server_id' => $serverId]);
         $this->connection->delete('elements', ['server_id' => $serverId]);
         $this->connection->delete('stats', ['server_id' => $serverId]);
+    }
+
+    private function tableCount(string $table, string $scopeColumn, int $scopeId): int
+    {
+        return (int) $this->connection->fetchOne(
+            sprintf('SELECT COUNT(*) FROM %s WHERE %s = ?', $table, $scopeColumn),
+            [$scopeId],
+        );
     }
 
     /**

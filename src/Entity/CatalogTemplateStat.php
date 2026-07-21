@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: 'catalog_template_stats')]
 #[ORM\UniqueConstraint(name: 'uniq_catalog_template_stats_name', columns: ['template_id', 'name'])]
+#[ORM\UniqueConstraint(name: 'uniq_catalog_template_stats_id_template', columns: ['id', 'template_id'])]
 class CatalogTemplateStat
 {
     #[ORM\Id]

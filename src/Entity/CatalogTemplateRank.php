@@ -11,6 +11,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'catalog_template_ranks')]
 #[ORM\UniqueConstraint(name: 'uniq_catalog_template_ranks_role_key', columns: ['template_id', 'role_key'])]
 #[ORM\UniqueConstraint(name: 'uniq_catalog_template_ranks_name', columns: ['template_id', 'name'])]
+#[ORM\UniqueConstraint(name: 'uniq_catalog_template_ranks_id_template', columns: ['id', 'template_id'])]
+#[ORM\UniqueConstraint(name: 'uniq_catalog_template_ranks_staff_scope', columns: ['staff_scope_id'])]
 class CatalogTemplateRank
 {
     #[ORM\Id]
@@ -37,6 +39,10 @@ class CatalogTemplateRank
     #[ORM\Column(name: 'is_staff', options: ['default' => false])]
     private bool $staff;
 
+    #[ORM\ManyToOne(targetEntity: CatalogTemplate::class)]
+    #[ORM\JoinColumn(name: 'staff_scope_id', nullable: true, onDelete: 'CASCADE')]
+    private ?CatalogTemplate $staffScope;
+
     public function __construct(CatalogTemplate $template, string $roleKey, string $name, int $percentage, ?string $byeTitle = null, bool $staff = false)
     {
         $this->template = $template;
@@ -45,6 +51,7 @@ class CatalogTemplateRank
         $this->percentage = $percentage;
         $this->byeTitle = $byeTitle;
         $this->staff = $staff;
+        $this->staffScope = $staff ? $template : null;
     }
 
     public function id(): ?int
@@ -89,5 +96,6 @@ class CatalogTemplateRank
         $this->percentage = $percentage;
         $this->byeTitle = $byeTitle;
         $this->staff = $staff;
+        $this->staffScope = $staff ? $this->template : null;
     }
 }

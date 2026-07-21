@@ -54,7 +54,8 @@ final readonly class BackofficeAccess
      *     icon_url: ?string,
      *     owner: bool,
      *     permissions: string,
-     *     canManageConfiguration: bool
+     *     canManageConfiguration: bool,
+     *     active: bool,
      * }>
      */
     public function guilds(?int $userId): array
@@ -89,7 +90,8 @@ final readonly class BackofficeAccess
      *     icon_url: ?string,
      *     owner: bool,
      *     permissions: string,
-     *     canManageConfiguration: bool
+     *     canManageConfiguration: bool,
+     *     active: bool,
      * }|null
      */
     public function findGuild(?int $userId, string $guildId): ?array
@@ -127,7 +129,8 @@ final readonly class BackofficeAccess
      *     icon_url: ?string,
      *     owner: bool,
      *     permissions: string,
-     *     canManageConfiguration: bool
+     *     canManageConfiguration: bool,
+     *     active: bool,
      * }
      */
     private function guildPayload(DiscordServerMember $membership): array
@@ -142,6 +145,7 @@ final readonly class BackofficeAccess
             'owner' => $membership->owner(),
             'permissions' => $membership->permissions(),
             'canManageConfiguration' => $membership->canManageConfiguration(),
+            'active' => $server->active(),
         ];
     }
 }

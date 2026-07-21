@@ -66,6 +66,17 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
             'name' => 'Serveur Test',
             'icon' => 'server-icon',
         ], $row);
+
+        $client->request('GET', '/api/discord-servers/123456789/catalogue', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->requestAccessToken($client),
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame([
+            'ready' => false,
+            'errors' => ['missing_non_staff_rank', 'empty_roles', 'empty_elements'],
+            'warnings' => ['empty_stats', 'missing_welcome_channel', 'missing_bye_channel', 'empty_welcome_messages', 'empty_bye_messages'],
+        ], $this->jsonPayload($client)['validation'] ?? null);
     }
 
     public function testBotCanRefreshKnownDiscordServerCache(): void
@@ -112,6 +123,79 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
             'icon' => null,
         ], $row);
         self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM discord_servers WHERE discord_id = ?', ['123456789']));
+    }
+
+    public function testBotCanDeactivateAndReactivateServerLifecycle(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $token = $this->requestAccessToken($client);
+
+        $client->request('POST', '/api/discord-servers', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode([
+            'discord_id' => '123456789',
+            'name' => 'Serveur Test',
+        ], JSON_THROW_ON_ERROR));
+
+        $lifecycle = $this->jsonPayload($client)['server']['lifecycle'] ?? null;
+        self::assertIsArray($lifecycle);
+        self::assertTrue($lifecycle['active'] ?? false);
+        self::assertIsString($lifecycle['last_seen_at'] ?? null);
+        self::assertNull($lifecycle['inactive_at'] ?? null);
+
+        $client->request('DELETE', '/api/discord-servers/123456789', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+        ]);
+        self::assertResponseStatusCodeSame(Response::HTTP_NO_CONTENT);
+
+        $client->request('DELETE', '/api/discord-servers/123456789', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+        ]);
+        self::assertResponseStatusCodeSame(Response::HTTP_NO_CONTENT);
+
+        $client->request('PATCH', '/api/discord-servers/123456789/settings', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: '{}');
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        $this->assertJsonPayloadContains(['error' => 'server_inactive']);
+
+        $client->request('PUT', '/api/discord-emojis', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode([
+            'source' => 'server',
+            'discord_server_id' => '123456789',
+            'emojis' => [],
+        ], JSON_THROW_ON_ERROR));
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        $this->assertJsonPayloadContains(['error' => 'server_inactive']);
+
+        $client->request('PUT', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: '{}');
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        $this->assertJsonPayloadContains(['error' => 'server_inactive']);
+
+        $client->request('GET', '/api/discord-servers/123456789/catalogue', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertFalse($this->jsonPayload($client)['server']['lifecycle']['active'] ?? true);
+
+        $client->request('POST', '/api/discord-servers', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode([
+            'discord_id' => '123456789',
+            'name' => 'Serveur revenu',
+        ], JSON_THROW_ON_ERROR));
+        self::assertResponseIsSuccessful();
+        self::assertTrue($this->jsonPayload($client)['server']['lifecycle']['active'] ?? false);
+        self::assertNull($this->jsonPayload($client)['server']['lifecycle']['inactive_at'] ?? null);
     }
 
     public function testBotCanRefreshServerEmojiCacheSnapshot(): void
@@ -246,6 +330,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         $statId = (int) $this->connection()->lastInsertId();
 
         $this->connection()->insert('rank_stats', [
+            'server_id' => $serverId,
             'rank_id' => $rankId,
             'stat_id' => $statId,
             'percentage' => 70,
@@ -293,6 +378,12 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         ]);
 
         self::assertResponseIsSuccessful();
+        $responsePayload = $this->jsonPayload($client);
+        self::assertTrue($responsePayload['server']['lifecycle']['active'] ?? false);
+        self::assertIsString($responsePayload['server']['lifecycle']['last_seen_at'] ?? null);
+        self::assertNull($responsePayload['server']['lifecycle']['inactive_at'] ?? null);
+        unset($responsePayload['server']['lifecycle']);
+
         self::assertSame([
             'server' => [
                 'discord_id' => '123456789',
@@ -303,6 +394,11 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
                     'bye_channel_id' => null,
                     'staff_role_id' => null,
                 ],
+            ],
+            'validation' => [
+                'ready' => true,
+                'errors' => [],
+                'warnings' => ['missing_welcome_channel', 'missing_bye_channel'],
             ],
             'catalogue' => [
                 'ranks' => [[
@@ -358,7 +454,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
                     ],
                 ]],
             ],
-        ], $this->jsonPayload($client));
+        ], $responsePayload);
 
         $client->request('GET', '/api/discord-servers/000000000/catalogue', server: [
             'HTTP_AUTHORIZATION' => 'Bearer '.$this->requestAccessToken($client),
@@ -605,6 +701,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
             'percentage' => 0,
             'bye_title' => null,
             'is_staff' => 1,
+            'staff_scope_id' => $serverId,
             'created_at' => '2026-07-06 10:00:00',
             'updated_at' => '2026-07-06 10:00:00',
         ]);
@@ -686,11 +783,25 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
      */
     private function assertJsonPayloadContains(array $expected): void
     {
-        $payload = $this->jsonPayload();
+        $this->assertArrayContains($expected, $this->jsonPayload());
+    }
 
+    /**
+     * @param array<mixed> $expected
+     * @param array<mixed> $actual
+     */
+    private function assertArrayContains(array $expected, array $actual): void
+    {
         foreach ($expected as $key => $value) {
-            self::assertArrayHasKey($key, $payload);
-            self::assertSame($value, $payload[$key]);
+            self::assertArrayHasKey($key, $actual);
+            if (\is_array($value)) {
+                self::assertIsArray($actual[$key]);
+                $this->assertArrayContains($value, $actual[$key]);
+
+                continue;
+            }
+
+            self::assertSame($value, $actual[$key]);
         }
     }
 

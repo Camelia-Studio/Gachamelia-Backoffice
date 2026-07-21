@@ -10,7 +10,9 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 
+#[IsCsrfTokenValid('backoffice', tokenKey: '_token', methods: ['POST'])]
 final class DiscordAuthController extends AbstractController
 {
     private const STATE_KEY = 'gachamelia.discord_oauth_state';

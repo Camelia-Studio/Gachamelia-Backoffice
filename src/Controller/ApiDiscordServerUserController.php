@@ -34,6 +34,9 @@ final class ApiDiscordServerUserController extends AbstractController
         if (!$server instanceof DiscordServer) {
             return $this->json(['error' => 'server_not_found'], Response::HTTP_NOT_FOUND);
         }
+        if (!$server->active()) {
+            return $this->json(['error' => 'server_inactive'], Response::HTTP_CONFLICT);
+        }
 
         $user = $entityManager->getRepository(GachaUser::class)->findOneBy(['server' => $server, 'discordId' => $userDiscordId]);
         $created = false;
@@ -75,6 +78,9 @@ final class ApiDiscordServerUserController extends AbstractController
         if (!$server instanceof DiscordServer) {
             return $this->json(['error' => 'server_not_found'], Response::HTTP_NOT_FOUND);
         }
+        if (!$server->active()) {
+            return $this->json(['error' => 'server_inactive'], Response::HTTP_CONFLICT);
+        }
 
         $user = $this->userOr404($entityManager, $server, $userDiscordId);
         if (!$user instanceof GachaUser) {
@@ -108,6 +114,9 @@ final class ApiDiscordServerUserController extends AbstractController
         $server = $this->serverOr404($entityManager, $discordId);
         if (!$server instanceof DiscordServer) {
             return $this->json(['error' => 'server_not_found'], Response::HTTP_NOT_FOUND);
+        }
+        if (!$server->active()) {
+            return $this->json(['error' => 'server_inactive'], Response::HTTP_CONFLICT);
         }
 
         $user = $this->userOr404($entityManager, $server, $userDiscordId);

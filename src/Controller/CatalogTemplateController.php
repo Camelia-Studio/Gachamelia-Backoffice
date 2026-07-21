@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Backoffice\BackofficeAccess;
 use App\Backoffice\BackofficeSession;
 use App\Backoffice\CatalogTemplateImporter;
+use App\Backoffice\CatalogValidator;
 use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Entity\CatalogTemplate;
 use App\Entity\CatalogTemplateByeMessage;
@@ -22,9 +23,12 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 
+#[IsCsrfTokenValid('backoffice', tokenKey: '_token', methods: ['POST'])]
 final class CatalogTemplateController extends AbstractController
 {
     /**
@@ -140,6 +144,7 @@ final class CatalogTemplateController extends AbstractController
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
+        CatalogValidator $catalogValidator,
     ): Response {
         $this->templateAdminUserOr403($backofficeSession, $backofficeAccess, $entityManager);
         $template = $this->templateOr404($entityManager, (int) $templateId);
@@ -148,6 +153,7 @@ final class CatalogTemplateController extends AbstractController
         return $this->render('backoffice/catalog_template_configuration.html.twig', [
             'template' => $this->templatePayload($entityManager, $template),
             'catalog' => $catalog,
+            'validation' => $catalogValidator->validateTemplate($template)->toArray(),
             'emoji_picker' => $this->emojiPickerPayload($entityManager),
             'configuration_sections' => $this->templateSections($catalog),
             'active_section' => 'overview',
@@ -162,6 +168,7 @@ final class CatalogTemplateController extends AbstractController
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
+        CatalogValidator $catalogValidator,
     ): Response {
         $this->templateSectionOr404($section);
         $this->templateAdminUserOr403($backofficeSession, $backofficeAccess, $entityManager);
@@ -171,6 +178,7 @@ final class CatalogTemplateController extends AbstractController
         return $this->render('backoffice/catalog_template_configuration.html.twig', [
             'template' => $this->templatePayload($entityManager, $template),
             'catalog' => $catalog,
+            'validation' => $catalogValidator->validateTemplate($template)->toArray(),
             'emoji_picker' => $this->emojiPickerPayload($entityManager),
             'configuration_sections' => $this->templateSections($catalog),
             'active_section' => $section,
@@ -185,11 +193,17 @@ final class CatalogTemplateController extends AbstractController
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
+        CatalogValidator $catalogValidator,
     ): Response {
         $this->templateAdminUserOr403($backofficeSession, $backofficeAccess, $entityManager);
         $template = $this->templateOr404($entityManager, (int) $templateId);
 
         if ('1' === $request->request->get('published')) {
+            if (!$catalogValidator->validateTemplate($template)->ready()) {
+                $this->addFlash('error', 'Ce modèle ne peut pas être publié tant que son catalogue est incomplet.');
+
+                return $this->redirectToRoute('app_catalog_template_configuration', ['templateId' => $templateId]);
+            }
             $template->publish();
         } else {
             $template->unpublish();
@@ -606,7 +620,7 @@ final class CatalogTemplateController extends AbstractController
         EntityManagerInterface $entityManager,
     ): Response {
         $guild = $this->manageableGuildOr404($guildId, $backofficeSession, $backofficeAccess);
-        $this->findServerEntityOr404($entityManager, $guild['id']);
+        $this->activeServerOr409($entityManager, $guild['id']);
 
         return $this->render('backoffice/catalog_template_imports.html.twig', [
             'guild' => $guild,
@@ -625,9 +639,10 @@ final class CatalogTemplateController extends AbstractController
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
         DiscordGuildResourcesProviderInterface $discordGuildResourcesProvider,
+        CatalogTemplateImporter $importer,
     ): Response {
         $guild = $this->manageableGuildOr404($guildId, $backofficeSession, $backofficeAccess);
-        $this->findServerEntityOr404($entityManager, $guild['id']);
+        $server = $this->activeServerOr409($entityManager, $guild['id']);
         $template = $this->publishedTemplateOr404($entityManager, (int) $templateId);
         $discordResources = $discordGuildResourcesProvider->resourcesForGuild($guild['id']);
 
@@ -636,6 +651,7 @@ final class CatalogTemplateController extends AbstractController
             'template' => $this->templatePayload($entityManager, $template),
             'catalog' => $this->templateCatalogPayload($entityManager, $template),
             'discord_resources' => $discordResources,
+            'preview' => $importer->preview($server, $template),
         ]);
     }
 
@@ -650,11 +666,30 @@ final class CatalogTemplateController extends AbstractController
         CatalogTemplateImporter $importer,
     ): Response {
         $guild = $this->manageableGuildOr404($guildId, $backofficeSession, $backofficeAccess);
-        $server = $this->findServerEntityOr404($entityManager, $guild['id']);
+        $server = $this->activeServerOr409($entityManager, $guild['id']);
         $template = $this->publishedTemplateOr404($entityManager, (int) $templateId);
+
+        if ('1' !== $request->request->get('confirm_overwrite')) {
+            $this->addFlash('error', 'Confirme explicitement l’écrasement du catalogue actuel.');
+
+            return $this->redirectToRoute('app_server_catalog_template_import', [
+                'guildId' => $guildId,
+                'templateId' => $templateId,
+            ]);
+        }
+
         $rankRoles = $request->request->all('rank_roles');
 
-        $importer->import($server, $template, \is_array($rankRoles) ? $rankRoles : []);
+        try {
+            $importer->import($server, $template, \is_array($rankRoles) ? $rankRoles : []);
+        } catch (\InvalidArgumentException $exception) {
+            $this->addFlash('error', $exception->getMessage());
+
+            return $this->redirectToRoute('app_server_catalog_template_import', [
+                'guildId' => $guildId,
+                'templateId' => $templateId,
+            ]);
+        }
 
         return $this->redirectToRoute('app_server_configuration', ['guildId' => $guildId]);
     }
@@ -718,6 +753,16 @@ final class CatalogTemplateController extends AbstractController
         $server = $entityManager->getRepository(DiscordServer::class)->findOneBy(['discordId' => $guildId]);
         if (!$server instanceof DiscordServer) {
             throw new NotFoundHttpException('Server is not available in this backoffice session.');
+        }
+
+        return $server;
+    }
+
+    private function activeServerOr409(EntityManagerInterface $entityManager, string $guildId): DiscordServer
+    {
+        $server = $this->findServerEntityOr404($entityManager, $guildId);
+        if (!$server->active()) {
+            throw new ConflictHttpException('Server is inactive.');
         }
 
         return $server;

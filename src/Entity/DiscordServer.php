@@ -35,6 +35,15 @@ class DiscordServer
     #[ORM\Column(name: 'staff_role_id', length: 32, nullable: true)]
     private ?string $staffRoleId = null;
 
+    #[ORM\Column(options: ['default' => true])]
+    private bool $active = true;
+
+    #[ORM\Column(name: 'last_seen_at', type: Types::DATETIME_IMMUTABLE, options: ['default' => 'CURRENT_TIMESTAMP'])]
+    private \DateTimeImmutable $lastSeenAt;
+
+    #[ORM\Column(name: 'inactive_at', type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $inactiveAt = null;
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -48,6 +57,7 @@ class DiscordServer
         $this->icon = $icon;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
+        $this->lastSeenAt = $this->createdAt;
     }
 
     public function id(): ?int
@@ -85,15 +95,47 @@ class DiscordServer
         return $this->staffRoleId;
     }
 
+    public function active(): bool
+    {
+        return $this->active;
+    }
+
+    public function lastSeenAt(): \DateTimeImmutable
+    {
+        return $this->lastSeenAt;
+    }
+
+    public function inactiveAt(): ?\DateTimeImmutable
+    {
+        return $this->inactiveAt;
+    }
+
     public function refreshCache(string $name, ?string $icon): void
     {
-        if ($this->name === $name && $this->icon === $icon) {
+        $this->name = $name;
+        $this->icon = $icon;
+        $this->markSeen();
+    }
+
+    public function markSeen(?\DateTimeImmutable $at = null): void
+    {
+        $at ??= new \DateTimeImmutable();
+        $this->active = true;
+        $this->lastSeenAt = $at;
+        $this->inactiveAt = null;
+        $this->updatedAt = $at;
+    }
+
+    public function deactivate(?\DateTimeImmutable $at = null): void
+    {
+        if (!$this->active) {
             return;
         }
 
-        $this->name = $name;
-        $this->icon = $icon;
-        $this->updatedAt = new \DateTimeImmutable();
+        $at ??= new \DateTimeImmutable();
+        $this->active = false;
+        $this->inactiveAt = $at;
+        $this->updatedAt = $at;
     }
 
     public function updateSettings(?string $welcomeChannelId, ?string $byeChannelId, ?string $staffRoleId): void

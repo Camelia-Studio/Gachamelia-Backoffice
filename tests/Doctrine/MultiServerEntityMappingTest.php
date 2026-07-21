@@ -24,6 +24,7 @@ use App\Entity\Rank;
 use App\Entity\RankStat;
 use App\Entity\Stat;
 use App\Entity\UserStat;
+use App\Entity\UserElement;
 use App\Entity\WelcomeMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -120,6 +121,12 @@ final class MultiServerEntityMappingTest extends KernelTestCase
         self::assertTrue($metadata->hasAssociation('role'));
         self::assertTrue($metadata->hasAssociation('elements'));
         $this->assertUniqueColumns($metadata, ['server_id', 'discord_id']);
+        $this->assertUniqueColumns($metadata, ['id', 'server_id']);
+
+        $userElement = $this->metadata(UserElement::class);
+        self::assertSame('users_elements', $userElement->getTableName());
+        self::assertSame(['user', 'element'], $userElement->identifier);
+        self::assertTrue($userElement->hasAssociation('server'));
     }
 
     public function testCompositeRelationMappings(): void
@@ -127,10 +134,12 @@ final class MultiServerEntityMappingTest extends KernelTestCase
         $rankStat = $this->metadata(RankStat::class);
         self::assertSame(['rank', 'stat'], $rankStat->identifier);
         self::assertSame('rank_stats', $rankStat->getTableName());
+        self::assertTrue($rankStat->hasAssociation('server'));
 
         $userStat = $this->metadata(UserStat::class);
         self::assertSame(['user', 'stat'], $userStat->identifier);
         self::assertSame('user_stats', $userStat->getTableName());
+        self::assertTrue($userStat->hasAssociation('server'));
     }
 
     public function testMessageMappingsAreServerAndRankScoped(): void
@@ -194,6 +203,7 @@ final class MultiServerEntityMappingTest extends KernelTestCase
         $rankStat = $this->metadata(CatalogTemplateRankStat::class);
         self::assertSame('catalog_template_rank_stats', $rankStat->getTableName());
         self::assertSame(['rank', 'stat'], $rankStat->identifier);
+        self::assertTrue($rankStat->hasAssociation('template'));
         self::assertTrue($rankStat->hasField('percentage'));
 
         foreach ([CatalogTemplateWelcomeMessage::class => 'catalog_template_welcome_messages', CatalogTemplateByeMessage::class => 'catalog_template_bye_messages'] as $entityClass => $tableName) {

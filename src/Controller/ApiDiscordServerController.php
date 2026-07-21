@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Backoffice\CatalogValidator;
 use App\Entity\ByeMessage;
 use App\Entity\CharacterRole;
 use App\Entity\DiscordServer;
@@ -20,8 +21,11 @@ use Symfony\Component\Routing\Attribute\Route;
 final class ApiDiscordServerController extends AbstractController
 {
     #[Route('/api/discord-servers/{discordId}/catalogue', name: 'api_discord_servers_catalogue', methods: ['GET'])]
-    public function catalogue(string $discordId, EntityManagerInterface $entityManager): JsonResponse
-    {
+    public function catalogue(
+        string $discordId,
+        EntityManagerInterface $entityManager,
+        CatalogValidator $catalogValidator,
+    ): JsonResponse {
         $server = $entityManager->getRepository(DiscordServer::class)->findOneBy(['discordId' => $discordId]);
         if (!$server instanceof DiscordServer) {
             return $this->json(['error' => 'server_not_found'], Response::HTTP_NOT_FOUND);
@@ -29,6 +33,7 @@ final class ApiDiscordServerController extends AbstractController
 
         return $this->json([
             'server' => $this->serverPayload($server),
+            'validation' => $catalogValidator->validateServer($server)->toArray(),
             'catalogue' => $this->cataloguePayload($entityManager, $server),
         ]);
     }
@@ -79,6 +84,9 @@ final class ApiDiscordServerController extends AbstractController
         if (!$server instanceof DiscordServer) {
             return $this->json(['error' => 'server_not_found'], Response::HTTP_NOT_FOUND);
         }
+        if (!$server->active()) {
+            return $this->json(['error' => 'server_inactive'], Response::HTTP_CONFLICT);
+        }
 
         $server->updateSettings(
             $this->nullablePayloadStringOrCurrent($payload, 'welcome_channel_id', $server->welcomeChannelId()),
@@ -90,6 +98,18 @@ final class ApiDiscordServerController extends AbstractController
         return $this->json([
             'server' => $this->serverPayload($server),
         ]);
+    }
+
+    #[Route('/api/discord-servers/{discordId}', name: 'api_discord_servers_deactivate', methods: ['DELETE'])]
+    public function deactivate(string $discordId, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $server = $entityManager->getRepository(DiscordServer::class)->findOneBy(['discordId' => $discordId]);
+        if ($server instanceof DiscordServer) {
+            $server->deactivate();
+            $entityManager->flush();
+        }
+
+        return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 
     /**
@@ -155,7 +175,7 @@ final class ApiDiscordServerController extends AbstractController
     }
 
     /**
-     * @return array{discord_id: string, name: string, icon: ?string, settings: array{welcome_channel_id: ?string, bye_channel_id: ?string, staff_role_id: ?string}}
+     * @return array{discord_id: string, name: string, icon: ?string, settings: array{welcome_channel_id: ?string, bye_channel_id: ?string, staff_role_id: ?string}, lifecycle: array{active: bool, last_seen_at: string, inactive_at: ?string}}
      */
     private function serverPayload(DiscordServer $server): array
     {
@@ -167,6 +187,11 @@ final class ApiDiscordServerController extends AbstractController
                 'welcome_channel_id' => $server->welcomeChannelId(),
                 'bye_channel_id' => $server->byeChannelId(),
                 'staff_role_id' => $server->staffRoleId(),
+            ],
+            'lifecycle' => [
+                'active' => $server->active(),
+                'last_seen_at' => $server->lastSeenAt()->format(\DateTimeInterface::ATOM),
+                'inactive_at' => $server->inactiveAt()?->format(\DateTimeInterface::ATOM),
             ],
         ];
     }

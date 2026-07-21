@@ -59,6 +59,11 @@
         </header>
 
         <main class="mx-auto flex w-full max-w-[90rem] flex-1 flex-col px-4 py-10 sm:px-6 lg:px-8">
+            {% for message in app.flashes('error') %}
+                <div class="mb-6 border border-camelia-rose/30 bg-camelia-blush px-5 py-4 text-sm font-bold text-camelia-ink" data-testid="flash-error">
+                    {{ message }}
+                </div>
+            {% endfor %}
             {% block body %}{% endblock %}
         </main>
     </div>

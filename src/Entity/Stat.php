@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: 'stats')]
 #[ORM\UniqueConstraint(name: 'uniq_stats_server_name', columns: ['server_id', 'name'])]
+#[ORM\UniqueConstraint(name: 'uniq_stats_id_server', columns: ['id', 'server_id'])]
 class Stat
 {
     #[ORM\Id]

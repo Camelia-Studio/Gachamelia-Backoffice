@@ -3,6 +3,7 @@
 namespace App\Tests\Backoffice;
 
 use App\Backoffice\CatalogTemplateImporter;
+use App\Backoffice\CatalogValidator;
 use App\Entity\CatalogTemplate;
 use App\Entity\CatalogTemplateByeMessage;
 use App\Entity\CatalogTemplateElement;
@@ -42,7 +43,7 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $this->entityManager->persist($oldStat);
 
         $template = new CatalogTemplate('Starter Gacha', 'Catalogue de départ.');
-        $rank = new CatalogTemplateRank($template, 'Comète', 'Comète de l’Aube', 35, 'Comète filante', true);
+        $rank = new CatalogTemplateRank($template, 'Comète', 'Comète de l’Aube', 35, 'Comète filante');
         $stat = new CatalogTemplateStat($template, 'Éther');
         $role = new CatalogTemplateRole($template, 'Gardien', 45, 'unicode', '🛡️');
         $element = new CatalogTemplateElement($template, 'Ambre', 'unicode', '🟠');
@@ -67,7 +68,7 @@ final class CatalogTemplateImporterTest extends KernelTestCase
             'name' => 'Comète de l’Aube',
             'percentage' => 35,
             'bye_title' => 'Comète filante',
-            'is_staff' => 1,
+            'is_staff' => 0,
         ], $this->connection()->fetchAssociative('SELECT discord_id, name, percentage, bye_title, is_staff FROM ranks WHERE server_id = ?', [$server->id()]));
         self::assertSame('Gardien', $this->connection()->fetchOne('SELECT name FROM roles WHERE server_id = ?', [$server->id()]));
         self::assertSame('Éther', $this->connection()->fetchOne('SELECT name FROM stats WHERE server_id = ?', [$server->id()]));
@@ -87,6 +88,8 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $this->entityManager->persist($server);
         $this->entityManager->persist($template);
         $this->entityManager->persist($rank);
+        $this->entityManager->persist(new CatalogTemplateRole($template, 'Gardien', 100));
+        $this->entityManager->persist(new CatalogTemplateElement($template, 'Ambre'));
         $this->entityManager->flush();
 
         $this->expectException(\InvalidArgumentException::class);
@@ -95,8 +98,33 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $this->importer()->import($server, $template, []);
     }
 
+    public function testItRejectsInvalidTemplateWithoutAlteringServerCatalog(): void
+    {
+        $server = new DiscordServer('server-1', 'Serveur Test');
+        $oldRank = new Rank($server, 'old-rank', 'Ancien rang', 100);
+        $template = new CatalogTemplate('Modèle invalide');
+        $this->entityManager->persist($server);
+        $this->entityManager->persist($oldRank);
+        $this->entityManager->persist($template);
+        $this->entityManager->flush();
+
+        try {
+            $this->importer()->import($server, $template, []);
+            self::fail('The invalid template should have been rejected.');
+        } catch (\InvalidArgumentException $exception) {
+            self::assertSame('Catalog template is not ready for import.', $exception->getMessage());
+        }
+
+        self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM ranks WHERE server_id = ?', [$server->id()]));
+        self::assertSame('Ancien rang', $this->connection()->fetchOne('SELECT name FROM ranks WHERE server_id = ?', [$server->id()]));
+    }
+
     private function importer(): CatalogTemplateImporter
     {
-        return new CatalogTemplateImporter($this->entityManager, $this->connection());
+        return new CatalogTemplateImporter(
+            $this->entityManager,
+            $this->connection(),
+            new CatalogValidator($this->entityManager),
+        );
     }
 }

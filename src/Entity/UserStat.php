@@ -10,6 +10,10 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'user_stats')]
 class UserStat
 {
+    #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
+    #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
+    private DiscordServer $server;
+
     #[ORM\Id]
     #[ORM\ManyToOne(targetEntity: GachaUser::class)]
     #[ORM\JoinColumn(name: 'user_id', nullable: false, onDelete: 'CASCADE')]
@@ -25,9 +29,19 @@ class UserStat
 
     public function __construct(GachaUser $user, Stat $stat, int $value = 0)
     {
+        if ($user->server() !== $stat->server()) {
+            throw new \InvalidArgumentException('A user stat must belong to one server.');
+        }
+
+        $this->server = $user->server();
         $this->user = $user;
         $this->stat = $stat;
         $this->value = $value;
+    }
+
+    public function server(): DiscordServer
+    {
+        return $this->server;
     }
 
     public function user(): GachaUser

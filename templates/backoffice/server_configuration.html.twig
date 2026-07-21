@@ -112,7 +112,7 @@
                         {% endif %}
                         <div class="min-w-0">
                             <p class="truncate text-sm font-black leading-tight">{{ guild.name }}</p>
-                            <p class="mt-1 text-xs font-bold leading-tight text-camelia-muted">Catalogue actif</p>
+                            <p class="mt-1 text-xs font-bold leading-tight text-camelia-muted">{{ read_only ? 'Catalogue inactif' : 'Catalogue actif' }}</p>
                         </div>
                     </div>
 
@@ -169,6 +169,16 @@
                     </div>
                 </header>
 
+                {% if read_only %}
+                    <div class="border border-camelia-gold/40 bg-camelia-gold/10 p-5" data-testid="inactive-server-notice">
+                        <p class="font-black text-camelia-ink">Serveur inactif</p>
+                        <p class="mt-1 text-sm font-bold leading-relaxed text-camelia-muted">Le catalogue est conservé en lecture seule. Il redeviendra modifiable dès que le bot signalera son retour sur le serveur.</p>
+                    </div>
+                {% endif %}
+
+                {% include 'backoffice/_catalog_validation.html.twig' with { validation: validation } only %}
+
+                <fieldset class="contents" data-testid="configuration-read-only" {% if read_only %}disabled{% endif %}>
                 {% if is_overview %}
                     <section class="grid gap-7" data-testid="configuration-overview">
                         <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -201,12 +211,16 @@
                                 <h2 class="text-xl font-black">Importer un modèle de catalogue</h2>
                                 <p class="mt-2 max-w-2xl text-base font-bold leading-relaxed text-camelia-muted">Démarre depuis un catalogue global préparé par les admins du bot. L’import demande une confirmation car il remplace le catalogue actuel.</p>
                             </div>
-                            <a
-                                href="{{ path('app_server_catalog_template_imports', { guildId: guild.id }) }}"
-                                class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
-                            >
-                                Importer
-                            </a>
+                            {% if read_only %}
+                                <span class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink/10 px-5 text-sm font-black text-camelia-muted">Import indisponible</span>
+                            {% else %}
+                                <a
+                                    href="{{ path('app_server_catalog_template_imports', { guildId: guild.id }) }}"
+                                    class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+                                >
+                                    Importer
+                                </a>
+                            {% endif %}
                         </article>
                     </section>
                 {% else %}
@@ -220,6 +234,7 @@
                                         <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Ces valeurs Discord sont utilisées par le bot pour poster les messages et reconnaître le staff.</p>
                                     </div>
                                     <form method="post" action="{{ path('app_server_settings_update', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         {% if discord_resources.channels is empty and discord_resources.roles is empty %}
                                             <p class="border border-camelia-rose/20 bg-camelia-blush/70 p-4 text-sm font-bold leading-relaxed text-camelia-muted">Ressources Discord temporairement indisponibles. Les IDs restent éditables manuellement.</p>
                                         {% endif %}
@@ -316,6 +331,7 @@
                                         <p class="mt-1 text-sm font-bold text-camelia-muted">Renseigne les infos minimales pour alimenter le bot.</p>
                                     </div>
                                     <form method="post" action="{{ path('app_server_catalog_rank_create', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         {% if discord_resources.roles is empty %}
                                             <p class="border border-camelia-rose/20 bg-camelia-blush/70 p-4 text-sm font-bold leading-relaxed text-camelia-muted">Rôles Discord temporairement indisponibles. L’ID reste éditable manuellement.</p>
                                         {% endif %}
@@ -387,6 +403,7 @@
                                                     <summary class="cursor-pointer text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Configurer le rang</summary>
                                                     <div class="mt-5 grid gap-6">
                                                         <form method="post" action="{{ path('app_server_catalog_rank_update', { guildId: guild.id, rankId: rank.id }) }}" class="grid gap-4 border border-camelia-ink/10 bg-camelia-ivory p-4">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                             <div class="grid gap-3 md:grid-cols-2">
                                                                 <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                                     Rôle Discord
@@ -430,6 +447,7 @@
                                                         </form>
 
                                                         <form method="post" action="{{ path('app_server_catalog_rank_delete', { guildId: guild.id, rankId: rank.id }) }}" class="justify-self-start">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                             <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                                                 Supprimer le rang
                                                             </button>
@@ -451,6 +469,7 @@
                                         <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Cette probabilité nourrit le catalogue du rang sans encombrer sa fiche principale.</p>
                                     </div>
                                     <form method="post" action="{{ path('app_server_catalog_rank_stat_upsert_dedicated', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Rang
                                             <select name="rank_id" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
@@ -505,6 +524,7 @@
                                                     <summary class="cursor-pointer text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Modifier</summary>
                                                     <div class="mt-4 grid gap-4">
                                                         <form method="post" action="{{ path('app_server_catalog_rank_stat_upsert_dedicated', { guildId: guild.id }) }}" class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem_auto] sm:items-end">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                             <input type="hidden" name="rank_id" value="{{ rank_stat.rank_id }}">
                                                             <input type="hidden" name="stat_id" value="{{ rank_stat.stat_id }}">
                                                             <label class="grid gap-1 text-sm font-bold text-camelia-muted">
@@ -520,6 +540,7 @@
                                                             </button>
                                                         </form>
                                                         <form method="post" action="{{ path('app_server_catalog_rank_stat_delete_dedicated', { guildId: guild.id, rankId: rank_stat.rank_id, statId: rank_stat.stat_id }) }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                             <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                                                 Supprimer
                                                             </button>
@@ -549,6 +570,7 @@
                                         <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Le message reste rattaché au rang sélectionné et uniquement à ce serveur.</p>
                                     </div>
                                     <form method="post" action="{{ path(create_route, { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Rang
                                             <select name="rank_id" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
@@ -588,6 +610,7 @@
                                                     <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">#{{ message.id }}</span>
                                                 </div>
                                                 <form method="post" action="{{ path(update_route, { guildId: guild.id, messageId: message.id }) }}" class="grid gap-4">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <label class="grid gap-2 text-sm font-bold text-camelia-muted">
                                                         Message
                                                         <textarea name="message" required maxlength="255" rows="4" class="min-h-28 resize-y border border-camelia-ink/10 bg-camelia-ivory px-3 py-3 font-semibold leading-relaxed text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">{{ message.message }}</textarea>
@@ -599,6 +622,7 @@
                                                     </div>
                                                 </form>
                                                 <form method="post" action="{{ path(delete_route, { guildId: guild.id, messageId: message.id }) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                                         Supprimer
                                                     </button>
@@ -618,6 +642,7 @@
                                         <p class="mt-1 text-sm font-bold text-camelia-muted">L’emoji sera affiché sur les fiches Discord et les tirages.</p>
                                     </div>
                                     <form method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="grid gap-5 p-6" data-controller="emoji-picker" data-emoji-picker-default-value="🎭">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
                                             <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                 Nom
@@ -666,6 +691,7 @@
                                                     <summary class="cursor-pointer text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Modifier</summary>
                                                     <div class="mt-4 grid gap-4">
                                                         <form method="post" action="{{ path('app_server_catalog_role_update', { guildId: guild.id, roleId: role.id }) }}" class="grid gap-4" data-controller="emoji-picker" data-emoji-picker-default-value="{{ role.emoji_markup }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                             <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
                                                                 <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                                     Nom
@@ -682,6 +708,7 @@
                                                             </button>
                                                         </form>
                                                         <form method="post" action="{{ path('app_server_catalog_role_delete', { guildId: guild.id, roleId: role.id }) }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                             <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                                                 Supprimer
                                                             </button>
@@ -703,6 +730,7 @@
                                         <p class="mt-1 text-sm font-bold text-camelia-muted">Une stat est simplement un nom pour l’instant.</p>
                                     </div>
                                     <form method="post" action="{{ path('app_server_catalog_stat_create', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Nom
                                             <input name="name" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
@@ -733,6 +761,7 @@
                                                     <summary class="cursor-pointer text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Modifier</summary>
                                                     <div class="mt-4 grid gap-4">
                                                         <form method="post" action="{{ path('app_server_catalog_stat_update', { guildId: guild.id, statId: stat.id }) }}" class="grid gap-3">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                             <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                                 Nom
                                                                 <input name="name" value="{{ stat.name }}" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
@@ -742,6 +771,7 @@
                                                             </button>
                                                         </form>
                                                         <form method="post" action="{{ path('app_server_catalog_stat_delete', { guildId: guild.id, statId: stat.id }) }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                             <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                                                 Supprimer
                                                             </button>
@@ -763,6 +793,7 @@
                                         <p class="mt-1 text-sm font-bold text-camelia-muted">L’emoji sera affiché dans les fiches Discord.</p>
                                     </div>
                                     <form method="post" action="{{ path('app_server_catalog_element_create', { guildId: guild.id }) }}" class="grid gap-5 p-6" data-controller="emoji-picker" data-emoji-picker-default-value="✨">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                             Nom
                                             <input name="name" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
@@ -800,6 +831,7 @@
                                                     <summary class="cursor-pointer text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Modifier</summary>
                                                     <div class="mt-4 grid gap-4">
                                                         <form method="post" action="{{ path('app_server_catalog_element_update', { guildId: guild.id, elementId: element.id }) }}" class="grid gap-4" data-controller="emoji-picker" data-emoji-picker-default-value="{{ element.emoji_markup }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                             <label class="grid gap-1 text-sm font-bold text-camelia-muted">
                                                                 Nom
                                                                 <input name="name" value="{{ element.name }}" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
@@ -810,6 +842,7 @@
                                                             </button>
                                                         </form>
                                                         <form method="post" action="{{ path('app_server_catalog_element_delete', { guildId: guild.id, elementId: element.id }) }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                             <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
                                                                 Supprimer
                                                             </button>
@@ -826,6 +859,7 @@
                         {% endif %}
                     </div>
                 {% endif %}
+                </fieldset>
             </div>
         </div>
     </section>

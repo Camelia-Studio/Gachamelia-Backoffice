@@ -1,0 +1,44 @@
+{% set labels = {
+    missing_non_staff_rank: 'Ajoute au moins un rang non staff.',
+    empty_roles: 'Ajoute au moins un rôle de personnage.',
+    empty_elements: 'Ajoute au moins un élément.',
+    zero_rank_weight: 'La somme des probabilités des rangs non staff doit être supérieure à zéro.',
+    zero_role_weight: 'La somme des probabilités des rôles doit être supérieure à zéro.',
+    multiple_staff_ranks: 'Un seul rang staff peut être configuré.',
+    empty_stats: 'Aucune statistique n’est encore configurée.',
+    missing_welcome_channel: 'Le salon d’arrivée Discord n’est pas configuré.',
+    missing_bye_channel: 'Le salon de départ Discord n’est pas configuré.',
+    staff_role_without_staff_rank: 'Un rôle Discord staff est configuré sans rang staff.',
+    empty_welcome_messages: 'Aucun message d’arrivée n’est encore configuré.',
+    empty_bye_messages: 'Aucun message de départ n’est encore configuré.'
+} %}
+
+<section
+    class="grid gap-4 border p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)] md:items-start {{ validation.ready ? 'border-camelia-leaf/25 bg-camelia-leaf/5' : 'border-camelia-rose/25 bg-camelia-blush/45' }}"
+    data-testid="catalog-validation"
+    data-ready="{{ validation.ready ? 'true' : 'false' }}"
+>
+    <div>
+        <p class="text-xs font-black tracking-[0.16em] uppercase {{ validation.ready ? 'text-camelia-leaf' : 'text-camelia-rose' }}">État du catalogue</p>
+        <h2 class="mt-2 text-lg font-black">{{ validation.ready ? 'Prêt pour le bot' : 'Catalogue à compléter' }}</h2>
+        <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">
+            {{ validation.ready ? 'Les données bloquantes sont en place.' : 'Tu peux continuer à éditer librement, mais ce catalogue n’est pas encore exploitable.' }}
+        </p>
+    </div>
+    <div class="grid gap-3 text-sm font-bold text-camelia-muted">
+        {% if validation.errors %}
+            <ul class="grid gap-2" data-testid="catalog-validation-errors">
+                {% for code in validation.errors %}
+                    <li class="border-l-2 border-camelia-rose pl-3">{{ labels[code] ?? code }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% if validation.warnings %}
+            <ul class="grid gap-2" data-testid="catalog-validation-warnings">
+                {% for code in validation.warnings %}
+                    <li class="border-l-2 border-camelia-gold pl-3">{{ labels[code] ?? code }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+</section>

@@ -29,6 +29,26 @@
             </p>
         </header>
 
+        {% include 'backoffice/_catalog_validation.html.twig' with { validation: preview.validation } only %}
+
+        <section class="grid gap-4 sm:grid-cols-3" data-testid="template-import-summary">
+            <article class="border border-camelia-ink/10 bg-camelia-ivory p-5 shadow-sm" data-testid="template-import-current">
+                <p class="text-xs font-black tracking-[0.14em] text-camelia-muted uppercase">Catalogue actuel</p>
+                <p class="mt-2 font-display text-3xl font-black">{{ preview.current.total }}</p>
+                <p class="mt-1 text-sm font-bold text-camelia-muted">entrées supprimées</p>
+            </article>
+            <article class="border border-camelia-leaf/20 bg-camelia-leaf/5 p-5 shadow-sm" data-testid="template-import-incoming">
+                <p class="text-xs font-black tracking-[0.14em] text-camelia-leaf uppercase">Catalogue importé</p>
+                <p class="mt-2 font-display text-3xl font-black">{{ preview.incoming.total }}</p>
+                <p class="mt-1 text-sm font-bold text-camelia-muted">entrées créées</p>
+            </article>
+            <article class="border border-camelia-rose/20 bg-camelia-blush/50 p-5 shadow-sm" data-testid="template-import-affected-users">
+                <p class="text-xs font-black tracking-[0.14em] text-camelia-rose uppercase">Personnages affectés</p>
+                <p class="mt-2 font-display text-3xl font-black">{{ preview.affected_user_count }}</p>
+                <p class="mt-1 text-sm font-bold text-camelia-muted">{{ preview.affected_user_count > 1 ? 'personnages' : 'personnage' }} à réattribuer</p>
+            </article>
+        </section>
+
         <div class="grid gap-7 xl:grid-cols-[minmax(20rem,32rem)_minmax(0,1fr)] xl:items-start">
             <section class="grid gap-6 border border-camelia-rose/20 bg-camelia-blush/50 shadow-sm">
                 <div class="border-b border-camelia-rose/20 p-6">
@@ -38,6 +58,7 @@
                     </p>
                 </div>
                 <form method="post" action="{{ path('app_server_catalog_template_import_apply', { guildId: guild.id, templateId: template.id }) }}" class="grid gap-5 p-6">
+                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                     {% if discord_resources.roles is empty %}
                         <p class="border border-camelia-rose/20 bg-camelia-ivory p-4 text-sm font-bold leading-relaxed text-camelia-muted">
                             Rôles Discord temporairement indisponibles. Les IDs restent éditables manuellement.
@@ -64,7 +85,12 @@
                         </p>
                     {% endfor %}
 
-                    <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-rose px-5 text-sm font-black text-white transition hover:bg-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                    <label class="flex items-start gap-3 border border-camelia-rose/25 bg-camelia-ivory p-4 text-sm font-bold leading-relaxed text-camelia-muted">
+                        <input name="confirm_overwrite" type="checkbox" value="1" required class="mt-0.5 size-4 shrink-0 accent-camelia-rose">
+                        Je confirme que le catalogue actuel et les attributions associées seront écrasés.
+                    </label>
+
+                    <button type="submit" {% if not preview.validation.ready %}disabled{% endif %} class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-rose px-5 text-sm font-black text-white transition hover:bg-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 disabled:cursor-not-allowed disabled:opacity-45">
                         Écraser et importer
                     </button>
                 </form>

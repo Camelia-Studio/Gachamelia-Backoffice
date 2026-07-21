@@ -38,6 +38,9 @@ final class ApiDiscordEmojiController extends AbstractController
             if (!$server instanceof DiscordServer) {
                 return $this->json(['error' => 'server_not_found'], Response::HTTP_NOT_FOUND);
             }
+            if (!$server->active()) {
+                return $this->json(['error' => 'server_inactive'], Response::HTTP_CONFLICT);
+            }
 
             $cacheKey = DiscordEmoji::serverCacheKey($server);
         }

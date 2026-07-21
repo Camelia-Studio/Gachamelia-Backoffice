@@ -10,6 +10,10 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'rank_stats')]
 class RankStat
 {
+    #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
+    #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
+    private DiscordServer $server;
+
     #[ORM\Id]
     #[ORM\ManyToOne(targetEntity: Rank::class)]
     #[ORM\JoinColumn(name: 'rank_id', nullable: false, onDelete: 'CASCADE')]
@@ -25,9 +29,19 @@ class RankStat
 
     public function __construct(Rank $rank, Stat $stat, int $percentage)
     {
+        if ($rank->server() !== $stat->server()) {
+            throw new \InvalidArgumentException('A rank stat must belong to one server.');
+        }
+
+        $this->server = $rank->server();
         $this->rank = $rank;
         $this->stat = $stat;
         $this->percentage = $percentage;
+    }
+
+    public function server(): DiscordServer
+    {
+        return $this->server;
     }
 
     public function rank(): Rank

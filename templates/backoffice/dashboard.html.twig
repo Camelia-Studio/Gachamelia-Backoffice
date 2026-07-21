@@ -1,9 +1,67 @@
 {% extends 'base.html.twig' %}
 
+{% macro guild_card(guild, inactive) %}
+    <article
+        class="grid gap-4 border p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center {{ inactive ? 'border-camelia-ink/10 bg-camelia-ivory opacity-80' : 'border-camelia-ink/10 bg-white' }}"
+        data-testid="guild-{{ guild.id }}"
+    >
+        <div class="flex min-w-0 items-center gap-4">
+            {% if guild.icon_url %}
+                <img
+                    src="{{ guild.icon_url }}"
+                    alt="Logo {{ guild.name }}"
+                    width="48"
+                    height="48"
+                    class="size-12 shrink-0 rounded-full border border-camelia-ink/10 bg-camelia-blush object-cover"
+                    loading="lazy"
+                >
+            {% else %}
+                <span
+                    class="flex size-12 shrink-0 items-center justify-center rounded-full border border-camelia-ink/10 bg-camelia-blush font-display text-2xl font-black text-camelia-rose"
+                    data-testid="guild-icon-fallback"
+                    aria-hidden="true"
+                >
+                    {{ guild.name|slice(0, 1)|upper }}
+                </span>
+            {% endif %}
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="text-lg font-black leading-tight">{{ guild.name }}</h2>
+                    {% if inactive %}
+                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-ink/10 px-3 text-xs font-black text-camelia-muted">Inactif</span>
+                    {% endif %}
+                </div>
+                <p class="mt-1 text-sm font-semibold text-camelia-muted">
+                    {{ guild.canManageConfiguration ? 'Administration' : 'Membre' }}
+                </p>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            {% if guild.canManageConfiguration %}
+                <a
+                    href="{{ path('app_server_configuration', { guildId: guild.id }) }}"
+                    class="inline-flex min-h-10 items-center justify-center rounded-full px-4 text-sm font-black transition focus:outline-none focus-visible:ring-2 {{ inactive ? 'border border-camelia-ink/10 bg-white text-camelia-muted hover:text-camelia-rose focus-visible:ring-camelia-rose/50' : 'bg-camelia-leaf text-white hover:bg-camelia-ink focus-visible:ring-camelia-leaf/50' }}"
+                >
+                    {{ inactive ? 'Consulter' : 'Configuration' }}
+                </a>
+            {% endif %}
+            <a
+                href="{{ path('app_character_sheet', { guildId: guild.id }) }}"
+                class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-ink/10 bg-camelia-blush px-4 text-sm font-black text-camelia-ink transition hover:border-camelia-rose/40 hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50"
+            >
+                Fiche personnage
+            </a>
+        </div>
+    </article>
+{% endmacro %}
+
+{% import _self as ui %}
+
 {% block title %}Serveurs Discord - Gachamélia Backoffice{% endblock %}
 
 {% block navbar_actions %}
     <form method="post" action="{{ path('app_logout') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <button
             type="submit"
             class="inline-flex min-h-10 cursor-pointer items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white shadow-sm transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
@@ -44,56 +102,30 @@
                 </p>
             </div>
         {% else %}
-            <div class="grid gap-3">
-                {% for guild in guilds %}
-                    <article
-                        class="grid gap-4 border border-camelia-ink/10 bg-white p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
-                        data-testid="guild-{{ guild.id }}"
-                    >
-                        <div class="flex min-w-0 items-center gap-4">
-                            {% if guild.icon_url %}
-                                <img
-                                    src="{{ guild.icon_url }}"
-                                    alt="Logo {{ guild.name }}"
-                                    width="48"
-                                    height="48"
-                                    class="size-12 shrink-0 rounded-full border border-camelia-ink/10 bg-camelia-blush object-cover"
-                                    loading="lazy"
-                                >
-                            {% else %}
-                                <span
-                                    class="flex size-12 shrink-0 items-center justify-center rounded-full border border-camelia-ink/10 bg-camelia-blush font-display text-2xl font-black text-camelia-rose"
-                                    data-testid="guild-icon-fallback"
-                                    aria-hidden="true"
-                                >
-                                    {{ guild.name|slice(0, 1)|upper }}
-                                </span>
-                            {% endif %}
-                            <div class="min-w-0">
-                                <h2 class="text-lg font-black leading-tight">{{ guild.name }}</h2>
-                                <p class="mt-1 text-sm font-semibold text-camelia-muted">
-                                    {{ guild.canManageConfiguration ? 'Administration' : 'Membre' }}
-                                </p>
-                            </div>
+            <div class="grid gap-8">
+                <section class="grid gap-3" data-testid="active-guilds">
+                    <div>
+                        <h2 class="text-lg font-black">Serveurs actifs</h2>
+                        <p class="mt-1 text-sm font-semibold text-camelia-muted">Le bot est actuellement présent sur ces serveurs.</p>
+                    </div>
+                    {% for guild in active_guilds %}
+                        {{ ui.guild_card(guild, false) }}
+                    {% else %}
+                        <p class="border border-dashed border-camelia-ink/15 bg-camelia-ivory p-5 text-sm font-bold text-camelia-muted">Aucun serveur actif.</p>
+                    {% endfor %}
+                </section>
+
+                {% if inactive_guilds is not empty %}
+                    <section class="grid gap-3 border-t border-camelia-ink/10 pt-8" data-testid="inactive-guilds">
+                        <div>
+                            <h2 class="text-lg font-black">Serveurs inactifs</h2>
+                            <p class="mt-1 text-sm font-semibold text-camelia-muted">Leur catalogue est conservé en lecture seule jusqu’au retour du bot.</p>
                         </div>
-                        <div class="flex flex-wrap gap-2">
-                            {% if guild.canManageConfiguration %}
-                                <a
-                                    href="{{ path('app_server_configuration', { guildId: guild.id }) }}"
-                                    class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-leaf px-4 text-sm font-black text-white transition hover:bg-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-leaf/50"
-                                >
-                                    Configuration
-                                </a>
-                            {% endif %}
-                            <a
-                                href="{{ path('app_character_sheet', { guildId: guild.id }) }}"
-                                class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-ink/10 bg-camelia-blush px-4 text-sm font-black text-camelia-ink transition hover:border-camelia-rose/40 hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50"
-                            >
-                                Fiche personnage
-                            </a>
-                        </div>
-                    </article>
-                {% endfor %}
+                        {% for guild in inactive_guilds %}
+                            {{ ui.guild_card(guild, true) }}
+                        {% endfor %}
+                    </section>
+                {% endif %}
             </div>
         {% endif %}
     </section>

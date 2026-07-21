@@ -11,6 +11,8 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'ranks')]
 #[ORM\UniqueConstraint(name: 'uniq_ranks_server_discord_id', columns: ['server_id', 'discord_id'])]
 #[ORM\UniqueConstraint(name: 'uniq_ranks_server_name', columns: ['server_id', 'name'])]
+#[ORM\UniqueConstraint(name: 'uniq_ranks_id_server', columns: ['id', 'server_id'])]
+#[ORM\UniqueConstraint(name: 'uniq_ranks_staff_scope', columns: ['staff_scope_id'])]
 class Rank
 {
     #[ORM\Id]
@@ -37,6 +39,10 @@ class Rank
     #[ORM\Column(name: 'is_staff', options: ['default' => false])]
     private bool $staff;
 
+    #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
+    #[ORM\JoinColumn(name: 'staff_scope_id', nullable: true, onDelete: 'CASCADE')]
+    private ?DiscordServer $staffScope;
+
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -57,6 +63,7 @@ class Rank
         $this->percentage = $percentage;
         $this->byeTitle = $byeTitle;
         $this->staff = $staff;
+        $this->staffScope = $staff ? $server : null;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }
@@ -103,6 +110,7 @@ class Rank
         $this->percentage = $percentage;
         $this->byeTitle = $byeTitle;
         $this->staff = $staff;
+        $this->staffScope = $staff ? $this->server : null;
         $this->updatedAt = new \DateTimeImmutable();
     }
 }

@@ -1,6 +1,24 @@
 # yaml-language-server: $schema=../vendor/symfony/dependency-injection/Loader/schema/services.schema.json
 
 services:
+    App\Security\BotTokenIssuer:
+        arguments:
+            $clientId: 'gachamelia-test-bot'
+            $clientSecret: 'test-bot-secret'
+            $jwtSecret: 'test-jwt-secret-0123456789abcdef'
+            $ttlSeconds: 3600
+
+    App\Security\JwtAuthenticator:
+        arguments:
+            $jwtSecret: 'test-jwt-secret-0123456789abcdef'
+
+    App\Controller\DiscordAuthController:
+        autowire: true
+        autoconfigure: true
+        arguments:
+            $discordClientId: 'test-discord-client'
+            $discordRedirectUri: 'http://localhost/connexion/discord/retour'
+
     App\Discord\DiscordApiClientInterface:
         public: true
         alias: App\Discord\DiscordHttpApiClient

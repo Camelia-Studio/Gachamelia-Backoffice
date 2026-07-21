@@ -12,6 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: 'users')]
 #[ORM\UniqueConstraint(name: 'uniq_users_server_discord_id', columns: ['server_id', 'discord_id'])]
+#[ORM\UniqueConstraint(name: 'uniq_users_id_server', columns: ['id', 'server_id'])]
 class GachaUser
 {
     #[ORM\Id]
@@ -35,14 +36,9 @@ class GachaUser
     private ?CharacterRole $role = null;
 
     /**
-     * @var Collection<int, Element>
+     * @var Collection<int, UserElement>
      */
-    #[ORM\ManyToMany(targetEntity: Element::class)]
-    #[ORM\JoinTable(
-        name: 'users_elements',
-        joinColumns: [new ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')],
-        inverseJoinColumns: [new ORM\JoinColumn(name: 'element_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')],
-    )]
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserElement::class, cascade: ['persist'], orphanRemoval: true)]
     private Collection $elements;
 
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
@@ -54,6 +50,7 @@ class GachaUser
     public function __construct(DiscordServer $server, string $discordId, ?Rank $rank = null, ?CharacterRole $role = null)
     {
         $this->server = $server;
+        $this->assertCatalogScope($rank, $role);
         $this->discordId = $discordId;
         $this->rank = $rank;
         $this->role = $role;
@@ -92,27 +89,46 @@ class GachaUser
      */
     public function elements(): Collection
     {
-        return $this->elements;
+        return new ArrayCollection(array_map(
+            static fn (UserElement $userElement): Element => $userElement->element(),
+            $this->elements->toArray(),
+        ));
     }
 
     public function updateRank(?Rank $rank): void
     {
+        if (null !== $rank && $rank->server() !== $this->server) {
+            throw new \InvalidArgumentException('A user rank must belong to the user server.');
+        }
+
         $this->rank = $rank;
         $this->touch();
     }
 
     public function updateRole(?CharacterRole $role): void
     {
+        if (null !== $role && $role->server() !== $this->server) {
+            throw new \InvalidArgumentException('A user role must belong to the user server.');
+        }
+
         $this->role = $role;
         $this->touch();
     }
 
     public function addElement(Element $element): void
     {
-        if (!$this->elements->contains($element)) {
-            $this->elements->add($element);
-            $this->touch();
+        if ($element->server() !== $this->server) {
+            throw new \InvalidArgumentException('A user element must belong to the user server.');
         }
+
+        foreach ($this->elements as $userElement) {
+            if ($userElement->element() === $element) {
+                return;
+            }
+        }
+
+        $this->elements->add(new UserElement($this, $element));
+        $this->touch();
     }
 
     /**
@@ -122,9 +138,19 @@ class GachaUser
     {
         $this->elements->clear();
         foreach ($elements as $element) {
-            $this->elements->add($element);
+            $this->addElement($element);
         }
         $this->touch();
+    }
+
+    private function assertCatalogScope(?Rank $rank, ?CharacterRole $role): void
+    {
+        if (null !== $rank && $rank->server() !== $this->server) {
+            throw new \InvalidArgumentException('A user rank must belong to the user server.');
+        }
+        if (null !== $role && $role->server() !== $this->server) {
+            throw new \InvalidArgumentException('A user role must belong to the user server.');
+        }
     }
 
     private function touch(): void
