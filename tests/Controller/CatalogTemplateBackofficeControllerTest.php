@@ -168,6 +168,20 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
         self::assertSelectorTextContains('[data-testid="flash-error"]', 'ne peut pas être publié');
     }
 
+    public function testServerAdminCanOpenPublishedTemplateImportList(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedBackofficeAccess($client);
+        $this->seedPublishedTemplate();
+
+        $client->request('GET', '/app/serveurs/admin/configuration/importer');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="template-imports"]');
+        self::assertSelectorTextContains('[data-testid="importable-template-card"]', 'Starter officiel');
+    }
+
     public function testServerAdminCanImportPublishedTemplateWithDiscordRoleMapping(): void
     {
         $client = static::createClient();

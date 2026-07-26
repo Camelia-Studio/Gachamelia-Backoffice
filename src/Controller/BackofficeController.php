@@ -166,7 +166,12 @@ final class BackofficeController extends AbstractController
         ]);
     }
 
-    #[Route('/app/serveurs/{guildId}/configuration/{section}', name: 'app_server_configuration_section', methods: ['GET'])]
+    #[Route(
+        '/app/serveurs/{guildId}/configuration/{section}',
+        name: 'app_server_configuration_section',
+        requirements: ['section' => 'settings|ranks|rank-stats|welcome-messages|bye-messages|roles|stats|elements'],
+        methods: ['GET'],
+    )]
     public function configurationSection(
         string $guildId,
         string $section,
