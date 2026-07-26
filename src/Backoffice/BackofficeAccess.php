@@ -16,7 +16,7 @@ final readonly class BackofficeAccess
     }
 
     /**
-     * @return array{id: string, username: string, global_name: ?string, avatar: ?string, global_roles: list<string>, can_manage_catalog_templates: bool}|null
+     * @return array{id: string, username: string, global_name: ?string, avatar: ?string, avatar_url: ?string, global_roles: list<string>, can_manage_catalog_templates: bool}|null
      */
     public function profile(?int $userId): ?array
     {
@@ -30,6 +30,7 @@ final readonly class BackofficeAccess
             'username' => $user->username(),
             'global_name' => $user->globalName(),
             'avatar' => $user->avatar(),
+            'avatar_url' => $this->discordCdnUrlGenerator->userAvatarUrl($user->discordId(), $user->avatar()),
             'global_roles' => $user->globalRoles(),
             'can_manage_catalog_templates' => $this->canManageCatalogTemplates($userId),
         ];

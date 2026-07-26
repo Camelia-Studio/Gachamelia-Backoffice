@@ -1031,6 +1031,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $client = static::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
+        $this->connection()->update('discord_users', ['avatar' => 'avatar-hash'], ['discord_id' => '42']);
         $this->seedCharacterSheetFixtures();
 
         $crawler = $client->request('GET', '/app/serveurs/admin/fiche-personnage');
@@ -1038,6 +1039,9 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="character-sheet-card"]');
         self::assertSelectorTextContains('[data-testid="character-sheet-identity"]', 'Melaine');
+        self::assertSelectorExists(
+            '[data-testid="character-sheet-identity"] img[alt="Avatar de Melaine"][src="https://cdn.discordapp.com/avatars/42/avatar-hash.webp?size=128"]',
+        );
         self::assertSelectorTextContains('[data-testid="character-sheet-rank"]', 'Floraison');
         self::assertSelectorTextContains('[data-testid="character-sheet-role"]', 'Alchimiste');
         self::assertSelectorTextContains('[data-testid="character-sheet-role"]', '🧪');

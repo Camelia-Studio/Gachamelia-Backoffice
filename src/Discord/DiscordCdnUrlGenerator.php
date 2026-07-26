@@ -24,4 +24,25 @@ final class DiscordCdnUrlGenerator
 
         return $url;
     }
+
+    public function userAvatarUrl(string $userId, ?string $avatar, int $size = 128): ?string
+    {
+        if (null === $avatar || '' === trim($avatar)) {
+            return null;
+        }
+
+        $avatar = trim($avatar);
+        $url = sprintf(
+            'https://cdn.discordapp.com/avatars/%s/%s.webp?size=%d',
+            rawurlencode($userId),
+            rawurlencode($avatar),
+            $size,
+        );
+
+        if (str_starts_with($avatar, 'a_')) {
+            $url .= '&animated=true';
+        }
+
+        return $url;
+    }
 }

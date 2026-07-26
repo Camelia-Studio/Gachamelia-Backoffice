@@ -69,9 +69,23 @@
                     <div class="grid min-w-0 gap-5" data-testid="character-sheet-identity">
                         <p class="text-xs font-black tracking-[0.18em] text-camelia-pink uppercase">Membre Discord</p>
                         <div class="flex min-w-0 items-center gap-4">
-                            <span class="flex size-14 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 font-display text-2xl font-black text-camelia-pink" aria-hidden="true">
-                                {{ (profile.global_name ?? profile.username)|slice(0, 1)|upper }}
-                            </span>
+                            {% if profile.avatar_url %}
+                                <img
+                                    src="{{ profile.avatar_url }}"
+                                    alt="Avatar de {{ profile.global_name ?? profile.username }}"
+                                    width="56"
+                                    height="56"
+                                    class="size-14 shrink-0 rounded-full border border-white/20 bg-white/10 object-cover"
+                                >
+                            {% else %}
+                                <span
+                                    class="flex size-14 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 font-display text-2xl font-black text-camelia-pink"
+                                    data-testid="character-sheet-avatar-fallback"
+                                    aria-hidden="true"
+                                >
+                                    {{ (profile.global_name ?? profile.username)|slice(0, 1)|upper }}
+                                </span>
+                            {% endif %}
                             <div class="min-w-0">
                                 <p class="break-words font-display text-3xl font-black leading-tight sm:text-4xl">
                                     {{ profile.global_name ?? profile.username }}
