@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Backoffice\BackofficeAccess;
 use App\Backoffice\BackofficeSession;
 use App\Backoffice\CatalogValidator;
+use App\Backoffice\CharacterSheetProvider;
 use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Entity\ByeMessage;
 use App\Entity\CharacterRole;
@@ -807,14 +808,31 @@ final class BackofficeController extends AbstractController
     }
 
     #[Route('/app/serveurs/{guildId}/fiche-personnage', name: 'app_character_sheet', methods: ['GET'])]
-    public function characterSheet(string $guildId, BackofficeSession $backofficeSession, BackofficeAccess $backofficeAccess): Response
-    {
+    public function characterSheet(
+        string $guildId,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        CharacterSheetProvider $characterSheetProvider,
+        EntityManagerInterface $entityManager,
+    ): Response {
         if (!$backofficeSession->isAuthenticated()) {
             return $this->redirectToRoute('app_discord_login');
         }
 
+        $guild = $this->findGuildOr404($backofficeSession, $backofficeAccess, $guildId);
+        $profile = $backofficeAccess->profile($backofficeSession->discordUserId());
+        if (null === $profile) {
+            $backofficeSession->logout();
+
+            return $this->redirectToRoute('app_discord_login');
+        }
+
+        $server = $this->findServerEntityOr404($entityManager, $guild['id']);
+
         return $this->render('backoffice/character_sheet.html.twig', [
-            'guild' => $this->findGuildOr404($backofficeSession, $backofficeAccess, $guildId),
+            'guild' => $guild,
+            'profile' => $profile,
+            'character_sheet' => $characterSheetProvider->forMember($server, $profile['id']),
         ]);
     }
 

@@ -13,16 +13,165 @@
 
 {% block body %}
     <section class="grid gap-8" data-testid="character-sheet">
-        <div class="grid gap-3 border-b border-camelia-ink/10 pb-6">
-            <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">{{ guild.name }}</p>
-            <h1 class="font-display text-4xl leading-tight md:text-5xl">Fiche personnage</h1>
+        <div class="grid gap-4 border-b border-camelia-ink/10 pb-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+            <div class="grid min-w-0 gap-3">
+                <div class="flex min-w-0 items-center gap-3">
+                    {% if guild.icon_url %}
+                        <img
+                            src="{{ guild.icon_url }}"
+                            alt=""
+                            width="40"
+                            height="40"
+                            class="size-10 shrink-0 rounded-full border border-camelia-ink/10 bg-white object-cover"
+                        >
+                    {% else %}
+                        <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-camelia-blush font-display text-lg font-black text-camelia-rose" aria-hidden="true">
+                            {{ guild.name|slice(0, 1)|upper }}
+                        </span>
+                    {% endif %}
+                    <p class="min-w-0 break-words text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">
+                        {{ guild.name }}
+                    </p>
+                </div>
+                <h1 class="font-display text-4xl leading-tight md:text-5xl">Fiche personnage</h1>
+            </div>
+            {% if not guild.active %}
+                <span class="inline-flex min-h-8 w-fit items-center rounded-full bg-camelia-ink/10 px-3 text-xs font-black text-camelia-muted">
+                    Serveur inactif
+                </span>
+            {% endif %}
         </div>
 
-        <div class="grid gap-4 border border-camelia-ink/10 bg-white p-6 shadow-sm">
-            <p class="text-lg font-black">Profil en préparation</p>
-            <p class="max-w-2xl text-sm leading-6 text-camelia-muted">
-                La fiche liée à ce serveur sera affichée ici.
-            </p>
-        </div>
+        {% if character_sheet is null %}
+            <article
+                class="relative isolate overflow-hidden border border-camelia-ink/10 bg-white p-6 shadow-sm sm:p-8"
+                data-testid="character-sheet-empty-state"
+            >
+                <div class="absolute -right-12 -top-12 -z-10 size-48 rounded-full border-[2rem] border-camelia-blush/60" aria-hidden="true"></div>
+                <div class="grid max-w-2xl gap-4">
+                    <span class="flex size-12 items-center justify-center rounded-full bg-camelia-blush font-display text-2xl font-black text-camelia-rose" aria-hidden="true">?</span>
+                    <div class="grid gap-2">
+                        <p class="font-display text-2xl font-black leading-tight text-camelia-ink">
+                            Ton personnage n’a pas encore été créé sur ce serveur.
+                        </p>
+                        <p class="text-sm font-semibold leading-6 text-camelia-muted">
+                            Utilise la commande
+                            <code class="rounded bg-camelia-ink px-2 py-1 font-sans text-xs font-black text-white">/ficheperso</code>
+                            sur Discord, puis reviens ici pour découvrir ton rang, ton rôle, tes éléments et tes statistiques.
+                        </p>
+                    </div>
+                </div>
+            </article>
+        {% else %}
+            <article class="overflow-hidden border border-camelia-ink/10 bg-white shadow-sm" data-testid="character-sheet-card">
+                <div class="relative isolate grid gap-8 overflow-hidden bg-camelia-ink p-6 text-white sm:p-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+                    <div class="absolute -left-24 -top-28 -z-10 size-72 rounded-full border-[3rem] border-camelia-rose/20" aria-hidden="true"></div>
+                    <div class="grid min-w-0 gap-5" data-testid="character-sheet-identity">
+                        <p class="text-xs font-black tracking-[0.18em] text-camelia-pink uppercase">Membre Discord</p>
+                        <div class="flex min-w-0 items-center gap-4">
+                            <span class="flex size-14 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 font-display text-2xl font-black text-camelia-pink" aria-hidden="true">
+                                {{ (profile.global_name ?? profile.username)|slice(0, 1)|upper }}
+                            </span>
+                            <div class="min-w-0">
+                                <p class="break-words font-display text-3xl font-black leading-tight sm:text-4xl">
+                                    {{ profile.global_name ?? profile.username }}
+                                </p>
+                                <p class="mt-1 break-all text-sm font-bold text-white/65">@{{ profile.username }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="relative mx-auto flex size-48 shrink-0 flex-col items-center justify-center rounded-full border-[0.6rem] border-camelia-gold bg-camelia-ivory p-5 text-center text-camelia-ink shadow-[0_0_0_1px_rgba(255,255,255,0.35),0_18px_50px_rgba(0,0,0,0.3)] lg:mx-0"
+                        data-testid="character-sheet-rank"
+                    >
+                        <span class="text-[0.65rem] font-black tracking-[0.2em] text-camelia-rose uppercase">Rang</span>
+                        <strong class="mt-2 max-w-full break-words font-display text-lg font-black leading-tight">
+                            {{ character_sheet.rank ? character_sheet.rank.name : 'Non attribué' }}
+                        </strong>
+                        {% if character_sheet.rank and character_sheet.rank.is_staff %}
+                            <span class="mt-2 rounded-full bg-camelia-leaf px-2 py-1 text-[0.65rem] font-black tracking-wide text-white uppercase">
+                                Staff
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="grid gap-8 p-6 sm:p-8 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+                    <div class="grid min-w-0 content-start gap-8">
+                        <section class="grid gap-3" data-testid="character-sheet-role">
+                            <p class="text-xs font-black tracking-[0.16em] text-camelia-rose uppercase">Rôle</p>
+                            <div class="flex min-w-0 items-center gap-4 border-l-4 border-camelia-gold bg-camelia-ivory p-4">
+                                {% if character_sheet.role %}
+                                    {% if character_sheet.role.emoji_url %}
+                                        <img
+                                            src="{{ character_sheet.role.emoji_url }}"
+                                            alt=""
+                                            width="40"
+                                            height="40"
+                                            class="size-10 shrink-0 object-contain"
+                                            loading="lazy"
+                                        >
+                                    {% else %}
+                                        <span class="text-3xl" aria-hidden="true">{{ character_sheet.role.emoji }}</span>
+                                    {% endif %}
+                                    <strong class="min-w-0 break-words text-lg font-black">{{ character_sheet.role.name }}</strong>
+                                {% else %}
+                                    <strong class="text-lg font-black text-camelia-muted">Non attribué</strong>
+                                {% endif %}
+                            </div>
+                        </section>
+
+                        <section class="grid gap-3" data-testid="character-sheet-elements">
+                            <p class="text-xs font-black tracking-[0.16em] text-camelia-rose uppercase">Éléments</p>
+                            {% if character_sheet.elements is empty %}
+                                <p class="text-sm font-bold text-camelia-muted">Aucun élément</p>
+                            {% else %}
+                                <ul class="flex flex-wrap gap-2" role="list">
+                                    {% for element in character_sheet.elements %}
+                                        <li class="flex min-w-0 items-center gap-2 rounded-full border border-camelia-ink/10 bg-camelia-blush px-3 py-2 text-sm font-black">
+                                            {% if element.emoji_url %}
+                                                <img
+                                                    src="{{ element.emoji_url }}"
+                                                    alt=""
+                                                    width="24"
+                                                    height="24"
+                                                    class="size-6 shrink-0 object-contain"
+                                                    loading="lazy"
+                                                >
+                                            {% else %}
+                                                <span class="text-lg" aria-hidden="true">{{ element.emoji }}</span>
+                                            {% endif %}
+                                            <span class="min-w-0 break-words">{{ element.name }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </section>
+                    </div>
+
+                    <section class="grid min-w-0 content-start gap-3">
+                        <div>
+                            <p class="text-xs font-black tracking-[0.16em] text-camelia-rose uppercase">Caractéristiques</p>
+                            <h2 class="mt-1 font-display text-2xl font-black">Statistiques</h2>
+                        </div>
+                        {% if character_sheet.stats is empty %}
+                            <p class="border border-dashed border-camelia-ink/15 bg-camelia-ivory p-4 text-sm font-bold text-camelia-muted">
+                                Aucune statistique
+                            </p>
+                        {% else %}
+                            <dl class="grid gap-px overflow-hidden border border-camelia-ink/10 bg-camelia-ink/10 sm:grid-cols-2" data-testid="character-sheet-stats">
+                                {% for stat in character_sheet.stats %}
+                                    <div class="grid min-w-0 gap-1 bg-white p-4">
+                                        <dt class="break-words text-xs font-black tracking-wide text-camelia-muted uppercase">{{ stat.name }}</dt>
+                                        <dd class="font-display text-3xl font-black text-camelia-ink">{{ stat.value }}</dd>
+                                    </div>
+                                {% endfor %}
+                            </dl>
+                        {% endif %}
+                    </section>
+                </div>
+            </article>
+        {% endif %}
     </section>
 {% endblock %}

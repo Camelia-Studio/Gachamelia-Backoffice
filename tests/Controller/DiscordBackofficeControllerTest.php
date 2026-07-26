@@ -1011,12 +1011,53 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Fiche personnage');
         self::assertSelectorTextContains('body', 'Serveur Admin');
+        self::assertSelectorExists('[data-testid="character-sheet-empty-state"]');
+        self::assertSelectorTextContains(
+            '[data-testid="character-sheet-empty-state"]',
+            'Ton personnage n’a pas encore été créé sur ce serveur.',
+        );
+        self::assertSelectorTextContains('[data-testid="character-sheet-empty-state"]', '/ficheperso');
+        self::assertSelectorNotExists('[data-testid="character-sheet-card"]');
 
         $client->request('GET', '/app/serveurs/member/fiche-personnage');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Fiche personnage');
         self::assertSelectorTextContains('body', 'Serveur Membre');
+    }
+
+    public function testCharacterSheetDisplaysOnlyTheConnectedMembersServerCharacter(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+        $this->seedCharacterSheetFixtures();
+
+        $crawler = $client->request('GET', '/app/serveurs/admin/fiche-personnage');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('[data-testid="character-sheet-card"]');
+        self::assertSelectorTextContains('[data-testid="character-sheet-identity"]', 'Melaine');
+        self::assertSelectorTextContains('[data-testid="character-sheet-rank"]', 'Floraison');
+        self::assertSelectorTextContains('[data-testid="character-sheet-role"]', 'Alchimiste');
+        self::assertSelectorTextContains('[data-testid="character-sheet-role"]', '🧪');
+        self::assertSelectorTextContains('[data-testid="character-sheet-elements"]', 'Ambre');
+        self::assertSelectorTextContains('[data-testid="character-sheet-elements"]', 'Lune');
+        self::assertSelectorTextContains('[data-testid="character-sheet-elements"]', '🌙');
+        self::assertSelectorTextContains('[data-testid="character-sheet-stats"]', 'Agilité');
+        self::assertSelectorTextContains('[data-testid="character-sheet-stats"]', '7');
+        self::assertSelectorTextContains('[data-testid="character-sheet-stats"]', 'Éther');
+        self::assertSelectorTextContains('[data-testid="character-sheet-stats"]', '12');
+        self::assertSelectorExists(
+            '[data-testid="character-sheet-elements"] img[src="https://cdn.discordapp.com/emojis/123456789012345678.webp?size=64&quality=lossless"]',
+        );
+        self::assertStringContainsString(
+            'sm:grid-cols-2',
+            $crawler->filter('[data-testid="character-sheet-stats"]')->attr('class') ?? '',
+        );
+        self::assertSelectorTextNotContains('[data-testid="character-sheet"]', 'Personnage voisin');
+        self::assertSelectorTextNotContains('[data-testid="character-sheet"]', 'Personnage autre serveur');
+        self::assertSelectorNotExists('[data-testid="character-sheet-empty-state"]');
     }
 
     public function testUnknownServerReturnsNotFound(): void
@@ -1084,6 +1125,137 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $session->save();
 
         $client->getCookieJar()->set(new Cookie($session->getName(), $session->getId()));
+    }
+
+    private function seedCharacterSheetFixtures(): void
+    {
+        $adminServerId = $this->serverDatabaseId('admin');
+        $memberServerId = $this->serverDatabaseId('member');
+
+        $this->connection()->insert('ranks', [
+            'server_id' => $adminServerId,
+            'discord_id' => 'rank-floraison',
+            'name' => 'Floraison',
+            'percentage' => 100,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-26 10:00:00',
+            'updated_at' => '2026-07-26 10:00:00',
+        ]);
+        $rankId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('roles', [
+            'server_id' => $adminServerId,
+            'name' => 'Alchimiste',
+            'percentage' => 100,
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '🧪',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
+        ]);
+        $roleId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('elements', [
+            'server_id' => $adminServerId,
+            'name' => 'Lune',
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '🌙',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
+        ]);
+        $moonId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('elements', [
+            'server_id' => $adminServerId,
+            'name' => 'Ambre',
+            'emoji_source' => 'server',
+            'emoji_unicode' => null,
+            'emoji_id' => '123456789012345678',
+            'emoji_name' => 'ambre',
+            'emoji_animated' => 0,
+        ]);
+        $amberId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('stats', [
+            'server_id' => $adminServerId,
+            'name' => 'Éther',
+        ]);
+        $etherId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('stats', [
+            'server_id' => $adminServerId,
+            'name' => 'Agilité',
+        ]);
+        $agilityId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('users', [
+            'server_id' => $adminServerId,
+            'discord_id' => '42',
+            'rank_id' => $rankId,
+            'role_id' => $roleId,
+            'created_at' => '2026-07-26 10:00:00',
+            'updated_at' => '2026-07-26 10:00:00',
+        ]);
+        $userId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('users_elements', [
+            'server_id' => $adminServerId,
+            'user_id' => $userId,
+            'element_id' => $moonId,
+        ]);
+        $this->connection()->insert('users_elements', [
+            'server_id' => $adminServerId,
+            'user_id' => $userId,
+            'element_id' => $amberId,
+        ]);
+        $this->connection()->insert('user_stats', [
+            'server_id' => $adminServerId,
+            'user_id' => $userId,
+            'stat_id' => $etherId,
+            'value' => 12,
+        ]);
+        $this->connection()->insert('user_stats', [
+            'server_id' => $adminServerId,
+            'user_id' => $userId,
+            'stat_id' => $agilityId,
+            'value' => 7,
+        ]);
+
+        $this->connection()->insert('ranks', [
+            'server_id' => $adminServerId,
+            'discord_id' => 'rank-neighbor',
+            'name' => 'Personnage voisin',
+            'percentage' => 0,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-26 10:00:00',
+            'updated_at' => '2026-07-26 10:00:00',
+        ]);
+        $neighborRankId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('users', [
+            'server_id' => $adminServerId,
+            'discord_id' => '99',
+            'rank_id' => $neighborRankId,
+            'role_id' => null,
+            'created_at' => '2026-07-26 10:00:00',
+            'updated_at' => '2026-07-26 10:00:00',
+        ]);
+
+        $this->connection()->insert('ranks', [
+            'server_id' => $memberServerId,
+            'discord_id' => 'rank-other-server',
+            'name' => 'Personnage autre serveur',
+            'percentage' => 100,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-26 10:00:00',
+            'updated_at' => '2026-07-26 10:00:00',
+        ]);
+        $otherServerRankId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('users', [
+            'server_id' => $memberServerId,
+            'discord_id' => '42',
+            'rank_id' => $otherServerRankId,
+            'role_id' => null,
+            'created_at' => '2026-07-26 10:00:00',
+            'updated_at' => '2026-07-26 10:00:00',
+        ]);
     }
 
     private function serverDatabaseId(string $discordId): int
