@@ -19,44 +19,23 @@ class CatalogTemplateElement
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: CatalogTemplate::class)]
-    #[ORM\JoinColumn(name: 'template_id', nullable: false, onDelete: 'CASCADE')]
-    private CatalogTemplate $template;
-
-    #[ORM\Column(length: 255)]
-    private string $name;
-
-    #[ORM\Column(name: 'emoji_source', length: 16, options: ['default' => 'unicode'])]
-    private string $emojiSource;
-
-    #[ORM\Column(name: 'emoji_unicode', length: 64, nullable: true)]
-    private ?string $emojiUnicode;
-
-    #[ORM\Column(name: 'emoji_id', length: 32, nullable: true)]
-    private ?string $emojiId;
-
-    #[ORM\Column(name: 'emoji_name', length: 255, nullable: true)]
-    private ?string $emojiName;
-
-    #[ORM\Column(name: 'emoji_animated', options: ['default' => false])]
-    private bool $emojiAnimated;
-
     public function __construct(
-        CatalogTemplate $template,
-        string $name,
-        string $emojiSource = 'unicode',
-        ?string $emojiUnicode = self::DEFAULT_EMOJI,
-        ?string $emojiId = null,
-        ?string $emojiName = null,
-        bool $emojiAnimated = false,
+        #[ORM\ManyToOne(targetEntity: CatalogTemplate::class)]
+        #[ORM\JoinColumn(name: 'template_id', nullable: false, onDelete: 'CASCADE')]
+        private CatalogTemplate $template,
+        #[ORM\Column(length: 255)]
+        private string $name,
+        #[ORM\Column(name: 'emoji_source', length: 16, options: ['default' => 'unicode'])]
+        private string $emojiSource = 'unicode',
+        #[ORM\Column(name: 'emoji_unicode', length: 64, nullable: true)]
+        private ?string $emojiUnicode = self::DEFAULT_EMOJI,
+        #[ORM\Column(name: 'emoji_id', length: 32, nullable: true)]
+        private ?string $emojiId = null,
+        #[ORM\Column(name: 'emoji_name', length: 255, nullable: true)]
+        private ?string $emojiName = null,
+        #[ORM\Column(name: 'emoji_animated', options: ['default' => false])]
+        private bool $emojiAnimated = false,
     ) {
-        $this->template = $template;
-        $this->name = $name;
-        $this->emojiSource = $emojiSource;
-        $this->emojiUnicode = $emojiUnicode;
-        $this->emojiId = $emojiId;
-        $this->emojiName = $emojiName;
-        $this->emojiAnimated = $emojiAnimated;
     }
 
     public function id(): ?int
@@ -108,5 +87,4 @@ class CatalogTemplateElement
     {
         return $this->emojiAnimated;
     }
-
 }

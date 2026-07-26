@@ -18,17 +18,13 @@ class Stat
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
-    #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
-    private DiscordServer $server;
-
-    #[ORM\Column(length: 255)]
-    private string $name;
-
-    public function __construct(DiscordServer $server, string $name)
-    {
-        $this->server = $server;
-        $this->name = $name;
+    public function __construct(
+        #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
+        #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
+        private DiscordServer $server,
+        #[ORM\Column(length: 255)]
+        private string $name,
+    ) {
     }
 
     public function id(): ?int

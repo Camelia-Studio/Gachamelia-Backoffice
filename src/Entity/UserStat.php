@@ -24,10 +24,8 @@ class UserStat
     #[ORM\JoinColumn(name: 'stat_id', nullable: false, onDelete: 'CASCADE')]
     private Stat $stat;
 
-    #[ORM\Column(options: ['default' => 0])]
-    private int $value;
-
-    public function __construct(GachaUser $user, Stat $stat, int $value = 0)
+    public function __construct(GachaUser $user, Stat $stat, #[ORM\Column(options: ['default' => 0])]
+        private int $value = 0)
     {
         if ($user->server() !== $stat->server()) {
             throw new \InvalidArgumentException('A user stat must belong to one server.');
@@ -36,7 +34,6 @@ class UserStat
         $this->server = $user->server();
         $this->user = $user;
         $this->stat = $stat;
-        $this->value = $value;
     }
 
     public function server(): DiscordServer

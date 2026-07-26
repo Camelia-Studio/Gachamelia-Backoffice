@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Controller;
 
 use App\Discord\DiscordApiClientInterface;
@@ -13,12 +15,12 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class DiscordBackofficeControllerTest extends WebTestCase
 {
-    use DatabaseResetter;
     use BackofficeCsrfRequest;
+    use DatabaseResetter;
 
     public function testBackofficeMutationsRequireCsrfToken(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -32,7 +34,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testLogoutRequiresCsrfToken(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -43,7 +45,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testBackofficeDashboardRedirectsAnonymousUserToDiscordLogin(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $client->request('GET', '/app');
 
@@ -52,7 +54,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testDiscordLoginStartsOauthFlowWithGuildScopesAndState(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $client->request('GET', '/connexion/discord');
 
@@ -69,7 +71,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testDiscordCallbackRejectsInvalidState(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $client->request('GET', '/connexion/discord/retour?code=test-code&state=bad-state');
 
@@ -78,7 +80,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testDiscordCallbackPersistsUserMembershipsFromKnownServersWithoutBotTokenCall(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $client->disableReboot();
         $this->resetDatabase();
         $this->seedKnownDiscordServer('admin', 'Ancien nom', 'old-icon');
@@ -86,11 +88,12 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $this->seedKnownDiscordServer('known-without-user', 'Serveur Absent', null);
 
         $fakeDiscordApiClient = new FakeDiscordApiClient();
-        static::getContainer()->set(DiscordApiClientInterface::class, $fakeDiscordApiClient);
+        self::getContainer()->set(DiscordApiClientInterface::class, $fakeDiscordApiClient);
 
         $client->request('GET', '/connexion/discord');
         $location = $client->getResponse()->headers->get('Location') ?? '';
-        parse_str(parse_url($location, PHP_URL_QUERY) ?: '', $query);
+        $queryString = parse_url($location, PHP_URL_QUERY);
+        parse_str(\is_string($queryString) ? $queryString : '', $query);
 
         self::assertIsString($query['state'] ?? null);
 
@@ -108,13 +111,13 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         $memberships = $this->connection()->fetchAllAssociative(
             <<<'SQL'
-                SELECT ds.discord_id, ds.name, ds.icon, dsm.owner, dsm.permissions, dsm.can_manage_configuration
-                FROM discord_server_members dsm
-                INNER JOIN discord_servers ds ON ds.id = dsm.server_id
-                INNER JOIN discord_users du ON du.id = dsm.user_id
-                WHERE du.discord_id = ?
-                ORDER BY ds.discord_id
-            SQL,
+                    SELECT ds.discord_id, ds.name, ds.icon, dsm.owner, dsm.permissions, dsm.can_manage_configuration
+                    FROM discord_server_members dsm
+                    INNER JOIN discord_servers ds ON ds.id = dsm.server_id
+                    INNER JOIN discord_users du ON du.id = dsm.user_id
+                    WHERE du.discord_id = ?
+                    ORDER BY ds.discord_id
+                SQL,
             ['42'],
         );
 
@@ -148,7 +151,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testDashboardListsDatabaseServersAndRoleSpecificLinks(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -171,7 +174,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testConfigurationRootDisplaysModuleCardsAndRequiresAdministratorAccess(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -202,7 +205,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testInactiveServerRemainsVisibleAndConfigurationIsReadOnly(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
         $this->connection()->update('discord_servers', [
@@ -230,7 +233,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testConfigurationSectionPagesDisplayDedicatedServerCatalogRows(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -363,11 +366,11 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testAdministratorCanSelectDiscordRoleWhenManagingRanks(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $client->disableReboot();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
-        static::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new FakeDiscordGuildResourcesProvider(
+        self::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new FakeDiscordGuildResourcesProvider(
             [],
             [
                 ['id' => '777777777777777777', 'name' => 'Comète', 'label' => '@Comète', 'position' => 9, 'managed' => false],
@@ -398,7 +401,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testDedicatedRankRelationPagesAreAvailableFromSidebarAndEditable(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -497,11 +500,11 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testAdministratorCanDisplayAndUpdateServerSettings(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $client->disableReboot();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
-        static::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new FakeDiscordGuildResourcesProvider(
+        self::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new FakeDiscordGuildResourcesProvider(
             [
                 ['id' => '111111111111111111', 'name' => 'bienvenue', 'label' => '#bienvenue', 'type' => 0],
                 ['id' => '555555555555555555', 'name' => 'départs', 'label' => '#départs', 'type' => 0],
@@ -550,11 +553,11 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testAdministratorCanKeepManualSettingsWhenDiscordResourcesAreUnavailable(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $client->disableReboot();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
-        static::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new FakeDiscordGuildResourcesProvider([], []));
+        self::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new FakeDiscordGuildResourcesProvider([], []));
 
         $this->connection()->update('discord_servers', [
             'welcome_channel_id' => '111111111111111111',
@@ -575,7 +578,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testAdministratorCanCreateServerCatalogRows(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -645,7 +648,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testAdministratorCanUpdateAndDeleteServerRoles(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -705,7 +708,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testAdministratorCanUpdateAndDeleteServerCatalogRows(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -829,7 +832,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testAdministratorCanManageRankStatsAndMessages(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -910,7 +913,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testAdministratorCanManageMessagesFromDedicatedPages(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -972,7 +975,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testMemberCannotCreateServerCatalogRows(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -1002,7 +1005,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testCharacterSheetPageIsAvailableToEveryDatabaseAccessibleGuildMember(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -1028,7 +1031,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testCharacterSheetDisplaysOnlyTheConnectedMembersServerCharacter(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
         $this->connection()->update('discord_users', ['avatar' => 'avatar-hash'], ['discord_id' => '42']);
@@ -1066,7 +1069,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
     public function testUnknownServerReturnsNotFound(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedPersistentBackofficeAccess($client);
 
@@ -1124,7 +1127,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             'updated_at' => '2026-07-06 10:00:00',
         ]);
 
-        $session = static::getContainer()->get('session.factory')->createSession();
+        $session = self::getContainer()->get('session.factory')->createSession();
         $session->set('gachamelia.discord_user_id', $userId);
         $session->save();
 
@@ -1302,7 +1305,7 @@ final class FakeDiscordApiClient implements DiscordApiClientInterface
 final readonly class FakeDiscordGuildResourcesProvider implements DiscordGuildResourcesProviderInterface
 {
     /**
-     * @param list<array{id: string, name: string, label: string, type: int}> $channels
+     * @param list<array{id: string, name: string, label: string, type: int}>                    $channels
      * @param list<array{id: string, name: string, label: string, position: int, managed: bool}> $roles
      */
     public function __construct(

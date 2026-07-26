@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord;
 
 final readonly class DiscordHttpApiClient implements DiscordApiClientInterface
@@ -46,6 +48,8 @@ final readonly class DiscordHttpApiClient implements DiscordApiClientInterface
     }
 
     /**
+     * @param list<string> $headers
+     *
      * @return array<string, mixed>
      */
     private function requestJson(string $method, string $path, array $headers, ?string $body = null): array
@@ -71,7 +75,7 @@ final readonly class DiscordHttpApiClient implements DiscordApiClientInterface
             throw new \RuntimeException('Discord API request failed.');
         }
 
-        $statusCode = $this->extractStatusCode($http_response_header ?? []);
+        $statusCode = $this->extractStatusCode($http_response_header);
         $payload = json_decode($response, true);
         if (!\is_array($payload)) {
             throw new \RuntimeException('Discord API returned an invalid JSON response.');

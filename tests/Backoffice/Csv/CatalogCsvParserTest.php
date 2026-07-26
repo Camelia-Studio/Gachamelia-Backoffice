@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Backoffice\Csv;
 
 use App\Backoffice\Csv\CatalogCsvParser;
@@ -114,7 +116,7 @@ final class CatalogCsvParserTest extends TestCase
     {
         $document = (new CatalogCsvParser())->parse($this->csv("nom\nForce\n"), CatalogCsvSection::Stats);
 
-        self::assertEquals($document, $document::fromArray($document->toArray()));
+        self::assertSame($document->toArray(), $document::fromArray($document->toArray())->toArray());
     }
 
     private function csv(string $contents): string

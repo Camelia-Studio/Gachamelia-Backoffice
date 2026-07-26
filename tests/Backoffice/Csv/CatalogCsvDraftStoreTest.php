@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Backoffice\Csv;
 
 use App\Backoffice\Csv\CatalogCsvDraftStore;
@@ -14,10 +16,9 @@ final class CatalogCsvDraftStoreTest extends TestCase
 {
     public function testDraftIsScopedExpiresAndIsRemovedExplicitly(): void
     {
-        $requestStack = new RequestStack();
         $request = new Request();
         $request->setSession(new Session(new MockArraySessionStorage()));
-        $requestStack->push($request);
+        $requestStack = new RequestStack([$request]);
         $store = new CatalogCsvDraftStore($requestStack);
         $now = new \DateTimeImmutable('2026-07-26 20:00:00');
 

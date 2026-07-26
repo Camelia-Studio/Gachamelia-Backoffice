@@ -58,10 +58,10 @@ final class ServerCatalogCsvTargetAdapter extends AbstractCatalogCsvTargetAdapte
         foreach ($preview->discordRoleLines() as $line) {
             $discordId = trim($discordRoleIdsByLine[$line] ?? '');
             if ('' === $discordId) {
-                throw new \InvalidArgumentException(sprintf('discord_role_mapping_required:%d', $line));
+                throw new \InvalidArgumentException(\sprintf('discord_role_mapping_required:%d', $line));
             }
             if (isset($usedDiscordIds[$discordId])) {
-                throw new \InvalidArgumentException(sprintf('discord_role_mapping_conflict:%d', $line));
+                throw new \InvalidArgumentException(\sprintf('discord_role_mapping_conflict:%d', $line));
             }
             $usedDiscordIds[$discordId] = true;
         }
@@ -79,11 +79,11 @@ final class ServerCatalogCsvTargetAdapter extends AbstractCatalogCsvTargetAdapte
         }
         $discordId = trim($discordRoleIdsByLine[$line] ?? '');
         if ('' === $discordId) {
-            throw new \InvalidArgumentException(sprintf('discord_role_mapping_required:%d', $line));
+            throw new \InvalidArgumentException(\sprintf('discord_role_mapping_required:%d', $line));
         }
         foreach ($existingRanks as $rank) {
             if ($rank instanceof Rank && $rank->discordId() === $discordId) {
-                throw new \InvalidArgumentException(sprintf('discord_role_mapping_conflict:%d', $line));
+                throw new \InvalidArgumentException(\sprintf('discord_role_mapping_conflict:%d', $line));
             }
         }
 

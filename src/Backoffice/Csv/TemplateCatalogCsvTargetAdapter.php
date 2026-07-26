@@ -61,7 +61,7 @@ final class TemplateCatalogCsvTargetAdapter extends AbstractCatalogCsvTargetAdap
         $base = '' === $base ? 'rang' : $base;
         $roleKey = $base;
         for ($suffix = 2; isset($usedKeys[$roleKey]); ++$suffix) {
-            $roleKey = sprintf('%s-%d', $base, $suffix);
+            $roleKey = \sprintf('%s-%d', $base, $suffix);
         }
 
         return new CatalogTemplateRank(

@@ -1,19 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Enum;
 
 use Random\RandomException;
 
 enum GachaElementEnum: string
 {
-    case SEVE = "Sève";
-    case BRUME = "Brume";
-    case ECHO = "Écho";
-    case VIDE = "Vide";
-    case SEL = "Sel";
-    case FLUX = "Flux";
-    case AMBRE = "Ambre";
-    case POUSSIERE = "Poussière";
+    case SEVE = 'Sève';
+    case BRUME = 'Brume';
+    case ECHO = 'Écho';
+    case VIDE = 'Vide';
+    case SEL = 'Sel';
+    case FLUX = 'Flux';
+    case AMBRE = 'Ambre';
+    case POUSSIERE = 'Poussière';
+
     /**
      * @throws RandomException
      */
@@ -21,6 +24,6 @@ enum GachaElementEnum: string
     {
         $cases = self::cases();
 
-        return $cases[random_int(0, count($cases) - 1)];
+        return $cases[random_int(0, \count($cases) - 1)];
     }
 }

@@ -18,17 +18,13 @@ class CatalogTemplateStat
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: CatalogTemplate::class)]
-    #[ORM\JoinColumn(name: 'template_id', nullable: false, onDelete: 'CASCADE')]
-    private CatalogTemplate $template;
-
-    #[ORM\Column(length: 255)]
-    private string $name;
-
-    public function __construct(CatalogTemplate $template, string $name)
-    {
-        $this->template = $template;
-        $this->name = $name;
+    public function __construct(
+        #[ORM\ManyToOne(targetEntity: CatalogTemplate::class)]
+        #[ORM\JoinColumn(name: 'template_id', nullable: false, onDelete: 'CASCADE')]
+        private CatalogTemplate $template,
+        #[ORM\Column(length: 255)]
+        private string $name,
+    ) {
     }
 
     public function id(): ?int

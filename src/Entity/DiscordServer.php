@@ -17,15 +17,6 @@ class DiscordServer
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\Column(name: 'discord_id', length: 32)]
-    private string $discordId;
-
-    #[ORM\Column(length: 255)]
-    private string $name;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $icon;
-
     #[ORM\Column(name: 'welcome_channel_id', length: 32, nullable: true)]
     private ?string $welcomeChannelId = null;
 
@@ -50,11 +41,11 @@ class DiscordServer
     #[ORM\Column(name: 'updated_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $updatedAt;
 
-    public function __construct(string $discordId, string $name, ?string $icon = null)
+    public function __construct(#[ORM\Column(name: 'discord_id', length: 32)]
+        private string $discordId, #[ORM\Column(length: 255)]
+        private string $name, #[ORM\Column(length: 255, nullable: true)]
+        private ?string $icon = null)
     {
-        $this->discordId = $discordId;
-        $this->name = $name;
-        $this->icon = $icon;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
         $this->lastSeenAt = $this->createdAt;

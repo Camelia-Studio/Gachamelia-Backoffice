@@ -21,25 +21,6 @@ class Rank
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
-    #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
-    private DiscordServer $server;
-
-    #[ORM\Column(name: 'discord_id', length: 32)]
-    private string $discordId;
-
-    #[ORM\Column(length: 255)]
-    private string $name;
-
-    #[ORM\Column]
-    private int $percentage;
-
-    #[ORM\Column(name: 'bye_title', length: 255, nullable: true)]
-    private ?string $byeTitle;
-
-    #[ORM\Column(name: 'is_staff', options: ['default' => false])]
-    private bool $staff;
-
-    #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
     #[ORM\JoinColumn(name: 'staff_scope_id', nullable: true, onDelete: 'CASCADE')]
     private ?DiscordServer $staffScope;
 
@@ -50,20 +31,21 @@ class Rank
     private \DateTimeImmutable $updatedAt;
 
     public function __construct(
-        DiscordServer $server,
-        string $discordId,
-        string $name,
-        int $percentage,
-        ?string $byeTitle = null,
-        bool $staff = false,
+        #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
+        #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
+        private DiscordServer $server,
+        #[ORM\Column(name: 'discord_id', length: 32)]
+        private string $discordId,
+        #[ORM\Column(length: 255)]
+        private string $name,
+        #[ORM\Column]
+        private int $percentage,
+        #[ORM\Column(name: 'bye_title', length: 255, nullable: true)]
+        private ?string $byeTitle = null,
+        #[ORM\Column(name: 'is_staff', options: ['default' => false])]
+        private bool $staff = false,
     ) {
-        $this->server = $server;
-        $this->discordId = $discordId;
-        $this->name = $name;
-        $this->percentage = $percentage;
-        $this->byeTitle = $byeTitle;
-        $this->staff = $staff;
-        $this->staffScope = $staff ? $server : null;
+        $this->staffScope = $this->staff ? $this->server : null;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }

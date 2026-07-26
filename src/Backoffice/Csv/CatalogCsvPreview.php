@@ -10,10 +10,10 @@ final readonly class CatalogCsvPreview
 
     /**
      * @param list<array{line: int, key: string, action: 'create'|'update'|'unchanged', current: ?array<string, mixed>, incoming: array<string, mixed>}> $operations
-     * @param list<array{line: ?int, column: ?string, message: string, value: ?string}>                                              $errors
-     * @param list<array{label: string, current: int, projected: int, valid: bool}>                                                  $totals
-     * @param list<int>                                                                                                             $discordRoleLines
-     * @param list<array<string, mixed>>                                                                                             $state
+     * @param list<array{line: ?int, column: ?string, message: string, value: ?string}>                                                                  $errors
+     * @param list<array{label: string, current: int, projected: int, valid: bool}>                                                                      $totals
+     * @param list<int>                                                                                                                                  $discordRoleLines
+     * @param list<array<string, mixed>>                                                                                                                 $state
      */
     public function __construct(
         private array $operations,

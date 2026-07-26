@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord;
 
 final readonly class DiscordHttpGuildResourcesClient implements DiscordGuildResourcesClientInterface
@@ -49,7 +51,7 @@ final readonly class DiscordHttpGuildResourcesClient implements DiscordGuildReso
             throw new \RuntimeException('Discord API request failed.');
         }
 
-        $statusCode = $this->extractStatusCode($http_response_header ?? []);
+        $statusCode = $this->extractStatusCode($http_response_header);
         $payload = json_decode($response, true);
         if (!\is_array($payload)) {
             throw new \RuntimeException('Discord API returned an invalid JSON response.');

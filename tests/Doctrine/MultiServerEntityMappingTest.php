@@ -28,6 +28,7 @@ use App\Entity\UserElement;
 use App\Entity\WelcomeMessage;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Mapping\ToOneOwningSideMapping;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
 final class MultiServerEntityMappingTest extends KernelTestCase
@@ -37,7 +38,7 @@ final class MultiServerEntityMappingTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
     }
 
     public function testRootServerMapping(): void
@@ -77,7 +78,9 @@ final class MultiServerEntityMappingTest extends KernelTestCase
             $metadata = $this->metadata($entityClass);
 
             self::assertTrue($metadata->hasAssociation('server'));
-            self::assertSame('server_id', $metadata->getAssociationMapping('server')->joinColumns[0]->name);
+            $serverMapping = $metadata->getAssociationMapping('server');
+            self::assertInstanceOf(ToOneOwningSideMapping::class, $serverMapping);
+            self::assertSame('server_id', $serverMapping->joinColumns[0]->name);
             $this->assertUniqueColumns($metadata, ['server_id', 'name']);
         }
 
@@ -216,7 +219,11 @@ final class MultiServerEntityMappingTest extends KernelTestCase
     }
 
     /**
-     * @param class-string $entityClass
+     * @template T of object
+     *
+     * @param class-string<T> $entityClass
+     *
+     * @return ClassMetadata<T>
      */
     private function metadata(string $entityClass): ClassMetadata
     {
@@ -224,7 +231,8 @@ final class MultiServerEntityMappingTest extends KernelTestCase
     }
 
     /**
-     * @param list<string> $columns
+     * @param ClassMetadata<object> $metadata
+     * @param list<string>          $columns
      */
     private function assertUniqueColumns(ClassMetadata $metadata, array $columns): void
     {
@@ -232,12 +240,10 @@ final class MultiServerEntityMappingTest extends KernelTestCase
 
         foreach ($uniqueConstraints as $uniqueConstraint) {
             if (($uniqueConstraint['columns'] ?? []) === $columns) {
-                self::assertTrue(true);
-
                 return;
             }
         }
 
-        self::fail(sprintf('Missing unique columns %s on %s.', implode(', ', $columns), $metadata->getTableName()));
+        self::fail(\sprintf('Missing unique columns %s on %s.', implode(', ', $columns), $metadata->getTableName()));
     }
 }

@@ -12,6 +12,7 @@ use Doctrine\Migrations\AbstractMigration;
  */
 final class Version20260706175117 extends AbstractMigration
 {
+    #[\Override]
     public function getDescription(): string
     {
         return '';
@@ -50,6 +51,7 @@ final class Version20260706175117 extends AbstractMigration
         $this->addSql('ALTER TABLE welcome_messages ADD CONSTRAINT FK_4F0FFBEF7616678F FOREIGN KEY (rank_id) REFERENCES ranks (id) ON DELETE CASCADE');
     }
 
+    #[\Override]
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs

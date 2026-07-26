@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord;
 
 use Psr\Cache\CacheItemPoolInterface;
@@ -112,8 +114,11 @@ final readonly class DiscordGuildResourcesProvider implements DiscordGuildResour
         }
 
         usort($payload, static function (array $left, array $right): int {
-            return $right['position'] <=> $left['position']
-                ?: strnatcasecmp($left['name'], $right['name']);
+            $positionComparison = $right['position'] <=> $left['position'];
+
+            return 0 !== $positionComparison
+                ? $positionComparison
+                : strnatcasecmp($left['name'], $right['name']);
         });
 
         return $payload;

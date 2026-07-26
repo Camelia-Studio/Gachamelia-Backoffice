@@ -12,6 +12,7 @@ use Doctrine\Migrations\AbstractMigration;
  */
 final class Version20260706222000 extends AbstractMigration
 {
+    #[\Override]
     public function getDescription(): string
     {
         return 'Add Discord emoji cache metadata for the backoffice picker.';
@@ -23,6 +24,7 @@ final class Version20260706222000 extends AbstractMigration
         $this->addSql('ALTER TABLE discord_emojis ADD CONSTRAINT FK_4A66FD111844E6B7 FOREIGN KEY (server_id) REFERENCES discord_servers (id) ON DELETE CASCADE');
     }
 
+    #[\Override]
     public function down(Schema $schema): void
     {
         $this->addSql('ALTER TABLE discord_emojis DROP FOREIGN KEY FK_4A66FD111844E6B7');

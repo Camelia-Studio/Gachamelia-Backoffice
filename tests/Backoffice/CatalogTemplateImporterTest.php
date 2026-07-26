@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Backoffice;
 
 use App\Backoffice\CatalogTemplateImporter;
@@ -28,7 +30,7 @@ final class CatalogTemplateImporterTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $this->resetDatabase();
     }
 

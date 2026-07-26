@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\EventSubscriber;
 
 use App\EventSubscriber\ApiExceptionSubscriber;
@@ -24,13 +26,15 @@ final class ApiExceptionSubscriberTest extends TestCase
         self::assertInstanceOf(JsonResponse::class, $response);
         self::assertSame(Response::HTTP_FORBIDDEN, $response->getStatusCode());
         self::assertSame('application/json', $response->headers->get('content-type'));
+        $content = $response->getContent();
+        self::assertIsString($content);
         self::assertSame(
             [
                 'error' => 'forbidden',
                 'message' => 'Forbidden',
                 'status' => Response::HTTP_FORBIDDEN,
             ],
-            json_decode($response->getContent() ?: '', true, flags: JSON_THROW_ON_ERROR),
+            json_decode($content, true, flags: JSON_THROW_ON_ERROR),
         );
     }
 
@@ -44,13 +48,15 @@ final class ApiExceptionSubscriberTest extends TestCase
 
         self::assertInstanceOf(JsonResponse::class, $response);
         self::assertSame(Response::HTTP_INTERNAL_SERVER_ERROR, $response->getStatusCode());
+        $content = $response->getContent();
+        self::assertIsString($content);
         self::assertSame(
             [
                 'error' => 'internal_server_error',
                 'message' => 'Internal Server Error',
                 'status' => Response::HTTP_INTERNAL_SERVER_ERROR,
             ],
-            json_decode($response->getContent() ?: '', true, flags: JSON_THROW_ON_ERROR),
+            json_decode($content, true, flags: JSON_THROW_ON_ERROR),
         );
     }
 
@@ -66,7 +72,7 @@ final class ApiExceptionSubscriberTest extends TestCase
     private function createExceptionEvent(string $path, \Throwable $exception): ExceptionEvent
     {
         return new ExceptionEvent(
-            new class implements HttpKernelInterface {
+            new class () implements HttpKernelInterface {
                 public function handle(Request $request, int $type = self::MAIN_REQUEST, bool $catch = true): Response
                 {
                     return new Response();

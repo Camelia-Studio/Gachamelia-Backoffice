@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Backoffice\Csv;
 
 use App\Backoffice\Csv\CatalogCsvSampleGenerator;
@@ -12,7 +14,7 @@ final class CatalogCsvSampleGeneratorTest extends TestCase
     /**
      * @param list<string> $headers
      */
-    #[DataProvider('sections')]
+    #[DataProvider('provideGeneratesFrenchExcelFriendlyExampleCases')]
     public function testGeneratesFrenchExcelFriendlyExample(CatalogCsvSection $section, array $headers, string $filename): void
     {
         $csv = (new CatalogCsvSampleGenerator())->generate($section);
@@ -32,7 +34,7 @@ final class CatalogCsvSampleGeneratorTest extends TestCase
     /**
      * @return iterable<string, array{CatalogCsvSection, list<string>, string}>
      */
-    public static function sections(): iterable
+    public static function provideGeneratesFrenchExcelFriendlyExampleCases(): iterable
     {
         yield 'rangs' => [CatalogCsvSection::Ranks, ['nom', 'pourcentage', 'titre_depart', 'est_staff'], 'exemple-rangs.csv'];
         yield 'probabilités' => [CatalogCsvSection::RankStats, ['rang', 'stat', 'pourcentage'], 'exemple-probabilites-rang-stat.csv'];

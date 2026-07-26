@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Backoffice\DiscordBackofficeSynchronizer;
@@ -15,7 +17,7 @@ use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 #[IsCsrfTokenValid('backoffice', tokenKey: '_token', methods: ['POST'])]
 final class DiscordAuthController extends AbstractController
 {
-    private const STATE_KEY = 'gachamelia.discord_oauth_state';
+    private const string STATE_KEY = 'gachamelia.discord_oauth_state';
 
     public function __construct(
         private readonly string $discordClientId,

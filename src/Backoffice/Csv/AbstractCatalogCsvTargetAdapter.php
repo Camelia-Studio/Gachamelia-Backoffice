@@ -127,9 +127,9 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
     }
 
     /**
-     * @param list<object>                                                                               $entities
-     * @param list<array{line: int, key: string, values: array<string, string|int|bool|null>}>            $rows
-     * @param list<array<string, mixed>>                                                                  $state
+     * @param list<object>                                                                     $entities
+     * @param list<array{line: int, key: string, values: array<string, string|int|bool|null>}> $rows
+     * @param list<array<string, mixed>>                                                       $state
      */
     private function previewRanks(array $entities, array $rows, array $state): CatalogCsvPreview
     {
@@ -151,7 +151,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
         $projectedTotal = array_sum($projected);
         $errors = [];
         if (100 !== $projectedTotal) {
-            $errors[] = $this->error('invalid_rank_percentage_total', sprintf('%d %%', $projectedTotal));
+            $errors[] = $this->error('invalid_rank_percentage_total', \sprintf('%d %%', $projectedTotal));
         }
         if (\count(array_filter($staff)) > 1) {
             $errors[] = $this->error('multiple_staff_ranks');
@@ -176,7 +176,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
     }
 
     /**
-     * @param list<object>                                                                    $entities
+     * @param list<object>                                                                     $entities
      * @param list<array{line: int, key: string, values: array<string, string|int|bool|null>}> $rows
      * @param list<array<string, mixed>>                                                       $state
      */
@@ -197,7 +197,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
         $projectedTotal = array_sum($projected);
         $errors = 100 === $projectedTotal
             ? []
-            : [$this->error('invalid_role_percentage_total', sprintf('%d %%', $projectedTotal))];
+            : [$this->error('invalid_role_percentage_total', \sprintf('%d %%', $projectedTotal))];
 
         return new CatalogCsvPreview(
             $operations,
@@ -209,7 +209,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
     }
 
     /**
-     * @param list<object>                                                                    $entities
+     * @param list<object>                                                                     $entities
      * @param list<array{line: int, key: string, values: array<string, string|int|bool|null>}> $rows
      * @param list<array<string, mixed>>                                                       $state
      */
@@ -266,7 +266,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
         foreach ($touchedRanks as $rankKey => $rankName) {
             $projectedTotal = array_sum($projectedByRank[$rankKey] ?? []);
             $totals[] = [
-                'label' => sprintf('Rang %s', $rankName),
+                'label' => \sprintf('Rang %s', $rankName),
                 'current' => $currentByRank[$rankKey] ?? 0,
                 'projected' => $projectedTotal,
                 'valid' => 100 === $projectedTotal,
@@ -274,7 +274,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
             if (100 !== $projectedTotal) {
                 $errors[] = $this->error(
                     'invalid_rank_stat_percentage_total',
-                    sprintf('%s : %d %%', $rankName, $projectedTotal),
+                    \sprintf('%s : %d %%', $rankName, $projectedTotal),
                 );
             }
         }
@@ -283,7 +283,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
     }
 
     /**
-     * @param list<object>                                                                    $entities
+     * @param list<object>                                                                     $entities
      * @param list<array{line: int, key: string, values: array<string, string|int|bool|null>}> $rows
      * @param list<array<string, mixed>>                                                       $state
      */
@@ -311,7 +311,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
     }
 
     /**
-     * @param list<object>                                                                    $entities
+     * @param list<object>                                                                     $entities
      * @param list<array{line: int, key: string, values: array<string, string|int|bool|null>}> $rows
      * @param list<array<string, mixed>>                                                       $state
      */
@@ -489,7 +489,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
      */
     private function error(string $message, ?string $value = null, ?int $line = null, ?string $column = null): array
     {
-        return compact('line', 'column', 'message', 'value');
+        return ['line' => $line, 'column' => $column, 'message' => $message, 'value' => $value];
     }
 
     /**

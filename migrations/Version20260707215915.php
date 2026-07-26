@@ -12,6 +12,7 @@ use Doctrine\Migrations\AbstractMigration;
  */
 final class Version20260707215915 extends AbstractMigration
 {
+    #[\Override]
     public function getDescription(): string
     {
         return 'Add global catalog template tables.';
@@ -41,6 +42,7 @@ final class Version20260707215915 extends AbstractMigration
         $this->addSql('ALTER TABLE catalog_templates ADD CONSTRAINT FK_95159733B03A8386 FOREIGN KEY (created_by_id) REFERENCES discord_users (id) ON DELETE SET NULL');
     }
 
+    #[\Override]
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs

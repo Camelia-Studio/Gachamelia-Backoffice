@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Backoffice\Csv;
 
 use App\Backoffice\Csv\CatalogCsvDocument;
@@ -37,7 +39,7 @@ final class CatalogCsvImportServiceTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $this->resetDatabase();
         $this->service = new CatalogCsvImportService(
             $this->entityManager,
@@ -222,9 +224,8 @@ final class CatalogCsvImportServiceTest extends KernelTestCase
     }
 
     /**
-     * @param DiscordServer|CatalogTemplate                  $target
-     * @param list<array<string, string|int|bool|null>>      $rows
-     * @param array<int, string>                             $discordRoleIdsByLine
+     * @param list<array<string, string|int|bool|null>> $rows
+     * @param array<int, string>                        $discordRoleIdsByLine
      */
     private function apply(
         DiscordServer|CatalogTemplate $target,

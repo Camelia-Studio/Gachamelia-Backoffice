@@ -46,7 +46,7 @@ final readonly class CatalogCsvImportService
         $adapter->validateApply($target, $section, $preview, $discordRoleIdsByLine);
 
         return $this->entityManager->wrapInTransaction(
-            fn (): CatalogCsvImportResult => $adapter->apply($target, $section, $preview, $discordRoleIdsByLine),
+            static fn (): CatalogCsvImportResult => $adapter->apply($target, $section, $preview, $discordRoleIdsByLine),
         );
     }
 

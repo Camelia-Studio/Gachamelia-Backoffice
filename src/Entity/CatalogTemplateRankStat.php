@@ -24,10 +24,8 @@ class CatalogTemplateRankStat
     #[ORM\JoinColumn(name: 'stat_id', nullable: false, onDelete: 'CASCADE')]
     private CatalogTemplateStat $stat;
 
-    #[ORM\Column]
-    private int $percentage;
-
-    public function __construct(CatalogTemplateRank $rank, CatalogTemplateStat $stat, int $percentage)
+    public function __construct(CatalogTemplateRank $rank, CatalogTemplateStat $stat, #[ORM\Column]
+        private int $percentage)
     {
         if ($rank->template() !== $stat->template()) {
             throw new \InvalidArgumentException('A template rank stat must belong to one template.');
@@ -36,7 +34,6 @@ class CatalogTemplateRankStat
         $this->template = $rank->template();
         $this->rank = $rank;
         $this->stat = $stat;
-        $this->percentage = $percentage;
     }
 
     public function template(): CatalogTemplate

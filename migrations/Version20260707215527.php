@@ -12,6 +12,7 @@ use Doctrine\Migrations\AbstractMigration;
  */
 final class Version20260707215527 extends AbstractMigration
 {
+    #[\Override]
     public function getDescription(): string
     {
         return 'Add global backoffice roles on Discord users.';
@@ -25,6 +26,7 @@ final class Version20260707215527 extends AbstractMigration
         $this->addSql('ALTER TABLE discord_users CHANGE global_roles global_roles JSON NOT NULL');
     }
 
+    #[\Override]
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs

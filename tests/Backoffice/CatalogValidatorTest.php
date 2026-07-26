@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Backoffice;
 
 use App\Backoffice\CatalogValidator;
@@ -31,7 +33,7 @@ final class CatalogValidatorTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $this->validator = new CatalogValidator($this->entityManager);
         $this->resetDatabase();
     }

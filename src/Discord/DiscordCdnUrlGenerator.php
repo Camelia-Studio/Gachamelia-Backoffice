@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord;
 
 final class DiscordCdnUrlGenerator
@@ -11,7 +13,7 @@ final class DiscordCdnUrlGenerator
         }
 
         $icon = trim($icon);
-        $url = sprintf(
+        $url = \sprintf(
             'https://cdn.discordapp.com/icons/%s/%s.webp?size=%d',
             rawurlencode($guildId),
             rawurlencode($icon),
@@ -32,7 +34,7 @@ final class DiscordCdnUrlGenerator
         }
 
         $avatar = trim($avatar);
-        $url = sprintf(
+        $url = \sprintf(
             'https://cdn.discordapp.com/avatars/%s/%s.webp?size=%d',
             rawurlencode($userId),
             rawurlencode($avatar),

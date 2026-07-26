@@ -1,0 +1,16 @@
+parameters:
+    level: 6
+    paths:
+        - src
+        - tests
+    symfony:
+        containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
+    doctrine:
+        objectManagerLoader: phpstan-doctrine.php
+    strictRules:
+        noVariableVariables: false
+    ignoreErrors:
+        - message: "#^Property App\\\\Entity\\\\.*\\:\\:\\$id \\(int\\|null\\) is never assigned int so it can be removed from the property type\\.$#"
+
+    reportUnmatchedIgnoredErrors: false
+    treatPhpDocTypesAsCertain: false

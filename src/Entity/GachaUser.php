@@ -20,13 +20,6 @@ class GachaUser
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
-    #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
-    private DiscordServer $server;
-
-    #[ORM\Column(name: 'discord_id', length: 32)]
-    private string $discordId;
-
     #[ORM\ManyToOne(targetEntity: Rank::class)]
     #[ORM\JoinColumn(name: 'rank_id', nullable: true, onDelete: 'SET NULL')]
     private ?Rank $rank = null;
@@ -38,7 +31,7 @@ class GachaUser
     /**
      * @var Collection<int, UserElement>
      */
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserElement::class, cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: UserElement::class, mappedBy: 'user', cascade: ['persist'], orphanRemoval: true)]
     private Collection $elements;
 
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
@@ -47,11 +40,12 @@ class GachaUser
     #[ORM\Column(name: 'updated_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $updatedAt;
 
-    public function __construct(DiscordServer $server, string $discordId, ?Rank $rank = null, ?CharacterRole $role = null)
+    public function __construct(#[ORM\ManyToOne(targetEntity: DiscordServer::class)]
+        #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
+        private DiscordServer $server, #[ORM\Column(name: 'discord_id', length: 32)]
+        private string $discordId, ?Rank $rank = null, ?CharacterRole $role = null)
     {
-        $this->server = $server;
         $this->assertCatalogScope($rank, $role);
-        $this->discordId = $discordId;
         $this->rank = $rank;
         $this->role = $role;
         $this->elements = new ArrayCollection();
@@ -97,7 +91,7 @@ class GachaUser
 
     public function updateRank(?Rank $rank): void
     {
-        if (null !== $rank && $rank->server() !== $this->server) {
+        if ($rank instanceof Rank && $rank->server() !== $this->server) {
             throw new \InvalidArgumentException('A user rank must belong to the user server.');
         }
 
@@ -107,7 +101,7 @@ class GachaUser
 
     public function updateRole(?CharacterRole $role): void
     {
-        if (null !== $role && $role->server() !== $this->server) {
+        if ($role instanceof CharacterRole && $role->server() !== $this->server) {
             throw new \InvalidArgumentException('A user role must belong to the user server.');
         }
 
@@ -145,10 +139,10 @@ class GachaUser
 
     private function assertCatalogScope(?Rank $rank, ?CharacterRole $role): void
     {
-        if (null !== $rank && $rank->server() !== $this->server) {
+        if ($rank instanceof Rank && $rank->server() !== $this->server) {
             throw new \InvalidArgumentException('A user rank must belong to the user server.');
         }
-        if (null !== $role && $role->server() !== $this->server) {
+        if ($role instanceof CharacterRole && $role->server() !== $this->server) {
             throw new \InvalidArgumentException('A user role must belong to the user server.');
         }
     }

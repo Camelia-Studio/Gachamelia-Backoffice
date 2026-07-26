@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Backoffice;
 
 use App\Entity\ByeMessage;
@@ -31,7 +33,7 @@ final readonly class CatalogTemplateImporter
     }
 
     /**
-     * @param array<string, string> $rankDiscordRoleIds Indexed by template rank id.
+     * @param array<string, string> $rankDiscordRoleIds indexed by template rank id
      */
     public function import(DiscordServer $server, CatalogTemplate $template, array $rankDiscordRoleIds): void
     {
@@ -175,11 +177,11 @@ final readonly class CatalogTemplateImporter
             $templateRankId = (string) $templateRank->id();
             $discordRoleId = trim($rankDiscordRoleIds[$templateRankId] ?? '');
             if ('' === $discordRoleId) {
-                throw new \InvalidArgumentException(sprintf('Missing Discord role mapping for rank %s.', $templateRank->name()));
+                throw new \InvalidArgumentException(\sprintf('Missing Discord role mapping for rank %s.', $templateRank->name()));
             }
 
             if (isset($usedDiscordRoleIds[$discordRoleId])) {
-                throw new \InvalidArgumentException(sprintf('Discord role %s is mapped more than once.', $discordRoleId));
+                throw new \InvalidArgumentException(\sprintf('Discord role %s is mapped more than once.', $discordRoleId));
             }
 
             $usedDiscordRoleIds[$discordRoleId] = true;
@@ -208,7 +210,7 @@ final readonly class CatalogTemplateImporter
     private function tableCount(string $table, string $scopeColumn, int $scopeId): int
     {
         return (int) $this->connection->fetchOne(
-            sprintf('SELECT COUNT(*) FROM %s WHERE %s = ?', $table, $scopeColumn),
+            \sprintf('SELECT COUNT(*) FROM %s WHERE %s = ?', $table, $scopeColumn),
             [$scopeId],
         );
     }

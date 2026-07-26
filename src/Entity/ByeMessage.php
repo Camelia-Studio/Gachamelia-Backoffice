@@ -16,22 +16,16 @@ class ByeMessage
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
-    #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
-    private DiscordServer $server;
-
-    #[ORM\ManyToOne(targetEntity: Rank::class)]
-    #[ORM\JoinColumn(name: 'rank_id', nullable: false, onDelete: 'CASCADE')]
-    private Rank $rank;
-
-    #[ORM\Column(length: 255)]
-    private string $message;
-
-    public function __construct(DiscordServer $server, Rank $rank, string $message)
-    {
-        $this->server = $server;
-        $this->rank = $rank;
-        $this->message = $message;
+    public function __construct(
+        #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
+        #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
+        private DiscordServer $server,
+        #[ORM\ManyToOne(targetEntity: Rank::class)]
+        #[ORM\JoinColumn(name: 'rank_id', nullable: false, onDelete: 'CASCADE')]
+        private Rank $rank,
+        #[ORM\Column(length: 255)]
+        private string $message,
+    ) {
     }
 
     public function id(): ?int

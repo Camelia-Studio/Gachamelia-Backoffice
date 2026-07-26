@@ -9,6 +9,7 @@ use Doctrine\Migrations\AbstractMigration;
 
 final class Version20260721225849 extends AbstractMigration
 {
+    #[\Override]
     public function getDescription(): string
     {
         return 'Track Discord server activity and soft deactivation.';
@@ -21,6 +22,7 @@ final class Version20260721225849 extends AbstractMigration
         $this->addSql('ALTER TABLE discord_servers MODIFY last_seen_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL');
     }
 
+    #[\Override]
     public function down(Schema $schema): void
     {
         $this->addSql('ALTER TABLE discord_servers DROP active, DROP last_seen_at, DROP inactive_at');

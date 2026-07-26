@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Backoffice\BackofficeAccess;
@@ -1459,7 +1461,7 @@ final class BackofficeController extends AbstractController
         }
 
         $value = $this->optionalRequestString($request, 'emoji_value') ?? $defaultUnicode;
-        if (1 === preg_match('/^<(?P<animated>a?):(?P<name>[A-Za-z0-9_]{2,32}):(?P<id>\d{17,22})>$/', $value, $matches)) {
+        if (1 === preg_match('/^<(?P<animated>a?):(?P<name>\w{2,32}):(?P<id>\d{17,22})>$/', $value, $matches)) {
             return [
                 'source' => 'unicode' === $source ? 'server' : $source,
                 'unicode' => null,

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Entity\DiscordEmoji;
@@ -83,9 +85,9 @@ final class ApiDiscordEmojiController extends AbstractController
                 $emoji->refresh($name, $animated, $isAvailable, $now);
             }
 
-            $received++;
+            ++$received;
             if ($isAvailable) {
-                $available++;
+                ++$available;
             }
             $seenDiscordIds[$discordId] = true;
         }

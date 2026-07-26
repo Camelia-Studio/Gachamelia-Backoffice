@@ -23,28 +23,6 @@ class DiscordEmoji
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
-    #[ORM\JoinColumn(name: 'server_id', nullable: true, onDelete: 'CASCADE')]
-    private ?DiscordServer $server;
-
-    #[ORM\Column(name: 'cache_key', length: 64)]
-    private string $cacheKey;
-
-    #[ORM\Column(length: 16)]
-    private string $source;
-
-    #[ORM\Column(name: 'discord_id', length: 32)]
-    private string $discordId;
-
-    #[ORM\Column(length: 255)]
-    private string $name;
-
-    #[ORM\Column(options: ['default' => false])]
-    private bool $animated;
-
-    #[ORM\Column(options: ['default' => true])]
-    private bool $available;
-
     #[ORM\Column(name: 'last_seen_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $lastSeenAt;
 
@@ -52,23 +30,24 @@ class DiscordEmoji
     private \DateTimeImmutable $updatedAt;
 
     public function __construct(
-        ?DiscordServer $server,
-        string $cacheKey,
-        string $source,
-        string $discordId,
-        string $name,
-        bool $animated,
-        bool $available = true,
+        #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
+        #[ORM\JoinColumn(name: 'server_id', nullable: true, onDelete: 'CASCADE')]
+        private ?DiscordServer $server,
+        #[ORM\Column(name: 'cache_key', length: 64)]
+        private string $cacheKey,
+        #[ORM\Column(length: 16)]
+        private string $source,
+        #[ORM\Column(name: 'discord_id', length: 32)]
+        private string $discordId,
+        #[ORM\Column(length: 255)]
+        private string $name,
+        #[ORM\Column(options: ['default' => false])]
+        private bool $animated,
+        #[ORM\Column(options: ['default' => true])]
+        private bool $available = true,
         ?\DateTimeImmutable $seenAt = null,
     ) {
         $now = $seenAt ?? new \DateTimeImmutable();
-        $this->server = $server;
-        $this->cacheKey = $cacheKey;
-        $this->source = $source;
-        $this->discordId = $discordId;
-        $this->name = $name;
-        $this->animated = $animated;
-        $this->available = $available;
         $this->lastSeenAt = $now;
         $this->updatedAt = $now;
     }
@@ -149,13 +128,13 @@ class DiscordEmoji
 
     public function markup(): string
     {
-        return sprintf('<%s:%s:%s>', $this->animated ? 'a' : '', $this->name, $this->discordId);
+        return \sprintf('<%s:%s:%s>', $this->animated ? 'a' : '', $this->name, $this->discordId);
     }
 
     public function cdnUrl(): string
     {
         $extension = $this->animated ? 'gif' : 'webp';
 
-        return sprintf('https://cdn.discordapp.com/emojis/%s.%s?size=64&quality=lossless', $this->discordId, $extension);
+        return \sprintf('https://cdn.discordapp.com/emojis/%s.%s?size=64&quality=lossless', $this->discordId, $extension);
     }
 }

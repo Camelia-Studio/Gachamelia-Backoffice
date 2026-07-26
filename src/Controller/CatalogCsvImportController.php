@@ -253,6 +253,10 @@ final class CatalogCsvImportController extends AbstractController
         return $response;
     }
 
+    /**
+     * @param list<array{line: ?int, column: ?string, message: string, value: ?string}>          $errors
+     * @param list<array{id: string, name: string, label: string, position: int, managed: bool}> $discordRoles
+     */
     private function renderImport(
         string $targetType,
         DiscordServer|CatalogTemplate $target,
@@ -356,7 +360,7 @@ final class CatalogCsvImportController extends AbstractController
             $roles = $this->discordRoles($target, $section, $resourcesProvider);
             $allowed = array_fill_keys(array_column($roles, 'id'), true);
             foreach ($request->request->all('discord_roles') as $line => $discordId) {
-                if ((\is_int($line) || ctype_digit((string) $line)) && \is_string($discordId) && isset($allowed[$discordId])) {
+                if ((\is_int($line) || ctype_digit($line)) && \is_string($discordId) && isset($allowed[$discordId])) {
                     $mappings[(int) $line] = $discordId;
                 }
             }
@@ -404,7 +408,7 @@ final class CatalogCsvImportController extends AbstractController
 
         $draftStore->remove($token);
         $counts = $result->counts();
-        $this->addFlash('success', sprintf(
+        $this->addFlash('success', \sprintf(
             'Import terminé : %d création%s, %d mise%s à jour, %d ligne%s inchangée%s. L’état du catalogue a été recalculé.',
             $counts['creates'],
             1 === $counts['creates'] ? '' : 's',

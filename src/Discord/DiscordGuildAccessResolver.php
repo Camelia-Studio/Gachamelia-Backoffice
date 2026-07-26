@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord;
 
 final class DiscordGuildAccessResolver
 {
-    private const ADMINISTRATOR_PERMISSION = 0x8;
+    private const int ADMINISTRATOR_PERMISSION = 0x8;
 
     /**
      * @param list<array<string, mixed>> $userGuilds
@@ -47,14 +49,14 @@ final class DiscordGuildAccessResolver
                 'icon' => \is_string($icon) && '' !== $icon ? $icon : null,
                 'owner' => $owner,
                 'permissions' => $permissions,
-                'canManageConfiguration' => $owner || self::hasAdministratorPermission($permissions),
+                'canManageConfiguration' => $owner || $this->hasAdministratorPermission($permissions),
             ];
         }
 
         return $accessibleGuilds;
     }
 
-    private static function hasAdministratorPermission(string $permissions): bool
+    private function hasAdministratorPermission(string $permissions): bool
     {
         return (((int) $permissions) & self::ADMINISTRATOR_PERMISSION) === self::ADMINISTRATOR_PERMISSION;
     }

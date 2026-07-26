@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Controller;
 
 use App\Tests\Support\DatabaseResetter;
@@ -11,12 +13,12 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 {
     use DatabaseResetter;
 
-    private const BOT_CLIENT_ID = 'gachamelia-test-bot';
-    private const BOT_CLIENT_SECRET = 'test-bot-secret';
+    private const string BOT_CLIENT_ID = 'gachamelia-test-bot';
+    private const string BOT_CLIENT_SECRET = 'test-bot-secret';
 
     public function testDiscordServerRouteRequiresBotBearerToken(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $client->request('POST', '/api/discord-servers', server: [
             'CONTENT_TYPE' => 'application/json',
@@ -33,7 +35,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
     public function testBotCanCreateMinimalDiscordServer(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
 
         $client->request('POST', '/api/discord-servers', server: [
@@ -81,7 +83,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
     public function testBotCanRefreshKnownDiscordServerCache(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
 
         $this->connection()->insert('discord_servers', [
@@ -127,7 +129,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
     public function testBotCanDeactivateAndReactivateServerLifecycle(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $token = $this->requestAccessToken($client);
 
@@ -200,7 +202,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
     public function testBotCanRefreshServerEmojiCacheSnapshot(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
 
         $this->connection()->insert('discord_servers', [
@@ -279,7 +281,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
     public function testBotCanReadCompleteServerCatalogueSnapshot(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
 
         $this->connection()->insert('discord_servers', [
@@ -466,7 +468,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
     public function testBotCanUpdateServerSettingsAndReadThemInCatalogue(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
 
         $this->connection()->insert('discord_servers', [
@@ -532,7 +534,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
     public function testBotCanEnsureRuntimeUserWithDefaultAssignmentsAndStats(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $catalogue = $this->seedRuntimeCatalogue();
 
@@ -574,7 +576,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
     public function testEnsureRejectsCatalogueWhosePercentageTotalIsNotOneHundred(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $catalogue = $this->seedRuntimeCatalogue();
         $this->connection()->update('ranks', ['percentage' => 80], ['id' => $catalogue['rank_id']]);
@@ -593,7 +595,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
     public function testNormalMemberCanDrawStaffRankFromItsPercentage(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $catalogue = $this->seedRuntimeCatalogue();
         $this->connection()->update('ranks', ['percentage' => 0], ['id' => $catalogue['rank_id']]);
@@ -610,7 +612,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
     public function testBotCanForceStaffRankAndPatchRuntimeAssignments(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $catalogue = $this->seedRuntimeCatalogue();
 
@@ -657,7 +659,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
 
     public function testBotCanUpsertRuntimeUserStats(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $catalogue = $this->seedRuntimeCatalogue();
 
@@ -859,13 +861,13 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
      */
     private function jsonPayload(?KernelBrowser $client = null): array
     {
-        $response = ($client ?? static::getClient())->getResponse();
-        self::assertNotNull($response);
+        $response = ($client ?? self::getClient())->getResponse();
+        $content = $response->getContent();
+        self::assertIsString($content);
 
-        $payload = json_decode($response->getContent() ?: '', true, flags: JSON_THROW_ON_ERROR);
+        $payload = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
 
         return $payload;
     }
-
 }

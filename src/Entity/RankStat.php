@@ -24,10 +24,8 @@ class RankStat
     #[ORM\JoinColumn(name: 'stat_id', nullable: false, onDelete: 'CASCADE')]
     private Stat $stat;
 
-    #[ORM\Column]
-    private int $percentage;
-
-    public function __construct(Rank $rank, Stat $stat, int $percentage)
+    public function __construct(Rank $rank, Stat $stat, #[ORM\Column]
+        private int $percentage)
     {
         if ($rank->server() !== $stat->server()) {
             throw new \InvalidArgumentException('A rank stat must belong to one server.');
@@ -36,7 +34,6 @@ class RankStat
         $this->server = $rank->server();
         $this->rank = $rank;
         $this->stat = $stat;
-        $this->percentage = $percentage;
     }
 
     public function server(): DiscordServer

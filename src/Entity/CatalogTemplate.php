@@ -17,18 +17,8 @@ class CatalogTemplate
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
-    private string $name;
-
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $description;
-
     #[ORM\Column(options: ['default' => false])]
     private bool $published = false;
-
-    #[ORM\ManyToOne(targetEntity: DiscordUser::class)]
-    #[ORM\JoinColumn(name: 'created_by_id', nullable: true, onDelete: 'SET NULL')]
-    private ?DiscordUser $createdBy;
 
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
@@ -36,11 +26,12 @@ class CatalogTemplate
     #[ORM\Column(name: 'updated_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $updatedAt;
 
-    public function __construct(string $name, ?string $description = null, ?DiscordUser $createdBy = null)
+    public function __construct(#[ORM\Column(length: 255)]
+        private string $name, #[ORM\Column(type: Types::TEXT, nullable: true)]
+        private ?string $description = null, #[ORM\ManyToOne(targetEntity: DiscordUser::class)]
+        #[ORM\JoinColumn(name: 'created_by_id', nullable: true, onDelete: 'SET NULL')]
+        private ?DiscordUser $createdBy = null)
     {
-        $this->name = $name;
-        $this->description = $description;
-        $this->createdBy = $createdBy;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }

@@ -21,37 +21,19 @@ class CatalogTemplateRank
     private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: CatalogTemplate::class)]
-    #[ORM\JoinColumn(name: 'template_id', nullable: false, onDelete: 'CASCADE')]
-    private CatalogTemplate $template;
-
-    #[ORM\Column(name: 'role_key', length: 255)]
-    private string $roleKey;
-
-    #[ORM\Column(length: 255)]
-    private string $name;
-
-    #[ORM\Column]
-    private int $percentage;
-
-    #[ORM\Column(name: 'bye_title', length: 255, nullable: true)]
-    private ?string $byeTitle;
-
-    #[ORM\Column(name: 'is_staff', options: ['default' => false])]
-    private bool $staff;
-
-    #[ORM\ManyToOne(targetEntity: CatalogTemplate::class)]
     #[ORM\JoinColumn(name: 'staff_scope_id', nullable: true, onDelete: 'CASCADE')]
     private ?CatalogTemplate $staffScope;
 
-    public function __construct(CatalogTemplate $template, string $roleKey, string $name, int $percentage, ?string $byeTitle = null, bool $staff = false)
+    public function __construct(#[ORM\ManyToOne(targetEntity: CatalogTemplate::class)]
+        #[ORM\JoinColumn(name: 'template_id', nullable: false, onDelete: 'CASCADE')]
+        private CatalogTemplate $template, #[ORM\Column(name: 'role_key', length: 255)]
+        private string $roleKey, #[ORM\Column(length: 255)]
+        private string $name, #[ORM\Column]
+        private int $percentage, #[ORM\Column(name: 'bye_title', length: 255, nullable: true)]
+        private ?string $byeTitle = null, #[ORM\Column(name: 'is_staff', options: ['default' => false])]
+        private bool $staff = false)
     {
-        $this->template = $template;
-        $this->roleKey = $roleKey;
-        $this->name = $name;
-        $this->percentage = $percentage;
-        $this->byeTitle = $byeTitle;
-        $this->staff = $staff;
-        $this->staffScope = $staff ? $template : null;
+        $this->staffScope = $this->staff ? $this->template : null;
     }
 
     public function id(): ?int

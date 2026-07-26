@@ -20,18 +20,6 @@ class DiscordUser
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\Column(name: 'discord_id', length: 32)]
-    private string $discordId;
-
-    #[ORM\Column(length: 255)]
-    private string $username;
-
-    #[ORM\Column(name: 'global_name', length: 255, nullable: true)]
-    private ?string $globalName;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $avatar;
-
     /**
      * @var list<string>
      */
@@ -44,12 +32,12 @@ class DiscordUser
     #[ORM\Column(name: 'updated_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $updatedAt;
 
-    public function __construct(string $discordId, string $username, ?string $globalName, ?string $avatar)
+    public function __construct(#[ORM\Column(name: 'discord_id', length: 32)]
+        private string $discordId, #[ORM\Column(length: 255)]
+        private string $username, #[ORM\Column(name: 'global_name', length: 255, nullable: true)]
+        private ?string $globalName, #[ORM\Column(length: 255, nullable: true)]
+        private ?string $avatar)
     {
-        $this->discordId = $discordId;
-        $this->username = $username;
-        $this->globalName = $globalName;
-        $this->avatar = $avatar;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }

@@ -315,7 +315,7 @@ final class MultiServerDatabaseInvariantTest extends KernelTestCase
     {
         try {
             $operation();
-            self::fail(sprintf('Database accepted an invalid write guarded by %s.', $constraint));
+            self::fail(\sprintf('Database accepted an invalid write guarded by %s.', $constraint));
         } catch (Exception $exception) {
             self::assertStringContainsString($constraint, $exception->getMessage());
         }

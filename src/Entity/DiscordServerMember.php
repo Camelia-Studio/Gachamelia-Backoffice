@@ -17,23 +17,6 @@ class DiscordServerMember
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: DiscordUser::class)]
-    #[ORM\JoinColumn(name: 'user_id', nullable: false, onDelete: 'CASCADE')]
-    private DiscordUser $user;
-
-    #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
-    #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
-    private DiscordServer $server;
-
-    #[ORM\Column(options: ['default' => false])]
-    private bool $owner;
-
-    #[ORM\Column(length: 64, options: ['default' => '0'])]
-    private string $permissions;
-
-    #[ORM\Column(name: 'can_manage_configuration', options: ['default' => false])]
-    private bool $canManageConfiguration;
-
     #[ORM\Column(name: 'created_at', type: Types::DATETIME_IMMUTABLE)]
     private \DateTimeImmutable $createdAt;
 
@@ -41,17 +24,19 @@ class DiscordServerMember
     private \DateTimeImmutable $updatedAt;
 
     public function __construct(
-        DiscordUser $user,
-        DiscordServer $server,
-        bool $owner,
-        string $permissions,
-        bool $canManageConfiguration,
+        #[ORM\ManyToOne(targetEntity: DiscordUser::class)]
+        #[ORM\JoinColumn(name: 'user_id', nullable: false, onDelete: 'CASCADE')]
+        private DiscordUser $user,
+        #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
+        #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
+        private DiscordServer $server,
+        #[ORM\Column(options: ['default' => false])]
+        private bool $owner,
+        #[ORM\Column(length: 64, options: ['default' => '0'])]
+        private string $permissions,
+        #[ORM\Column(name: 'can_manage_configuration', options: ['default' => false])]
+        private bool $canManageConfiguration,
     ) {
-        $this->user = $user;
-        $this->server = $server;
-        $this->owner = $owner;
-        $this->permissions = $permissions;
-        $this->canManageConfiguration = $canManageConfiguration;
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = $this->createdAt;
     }

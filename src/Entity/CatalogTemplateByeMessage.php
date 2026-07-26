@@ -16,22 +16,16 @@ class CatalogTemplateByeMessage
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: CatalogTemplate::class)]
-    #[ORM\JoinColumn(name: 'template_id', nullable: false, onDelete: 'CASCADE')]
-    private CatalogTemplate $template;
-
-    #[ORM\ManyToOne(targetEntity: CatalogTemplateRank::class)]
-    #[ORM\JoinColumn(name: 'rank_id', nullable: false, onDelete: 'CASCADE')]
-    private CatalogTemplateRank $rank;
-
-    #[ORM\Column(length: 255)]
-    private string $message;
-
-    public function __construct(CatalogTemplate $template, CatalogTemplateRank $rank, string $message)
-    {
-        $this->template = $template;
-        $this->rank = $rank;
-        $this->message = $message;
+    public function __construct(
+        #[ORM\ManyToOne(targetEntity: CatalogTemplate::class)]
+        #[ORM\JoinColumn(name: 'template_id', nullable: false, onDelete: 'CASCADE')]
+        private CatalogTemplate $template,
+        #[ORM\ManyToOne(targetEntity: CatalogTemplateRank::class)]
+        #[ORM\JoinColumn(name: 'rank_id', nullable: false, onDelete: 'CASCADE')]
+        private CatalogTemplateRank $rank,
+        #[ORM\Column(length: 255)]
+        private string $message,
+    ) {
     }
 
     public function id(): ?int

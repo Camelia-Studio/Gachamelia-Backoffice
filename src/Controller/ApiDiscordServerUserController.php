@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Backoffice\CatalogValidator;
@@ -57,7 +59,7 @@ final class ApiDiscordServerUserController extends AbstractController
         }
 
         $assignmentError = $this->applyEnsureAssignments($entityManager, $server, $user, $payload);
-        if (null !== $assignmentError) {
+        if ($assignmentError instanceof JsonResponse) {
             return $assignmentError;
         }
 
@@ -98,7 +100,7 @@ final class ApiDiscordServerUserController extends AbstractController
         }
 
         $assignmentError = $this->applyExplicitAssignments($entityManager, $server, $user, $payload);
-        if (null !== $assignmentError) {
+        if ($assignmentError instanceof JsonResponse) {
             return $assignmentError;
         }
 
@@ -180,11 +182,11 @@ final class ApiDiscordServerUserController extends AbstractController
         array $payload,
     ): ?JsonResponse {
         $assignmentError = $this->applyExplicitAssignments($entityManager, $server, $user, $payload);
-        if (null !== $assignmentError) {
+        if ($assignmentError instanceof JsonResponse) {
             return $assignmentError;
         }
 
-        if (null === $user->rank()) {
+        if (!$user->rank() instanceof Rank) {
             $rank = $this->defaultRank($entityManager, $server);
             if (!$rank instanceof Rank) {
                 return $this->json(['error' => 'rank_catalogue_empty'], Response::HTTP_CONFLICT);
@@ -192,7 +194,7 @@ final class ApiDiscordServerUserController extends AbstractController
             $user->updateRank($rank);
         }
 
-        if (null === $user->role()) {
+        if (!$user->role() instanceof CharacterRole) {
             $role = $this->defaultRole($entityManager, $server);
             if (!$role instanceof CharacterRole) {
                 return $this->json(['error' => 'role_catalogue_empty'], Response::HTTP_CONFLICT);
@@ -260,7 +262,7 @@ final class ApiDiscordServerUserController extends AbstractController
 
             $elements = [];
             foreach ($elementIds as $elementId) {
-                if (!\is_int($elementId) && !(\is_string($elementId) && ctype_digit($elementId))) {
+                if (!\is_int($elementId) && (!\is_string($elementId) || !ctype_digit($elementId))) {
                     return $this->json(['error' => 'invalid_payload'], Response::HTTP_BAD_REQUEST);
                 }
 
@@ -371,7 +373,7 @@ final class ApiDiscordServerUserController extends AbstractController
     /**
      * @template T of object
      *
-     * @param list<T> $items
+     * @param list<T>          $items
      * @param callable(T): int $weight
      *
      * @return T

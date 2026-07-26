@@ -12,6 +12,7 @@ use Doctrine\Migrations\AbstractMigration;
  */
 final class Version20260706233500 extends AbstractMigration
 {
+    #[\Override]
     public function getDescription(): string
     {
         return 'Add Discord server runtime settings.';
@@ -23,6 +24,7 @@ final class Version20260706233500 extends AbstractMigration
         $this->addSql('ALTER TABLE discord_servers ADD welcome_channel_id VARCHAR(32) DEFAULT NULL, ADD bye_channel_id VARCHAR(32) DEFAULT NULL, ADD staff_role_id VARCHAR(32) DEFAULT NULL');
     }
 
+    #[\Override]
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs

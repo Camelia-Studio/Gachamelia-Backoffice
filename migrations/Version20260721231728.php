@@ -9,11 +9,13 @@ use Doctrine\Migrations\AbstractMigration;
 
 final class Version20260721231728 extends AbstractMigration
 {
+    #[\Override]
     public function getDescription(): string
     {
         return 'Enforce catalog percentages, staff uniqueness, and multi-tenant relation scopes.';
     }
 
+    #[\Override]
     public function isTransactional(): bool
     {
         return false;
@@ -113,6 +115,7 @@ final class Version20260721231728 extends AbstractMigration
         }
     }
 
+    #[\Override]
     public function down(Schema $schema): void
     {
         foreach ([

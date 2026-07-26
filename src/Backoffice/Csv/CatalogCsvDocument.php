@@ -8,7 +8,7 @@ final readonly class CatalogCsvDocument
 {
     /**
      * @param list<array{line: int, key: string, values: array<string, string|int|bool|null>}> $rows
-     * @param list<array{line: ?int, column: ?string, message: string, value: ?string}>         $errors
+     * @param list<array{line: ?int, column: ?string, message: string, value: ?string}>        $errors
      */
     public function __construct(
         private array $rows,

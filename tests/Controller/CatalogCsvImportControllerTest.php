@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Controller;
 
 use App\Discord\DiscordGuildResourcesProviderInterface;
@@ -22,7 +24,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
 
     public function testEveryCatalogueSectionShowsImportAndExampleActionsExceptSettings(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         [, , $template] = $this->seedAccess($client);
 
@@ -45,7 +47,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
 
     public function testExampleDownloadUsesBomExpectedHeaderAndNoDiscordId(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedAccess($client);
 
@@ -59,7 +61,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
 
     public function testInvalidFileShowsStructuredErrorsAndDoesNotWrite(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedAccess($client);
 
@@ -74,7 +76,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
 
     public function testPreviewThenApplyMergesAndReturnsToVisibleCatalogueState(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedAccess($client);
 
@@ -101,11 +103,11 @@ final class CatalogCsvImportControllerTest extends WebTestCase
 
     public function testNewServerRankRequiresAndRevalidatesDiscordRoleMapping(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $client->disableReboot();
         $this->resetDatabase();
         $this->seedAccess($client);
-        static::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new CatalogCsvFakeDiscordResourcesProvider());
+        self::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new CatalogCsvFakeDiscordResourcesProvider());
 
         $crawler = $this->upload($client, '/app/serveurs/guild/configuration/ranks/csv/apercu', "nom;pourcentage;titre_depart;est_staff\nGardien;100;;non\n");
 
@@ -132,7 +134,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
 
     public function testTemplateAdminCanPreviewAndApplyAnImport(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         [, , $template] = $this->seedAccess($client);
 
@@ -158,12 +160,12 @@ final class CatalogCsvImportControllerTest extends WebTestCase
 
     public function testAccessAndMutationGuardsApplyToBothTargets(): void
     {
-        $anonymous = static::createClient();
+        $anonymous = self::createClient();
         $anonymous->request('GET', '/app/serveurs/guild/configuration/stats/csv');
         self::assertResponseRedirects('/connexion/discord');
 
-        static::ensureKernelShutdown();
-        $client = static::createClient();
+        self::ensureKernelShutdown();
+        $client = self::createClient();
         $this->resetDatabase();
         [, $server, $template] = $this->seedAccess($client);
         $server->deactivate();
@@ -183,7 +185,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
      */
     private function seedAccess(KernelBrowser $client): array
     {
-        $this->entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->entityManager = self::getContainer()->get(EntityManagerInterface::class);
         $user = new DiscordUser('42', 'melaine', 'Melaine', null);
         $user->replaceGlobalRoles([DiscordUser::GLOBAL_ROLE_TEMPLATE_ADMIN]);
         $server = new DiscordServer('guild', 'Serveur');
@@ -194,7 +196,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         $this->entityManager->persist($template);
         $this->entityManager->flush();
 
-        $session = static::getContainer()->get('session.factory')->createSession();
+        $session = self::getContainer()->get('session.factory')->createSession();
         $session->set('gachamelia.discord_user_id', $user->id());
         $session->save();
         $client->getCookieJar()->set(new Cookie($session->getName(), $session->getId()));

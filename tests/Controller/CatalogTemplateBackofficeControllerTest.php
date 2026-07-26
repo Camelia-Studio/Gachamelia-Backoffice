@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Controller;
 
 use App\Discord\DiscordGuildResourcesProviderInterface;
@@ -12,12 +14,12 @@ use Symfony\Component\BrowserKit\Cookie;
 
 final class CatalogTemplateBackofficeControllerTest extends WebTestCase
 {
-    use DatabaseResetter;
     use BackofficeCsrfRequest;
+    use DatabaseResetter;
 
     public function testCatalogTemplateMutationsRequireCsrfToken(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedBackofficeAccess($client, [DiscordUser::GLOBAL_ROLE_TEMPLATE_ADMIN]);
 
@@ -31,7 +33,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
 
     public function testDashboardLinksCatalogTemplatesForGlobalTemplateAdminsOnly(): void
     {
-        $adminClient = static::createClient();
+        $adminClient = self::createClient();
         $this->resetDatabase();
         $this->seedBackofficeAccess($adminClient, [DiscordUser::GLOBAL_ROLE_TEMPLATE_ADMIN]);
 
@@ -40,8 +42,8 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="catalog-template-admin-link"][href="/app/modeles-catalogue"]');
 
-        static::ensureKernelShutdown();
-        $memberClient = static::createClient();
+        self::ensureKernelShutdown();
+        $memberClient = self::createClient();
         $this->resetDatabase();
         $this->seedBackofficeAccess($memberClient);
 
@@ -53,7 +55,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
 
     public function testGlobalTemplateAdminCanCreateAndConfigureCatalogTemplate(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedBackofficeAccess($client, [DiscordUser::GLOBAL_ROLE_TEMPLATE_ADMIN]);
 
@@ -149,7 +151,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
 
     public function testIncompleteTemplateCannotBePublished(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedBackofficeAccess($client, [DiscordUser::GLOBAL_ROLE_TEMPLATE_ADMIN]);
 
@@ -170,7 +172,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
 
     public function testServerAdminCanOpenPublishedTemplateImportList(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedBackofficeAccess($client);
         $this->seedPublishedTemplate();
@@ -184,11 +186,11 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
 
     public function testServerAdminCanImportPublishedTemplateWithDiscordRoleMapping(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $client->disableReboot();
         $this->resetDatabase();
         $this->seedBackofficeAccess($client, [DiscordUser::GLOBAL_ROLE_TEMPLATE_ADMIN]);
-        static::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new CatalogTemplateFakeDiscordGuildResourcesProvider(
+        self::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new CatalogTemplateFakeDiscordGuildResourcesProvider(
             [],
             [
                 ['id' => '777777777777777777', 'name' => 'Comète', 'label' => '@Comète', 'position' => 9, 'managed' => false],
@@ -261,7 +263,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
 
     public function testNonGlobalAdminCannotManageCatalogTemplates(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $this->resetDatabase();
         $this->seedBackofficeAccess($client);
 
@@ -308,7 +310,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
             'updated_at' => '2026-07-07 10:00:00',
         ]);
 
-        $session = static::getContainer()->get('session.factory')->createSession();
+        $session = self::getContainer()->get('session.factory')->createSession();
         $session->set('gachamelia.discord_user_id', $userId);
         $session->save();
 
@@ -422,7 +424,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
 final readonly class CatalogTemplateFakeDiscordGuildResourcesProvider implements DiscordGuildResourcesProviderInterface
 {
     /**
-     * @param list<array{id: string, name: string, label: string, type: int}> $channels
+     * @param list<array{id: string, name: string, label: string, type: int}>                    $channels
      * @param list<array{id: string, name: string, label: string, position: int, managed: bool}> $roles
      */
     public function __construct(

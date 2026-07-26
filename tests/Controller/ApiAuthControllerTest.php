@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -7,12 +9,12 @@ use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 final class ApiAuthControllerTest extends WebTestCase
 {
-    private const BOT_CLIENT_ID = 'gachamelia-test-bot';
-    private const BOT_CLIENT_SECRET = 'test-bot-secret';
+    private const string BOT_CLIENT_ID = 'gachamelia-test-bot';
+    private const string BOT_CLIENT_SECRET = 'test-bot-secret';
 
     public function testTokenRouteRequiresBasicAuthentication(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $client->request('POST', '/api/auth/token');
 
@@ -23,7 +25,7 @@ final class ApiAuthControllerTest extends WebTestCase
 
     public function testTokenRouteRejectsInvalidBasicCredentials(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $client->request('POST', '/api/auth/token', server: [
             'HTTP_AUTHORIZATION' => 'Basic '.base64_encode('wrong-client:wrong-secret'),
@@ -36,7 +38,7 @@ final class ApiAuthControllerTest extends WebTestCase
 
     public function testTokenRouteIssuesBearerTokenForValidBasicCredentials(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $accessToken = $this->requestAccessToken($client);
 
@@ -45,7 +47,7 @@ final class ApiAuthControllerTest extends WebTestCase
 
     public function testProtectedApiRouteRequiresBearerToken(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $client->request('GET', '/api/me');
 
@@ -56,7 +58,7 @@ final class ApiAuthControllerTest extends WebTestCase
 
     public function testProtectedApiRouteAcceptsIssuedBearerToken(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $accessToken = $this->requestAccessToken($client);
 
         $client->request('GET', '/api/me', server: [
@@ -72,7 +74,7 @@ final class ApiAuthControllerTest extends WebTestCase
 
     public function testUnknownApiRouteReturnsJsonError(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $accessToken = $this->requestAccessToken($client);
 
         $client->request('GET', '/api/unknown', server: [
@@ -90,7 +92,7 @@ final class ApiAuthControllerTest extends WebTestCase
 
     public function testApiRootReturnsJsonError(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $accessToken = $this->requestAccessToken($client);
 
         $client->request('GET', '/api', server: [
@@ -108,7 +110,7 @@ final class ApiAuthControllerTest extends WebTestCase
 
     public function testApiMethodErrorReturnsJson(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
         $accessToken = $this->requestAccessToken($client);
 
         $client->request('POST', '/api/me', server: [
@@ -161,10 +163,11 @@ final class ApiAuthControllerTest extends WebTestCase
      */
     private function jsonPayload(?KernelBrowser $client = null): array
     {
-        $response = ($client ?? static::getClient())->getResponse();
-        self::assertNotNull($response);
+        $response = ($client ?? self::getClient())->getResponse();
+        $content = $response->getContent();
+        self::assertIsString($content);
 
-        $payload = json_decode($response->getContent() ?: '', true, flags: JSON_THROW_ON_ERROR);
+        $payload = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
 
         return $payload;

@@ -20,49 +20,25 @@ class CharacterRole
     #[ORM\Column(type: Types::BIGINT)]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
-    #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
-    private DiscordServer $server;
-
-    #[ORM\Column(length: 255)]
-    private string $name;
-
-    #[ORM\Column]
-    private int $percentage;
-
-    #[ORM\Column(name: 'emoji_source', length: 16, options: ['default' => 'unicode'])]
-    private string $emojiSource;
-
-    #[ORM\Column(name: 'emoji_unicode', length: 64, nullable: true)]
-    private ?string $emojiUnicode;
-
-    #[ORM\Column(name: 'emoji_id', length: 32, nullable: true)]
-    private ?string $emojiId;
-
-    #[ORM\Column(name: 'emoji_name', length: 255, nullable: true)]
-    private ?string $emojiName;
-
-    #[ORM\Column(name: 'emoji_animated', options: ['default' => false])]
-    private bool $emojiAnimated;
-
     public function __construct(
-        DiscordServer $server,
-        string $name,
-        int $percentage,
-        string $emojiSource = 'unicode',
-        ?string $emojiUnicode = self::DEFAULT_EMOJI,
-        ?string $emojiId = null,
-        ?string $emojiName = null,
-        bool $emojiAnimated = false,
+        #[ORM\ManyToOne(targetEntity: DiscordServer::class)]
+        #[ORM\JoinColumn(name: 'server_id', nullable: false, onDelete: 'CASCADE')]
+        private DiscordServer $server,
+        #[ORM\Column(length: 255)]
+        private string $name,
+        #[ORM\Column]
+        private int $percentage,
+        #[ORM\Column(name: 'emoji_source', length: 16, options: ['default' => 'unicode'])]
+        private string $emojiSource = 'unicode',
+        #[ORM\Column(name: 'emoji_unicode', length: 64, nullable: true)]
+        private ?string $emojiUnicode = self::DEFAULT_EMOJI,
+        #[ORM\Column(name: 'emoji_id', length: 32, nullable: true)]
+        private ?string $emojiId = null,
+        #[ORM\Column(name: 'emoji_name', length: 255, nullable: true)]
+        private ?string $emojiName = null,
+        #[ORM\Column(name: 'emoji_animated', options: ['default' => false])]
+        private bool $emojiAnimated = false,
     ) {
-        $this->server = $server;
-        $this->name = $name;
-        $this->percentage = $percentage;
-        $this->emojiSource = $emojiSource;
-        $this->emojiUnicode = $emojiUnicode;
-        $this->emojiId = $emojiId;
-        $this->emojiName = $emojiName;
-        $this->emojiAnimated = $emojiAnimated;
     }
 
     public function id(): ?int
@@ -131,7 +107,7 @@ class CharacterRole
     public function emojiMarkup(): string
     {
         if (null !== $this->emojiId && null !== $this->emojiName) {
-            return sprintf('<%s:%s:%s>', $this->emojiAnimated ? 'a' : '', $this->emojiName, $this->emojiId);
+            return \sprintf('<%s:%s:%s>', $this->emojiAnimated ? 'a' : '', $this->emojiName, $this->emojiId);
         }
 
         return $this->emojiUnicode ?? self::DEFAULT_EMOJI;
@@ -145,6 +121,6 @@ class CharacterRole
 
         $extension = $this->emojiAnimated ? 'gif' : 'webp';
 
-        return sprintf('https://cdn.discordapp.com/emojis/%s.%s?size=64&quality=lossless', $this->emojiId, $extension);
+        return \sprintf('https://cdn.discordapp.com/emojis/%s.%s?size=64&quality=lossless', $this->emojiId, $extension);
     }
 }

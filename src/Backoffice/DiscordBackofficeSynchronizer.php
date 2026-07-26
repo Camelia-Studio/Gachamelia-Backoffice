@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Backoffice;
 
 use App\Discord\DiscordGuildAccessResolver;
@@ -18,7 +20,7 @@ final readonly class DiscordBackofficeSynchronizer
 
     /**
      * @param array{id: string, username: string, global_name: ?string, avatar: ?string} $profile
-     * @param list<array<string, mixed>>                                                $userGuilds
+     * @param list<array<string, mixed>>                                                 $userGuilds
      */
     public function synchronize(array $profile, array $userGuilds): DiscordUser
     {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Backoffice;
 
 use App\Entity\DiscordUser;
@@ -8,10 +10,10 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 final readonly class BackofficeSession
 {
-    private const USER_ID_KEY = 'gachamelia.discord_user_id';
-    private const PROFILE_KEY = 'gachamelia.discord_profile';
-    private const GUILDS_KEY = 'gachamelia.discord_guilds';
-    private const LOADED_AT_KEY = 'gachamelia.discord_loaded_at';
+    private const string USER_ID_KEY = 'gachamelia.discord_user_id';
+    private const string PROFILE_KEY = 'gachamelia.discord_profile';
+    private const string GUILDS_KEY = 'gachamelia.discord_guilds';
+    private const string LOADED_AT_KEY = 'gachamelia.discord_loaded_at';
 
     public function __construct(
         private RequestStack $requestStack,

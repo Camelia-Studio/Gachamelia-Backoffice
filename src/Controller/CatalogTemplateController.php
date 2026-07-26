@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Backoffice\BackofficeAccess;
@@ -681,7 +683,7 @@ final class CatalogTemplateController extends AbstractController
         $rankRoles = $request->request->all('rank_roles');
 
         try {
-            $importer->import($server, $template, \is_array($rankRoles) ? $rankRoles : []);
+            $importer->import($server, $template, $rankRoles);
         } catch (\InvalidArgumentException $exception) {
             $this->addFlash('error', $exception->getMessage());
 
@@ -935,6 +937,8 @@ final class CatalogTemplateController extends AbstractController
     }
 
     /**
+     * @param array<string, list<array<string, mixed>>> $catalog
+     *
      * @return list<array{id: string, label: string, description: string, icon: string, count: int}>
      */
     private function templateSections(array $catalog): array
@@ -955,6 +959,8 @@ final class CatalogTemplateController extends AbstractController
     }
 
     /**
+     * @param array<string, list<array<string, mixed>>> $catalog
+     *
      * @return array{id: string, label: string, description: string, icon: string, count: int}
      */
     private function templateSectionPayload(array $catalog, string $id): array
@@ -1088,7 +1094,7 @@ final class CatalogTemplateController extends AbstractController
     private function emojiPayload(string $source, ?string $unicode, ?string $id, ?string $name, bool $animated): array
     {
         $markup = null !== $id && null !== $name
-            ? sprintf('<%s:%s:%s>', $animated ? 'a' : '', $name, $id)
+            ? \sprintf('<%s:%s:%s>', $animated ? 'a' : '', $name, $id)
             : ($unicode ?? CatalogTemplateRole::DEFAULT_EMOJI);
 
         return [
@@ -1099,7 +1105,7 @@ final class CatalogTemplateController extends AbstractController
             'emoji_name' => $name,
             'emoji_animated' => $animated,
             'emoji_markup' => $markup,
-            'emoji_cdn_url' => null === $id ? null : sprintf(
+            'emoji_cdn_url' => null === $id ? null : \sprintf(
                 'https://cdn.discordapp.com/emojis/%s.%s?size=64&quality=lossless',
                 $id,
                 $animated ? 'gif' : 'webp',
@@ -1196,7 +1202,7 @@ final class CatalogTemplateController extends AbstractController
         }
 
         $value = $this->optionalRequestString($request, 'emoji_value') ?? $defaultUnicode;
-        if (1 === preg_match('/^<(?P<animated>a?):(?P<name>[A-Za-z0-9_]{2,32}):(?P<id>\d{17,22})>$/', $value, $matches)) {
+        if (1 === preg_match('/^<(?P<animated>a?):(?P<name>\w{2,32}):(?P<id>\d{17,22})>$/', $value, $matches)) {
             return [
                 'source' => 'unicode' === $source ? 'server' : $source,
                 'unicode' => null,
