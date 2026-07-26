@@ -31,6 +31,12 @@ jobs:
 
             - name: Install dependencies
               run: composer install --prefer-dist --no-progress --no-interaction
+            - uses: actions/setup-node@v7
+              with:
+                node-version: 22
+                package-manager-cache: false
+            -   run: npm ci
+            -   run: npm run build
 
             - name: Run PHPUnit tests
               run: php vendor/bin/phpunit --no-coverage
