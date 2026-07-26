@@ -94,6 +94,9 @@ Codes fréquents :
 - `404 rank_not_found`, `role_not_found`, `element_not_found`, `stat_not_found`.
 - `409 rank_catalogue_empty`, `role_catalogue_empty`, `element_catalogue_empty`.
 - `409 staff_rank_not_found` : aucun rang `is_staff` dans le catalogue serveur.
+- `409 catalogue_not_ready` : catalogue incomplet ou distribution invalide. Les
+  rangs, rang staff inclus, et les rôles doivent chacun totaliser 100 %. Les
+  probabilités rang/stat doivent aussi totaliser 100 % pour chaque rang.
 
 ## Séquence recommandée côté bot
 
@@ -118,6 +121,11 @@ Pour garder exactement le tirage actuel côté Java, le bot peut tirer lui-même
 `rank_id`, `role_id` et `element_ids` depuis le catalogue, puis les envoyer dans
 le `PUT`. Si ces champs ne sont pas envoyés, l'API complète les valeurs
 manquantes avec des choix par défaut pondérés.
+
+Ces pourcentages sont absolus : l’API tire sur une échelle fixe de 1 à 100 et
+ne normalise pas une somme incomplète. Le rang staff participe au tirage
+ordinaire, tout en restant attribué de force lorsque le payload contient
+`{"staff": true}`.
 
 ## Serveurs Discord
 

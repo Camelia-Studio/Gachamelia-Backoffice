@@ -1,0 +1,111 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Import CSV · {{ section.label }} · Gachamélia Backoffice{% endblock %}
+
+{% block navbar_actions %}
+    <a href="{{ routes.back }}" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-ink/10 bg-white px-4 text-sm font-black text-camelia-ink shadow-sm">
+        Retour au catalogue
+    </a>
+{% endblock %}
+
+{% block body %}
+    <section class="mx-auto grid w-full max-w-5xl gap-8" data-testid="catalog-csv-upload">
+        <header class="border-b border-camelia-ink/10 pb-7">
+            <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">{{ target_name }} · Import CSV</p>
+            <h1 class="mt-2 font-display text-4xl leading-tight md:text-5xl">{{ section.label }}</h1>
+            <p class="mt-4 max-w-3xl text-base font-bold leading-relaxed text-camelia-muted">
+                Les doublons sont mis à jour, les nouvelles lignes sont ajoutées et les entrées absentes du fichier sont conservées. Le fichier complet est appliqué en une seule transaction après confirmation.
+            </p>
+        </header>
+
+        {% for error in errors %}
+            <div class="border border-camelia-rose/30 bg-camelia-blush px-5 py-4 text-sm font-bold text-camelia-ink" data-testid="catalog-csv-error">
+                {% if error.line %}Ligne {{ error.line }}{% if error.column %}, colonne « {{ error.column }} »{% endif %} : {% endif %}
+                {{ error.message }}
+                {% if error.value %}<span class="text-camelia-muted">({{ error.value }})</span>{% endif %}
+            </div>
+        {% endfor %}
+
+        <section class="grid gap-5 border border-camelia-ink/10 bg-camelia-ivory p-6 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-black">Choisir le fichier</h2>
+                    <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">CSV UTF-8, séparateur « ; » ou « , », 5 Mio et 1 000 lignes maximum.</p>
+                </div>
+                <a href="{{ routes.example }}" class="inline-flex min-h-10 items-center rounded-full border border-camelia-ink/10 bg-white px-4 text-sm font-black text-camelia-ink">
+                    Télécharger l’exemple
+                </a>
+            </div>
+            <form method="post" action="{{ routes.preview }}" enctype="multipart/form-data" class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                <label class="grid gap-2 text-sm font-black text-camelia-muted">
+                    Fichier CSV
+                    <input type="file" name="csv_file" accept=".csv,text/csv" required class="min-h-12 border border-camelia-ink/10 bg-white px-3 py-2 font-semibold text-camelia-ink">
+                </label>
+                <button type="submit" class="inline-flex min-h-12 items-center justify-center rounded-full bg-camelia-ink px-6 text-sm font-black text-white transition hover:bg-camelia-rose">
+                    Prévisualiser
+                </button>
+            </form>
+        </section>
+
+        {% if preview %}
+            <section class="grid gap-6 border border-camelia-ink/10 bg-white p-6 shadow-sm" data-testid="catalog-csv-preview">
+                <div class="flex flex-wrap items-center gap-3">
+                    <h2 class="mr-auto text-xl font-black">Aperçu avant confirmation</h2>
+                    <span class="rounded-full bg-camelia-leaf/15 px-4 py-2 text-xs font-black text-camelia-leaf">{{ preview.counts.creates }} création(s)</span>
+                    <span class="rounded-full bg-camelia-gold/20 px-4 py-2 text-xs font-black text-[#7a5415]">{{ preview.counts.updates }} mise(s) à jour</span>
+                    <span class="rounded-full bg-camelia-ink/10 px-4 py-2 text-xs font-black text-camelia-muted">{{ preview.counts.unchanged }} inchangée(s)</span>
+                </div>
+
+                {% if preview.totals is not empty %}
+                    <div class="grid gap-3 sm:grid-cols-2" data-testid="catalog-csv-totals">
+                        {% for total in preview.totals %}
+                            <div class="border p-4 {{ total.valid ? 'border-camelia-leaf/30 bg-camelia-leaf/10' : 'border-camelia-rose/30 bg-camelia-blush' }}">
+                                <p class="text-sm font-black">{{ total.label }}</p>
+                                <p class="mt-1 text-sm font-bold text-camelia-muted">{{ total.current }} % actuellement → {{ total.projected }} % après import</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="overflow-x-auto border border-camelia-ink/10">
+                    <table class="w-full min-w-[42rem] border-collapse text-left text-sm">
+                        <thead class="bg-camelia-blush/60 text-xs font-black tracking-wide text-camelia-muted uppercase">
+                            <tr><th class="p-3">Ligne</th><th class="p-3">Action</th><th class="p-3">Avant</th><th class="p-3">Après</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for operation in preview.operations %}
+                                <tr class="border-t border-camelia-ink/10" data-testid="catalog-csv-operation" data-action="{{ operation.action }}">
+                                    <td class="p-3 font-black">{{ operation.line }}</td>
+                                    <td class="p-3 font-black">
+                                        {{ operation.action == 'create' ? 'Création' : (operation.action == 'update' ? 'Mise à jour' : 'Inchangée') }}
+                                    </td>
+                                    <td class="p-3 font-semibold text-camelia-muted">{{ operation.current ? operation.current|json_encode(constant('JSON_UNESCAPED_UNICODE')) : '—' }}</td>
+                                    <td class="p-3 font-semibold">{{ operation.incoming|json_encode(constant('JSON_UNESCAPED_UNICODE')) }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <form method="post" action="{{ routes.apply }}" class="grid gap-5">
+                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                    {% for line in preview.discordRoleLines %}
+                        <label class="grid gap-2 text-sm font-black text-camelia-muted">
+                            Rôle Discord pour le nouveau rang de la ligne {{ line }}
+                            <select name="discord_roles[{{ line }}]" required class="min-h-12 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink">
+                                <option value="">Choisir un rôle actuel</option>
+                                {% for role in discord_roles %}
+                                    <option value="{{ role.id }}">{{ role.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </label>
+                    {% endfor %}
+                    <button type="submit" class="inline-flex min-h-12 items-center justify-center justify-self-start rounded-full bg-camelia-rose px-7 text-sm font-black text-white transition hover:bg-camelia-ink">
+                        Confirmer et appliquer l’import
+                    </button>
+                </form>
+            </section>
+        {% endif %}
+    </section>
+{% endblock %}

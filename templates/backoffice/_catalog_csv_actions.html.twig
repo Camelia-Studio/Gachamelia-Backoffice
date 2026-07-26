@@ -1,0 +1,30 @@
+{% if active_section != 'overview' and active_section != 'settings' %}
+    {% if target_type == 'server' %}
+        {% set import_url = path('app_server_catalog_csv_import', { guildId: target_id, section: active_section }) %}
+        {% set example_url = path('app_server_catalog_csv_example', { guildId: target_id, section: active_section }) %}
+    {% else %}
+        {% set import_url = path('app_catalog_template_csv_import', { templateId: target_id, section: active_section }) %}
+        {% set example_url = path('app_catalog_template_csv_example', { templateId: target_id, section: active_section }) %}
+    {% endif %}
+
+    <div class="flex flex-wrap items-center gap-3 border border-camelia-ink/10 bg-camelia-ivory p-5 shadow-sm" data-testid="catalog-csv-actions">
+        <div class="mr-auto">
+            <p class="font-black text-camelia-ink">Actions CSV</p>
+            <p class="mt-1 text-sm font-bold text-camelia-muted">Fusionne les lignes du fichier avec cette section du catalogue.</p>
+        </div>
+        <a
+            href="{{ example_url }}"
+            class="inline-flex min-h-11 items-center justify-center rounded-full border border-camelia-ink/10 bg-white px-5 text-sm font-black text-camelia-ink transition hover:border-camelia-rose/30 hover:text-camelia-rose"
+        >
+            Télécharger un exemple
+        </a>
+        {% if not read_only %}
+            <a
+                href="{{ import_url }}"
+                class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose"
+            >
+                Importer un CSV
+            </a>
+        {% endif %}
+    </div>
+{% endif %}

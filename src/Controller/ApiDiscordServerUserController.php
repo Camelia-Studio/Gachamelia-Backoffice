@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Backoffice\CatalogValidator;
 use App\Entity\CharacterRole;
 use App\Entity\DiscordServer;
 use App\Entity\Element;
@@ -24,6 +25,7 @@ final class ApiDiscordServerUserController extends AbstractController
         string $userDiscordId,
         Request $request,
         EntityManagerInterface $entityManager,
+        CatalogValidator $catalogValidator,
     ): JsonResponse {
         $payload = $this->jsonPayload($request);
         if (null === $payload) {
@@ -36,6 +38,14 @@ final class ApiDiscordServerUserController extends AbstractController
         }
         if (!$server->active()) {
             return $this->json(['error' => 'server_inactive'], Response::HTTP_CONFLICT);
+        }
+
+        $validation = $catalogValidator->validateServer($server);
+        if (!$validation->ready()) {
+            return $this->json([
+                'error' => 'catalogue_not_ready',
+                'validation' => $validation->toArray(),
+            ], Response::HTTP_CONFLICT);
         }
 
         $user = $entityManager->getRepository(GachaUser::class)->findOneBy(['server' => $server, 'discordId' => $userDiscordId]);
@@ -332,10 +342,7 @@ final class ApiDiscordServerUserController extends AbstractController
 
     private function defaultRank(EntityManagerInterface $entityManager, DiscordServer $server): ?Rank
     {
-        $ranks = array_values(array_filter(
-            $entityManager->getRepository(Rank::class)->findBy(['server' => $server], ['percentage' => 'ASC', 'name' => 'ASC']),
-            static fn (Rank $rank): bool => !$rank->isStaff(),
-        ));
+        $ranks = $entityManager->getRepository(Rank::class)->findBy(['server' => $server], ['percentage' => 'ASC', 'name' => 'ASC']);
 
         if ([] === $ranks) {
             return null;
@@ -372,11 +379,11 @@ final class ApiDiscordServerUserController extends AbstractController
     private function weightedPick(array $items, callable $weight): object
     {
         $total = array_sum(array_map(static fn (object $item): int => max(0, $weight($item)), $items));
-        if ($total <= 0) {
-            return $items[0];
+        if (100 !== $total) {
+            throw new \LogicException('A percentage distribution must total exactly 100.');
         }
 
-        $point = random_int(1, $total);
+        $point = random_int(1, 100);
         $cumulative = 0;
         foreach ($items as $item) {
             $cumulative += max(0, $weight($item));

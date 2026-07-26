@@ -43,16 +43,16 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $this->entityManager->persist($oldStat);
 
         $template = new CatalogTemplate('Starter Gacha', 'Catalogue de départ.');
-        $rank = new CatalogTemplateRank($template, 'Comète', 'Comète de l’Aube', 35, 'Comète filante');
+        $rank = new CatalogTemplateRank($template, 'Comète', 'Comète de l’Aube', 100, 'Comète filante');
         $stat = new CatalogTemplateStat($template, 'Éther');
-        $role = new CatalogTemplateRole($template, 'Gardien', 45, 'unicode', '🛡️');
+        $role = new CatalogTemplateRole($template, 'Gardien', 100, 'unicode', '🛡️');
         $element = new CatalogTemplateElement($template, 'Ambre', 'unicode', '🟠');
         $this->entityManager->persist($template);
         $this->entityManager->persist($rank);
         $this->entityManager->persist($stat);
         $this->entityManager->persist($role);
         $this->entityManager->persist($element);
-        $this->entityManager->persist(new CatalogTemplateRankStat($rank, $stat, 80));
+        $this->entityManager->persist(new CatalogTemplateRankStat($rank, $stat, 100));
         $this->entityManager->persist(new CatalogTemplateWelcomeMessage($template, $rank, 'Bienvenue, {user}.'));
         $this->entityManager->persist(new CatalogTemplateByeMessage($template, $rank, 'Au revoir, {user}.'));
         $this->entityManager->flush();
@@ -66,14 +66,14 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         self::assertSame([
             'discord_id' => '777777777777777777',
             'name' => 'Comète de l’Aube',
-            'percentage' => 35,
+            'percentage' => 100,
             'bye_title' => 'Comète filante',
             'is_staff' => 0,
         ], $this->connection()->fetchAssociative('SELECT discord_id, name, percentage, bye_title, is_staff FROM ranks WHERE server_id = ?', [$server->id()]));
         self::assertSame('Gardien', $this->connection()->fetchOne('SELECT name FROM roles WHERE server_id = ?', [$server->id()]));
         self::assertSame('Éther', $this->connection()->fetchOne('SELECT name FROM stats WHERE server_id = ?', [$server->id()]));
         self::assertSame('Ambre', $this->connection()->fetchOne('SELECT name FROM elements WHERE server_id = ?', [$server->id()]));
-        self::assertSame(80, (int) $this->connection()->fetchOne('SELECT percentage FROM rank_stats'));
+        self::assertSame(100, (int) $this->connection()->fetchOne('SELECT percentage FROM rank_stats'));
         self::assertSame('Bienvenue, {user}.', $this->connection()->fetchOne('SELECT message FROM welcome_messages'));
         self::assertSame('Au revoir, {user}.', $this->connection()->fetchOne('SELECT message FROM bye_messages'));
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM ranks WHERE name = ?', ['Ancien rang']));
@@ -84,10 +84,13 @@ final class CatalogTemplateImporterTest extends KernelTestCase
     {
         $server = new DiscordServer('server-1', 'Serveur Test');
         $template = new CatalogTemplate('Starter Gacha');
-        $rank = new CatalogTemplateRank($template, 'Comète', 'Comète de l’Aube', 35);
+        $rank = new CatalogTemplateRank($template, 'Comète', 'Comète de l’Aube', 100);
+        $stat = new CatalogTemplateStat($template, 'Éther');
         $this->entityManager->persist($server);
         $this->entityManager->persist($template);
         $this->entityManager->persist($rank);
+        $this->entityManager->persist($stat);
+        $this->entityManager->persist(new CatalogTemplateRankStat($rank, $stat, 100));
         $this->entityManager->persist(new CatalogTemplateRole($template, 'Gardien', 100));
         $this->entityManager->persist(new CatalogTemplateElement($template, 'Ambre'));
         $this->entityManager->flush();

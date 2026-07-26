@@ -249,7 +249,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
         self::assertSame([
             'discord_id' => '777777777777777777',
             'name' => 'Comète de l’Aube',
-            'percentage' => 35,
+            'percentage' => 100,
             'is_staff' => 0,
         ], $this->connection()->fetchAssociative('SELECT discord_id, name, percentage, is_staff FROM ranks WHERE server_id = ?', [$serverId]));
         self::assertSame('Gardien', $this->connection()->fetchOne('SELECT name FROM roles WHERE server_id = ?', [$serverId]));
@@ -344,7 +344,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
             'template_id' => $templateId,
             'role_key' => 'Comète',
             'name' => 'Comète de l’Aube',
-            'percentage' => 35,
+            'percentage' => 100,
             'bye_title' => 'Comète filante',
             'is_staff' => 0,
         ]);
@@ -360,12 +360,12 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
             'template_id' => $templateId,
             'rank_id' => $rankId,
             'stat_id' => $statId,
-            'percentage' => 80,
+            'percentage' => 100,
         ]);
         $this->connection()->insert('catalog_template_roles', [
             'template_id' => $templateId,
             'name' => 'Gardien',
-            'percentage' => 45,
+            'percentage' => 100,
             'emoji_source' => 'unicode',
             'emoji_unicode' => '🛡️',
             'emoji_id' => null,

@@ -150,6 +150,12 @@
                 </header>
 
                 {% include 'backoffice/_catalog_validation.html.twig' with { validation: validation } only %}
+                {% include 'backoffice/_catalog_csv_actions.html.twig' with {
+                    target_type: 'template',
+                    target_id: template.id,
+                    active_section: active_section,
+                    read_only: false
+                } only %}
 
                 {% if is_overview %}
                     <section class="grid gap-7" data-testid="template-configuration-overview">

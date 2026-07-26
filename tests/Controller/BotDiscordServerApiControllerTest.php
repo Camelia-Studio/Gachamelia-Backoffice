@@ -304,7 +304,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
             'server_id' => $serverId,
             'discord_id' => 'rank-novice',
             'name' => 'Novice',
-            'percentage' => 35,
+            'percentage' => 100,
             'bye_title' => 'Novice sortant',
             'is_staff' => 0,
             'created_at' => '2026-07-06 10:00:00',
@@ -333,7 +333,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
             'server_id' => $serverId,
             'rank_id' => $rankId,
             'stat_id' => $statId,
-            'percentage' => 70,
+            'percentage' => 100,
         ]);
 
         $this->connection()->insert('welcome_messages', [
@@ -353,7 +353,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         $this->connection()->insert('roles', [
             'server_id' => $serverId,
             'name' => 'Comète',
-            'percentage' => 45,
+            'percentage' => 100,
             'emoji_source' => 'server',
             'emoji_unicode' => null,
             'emoji_id' => '123456789012345678',
@@ -405,13 +405,13 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
                     'id' => $rankId,
                     'discord_id' => 'rank-novice',
                     'name' => 'Novice',
-                    'percentage' => 35,
+                    'percentage' => 100,
                     'bye_title' => 'Novice sortant',
                     'is_staff' => false,
                     'stats' => [[
                         'id' => $statId,
                         'name' => 'Force',
-                        'percentage' => 70,
+                        'percentage' => 100,
                     ]],
                     'welcome_messages' => [[
                         'id' => $welcomeMessageId,
@@ -425,7 +425,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
                 'roles' => [[
                     'id' => $roleId,
                     'name' => 'Comète',
-                    'percentage' => 45,
+                    'percentage' => 100,
                     'emoji' => [
                         'source' => 'server',
                         'unicode' => null,
@@ -570,6 +570,42 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         self::assertSame($catalogue['role_id'], (int) $userRow['role_id']);
         self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM users_elements WHERE user_id = ? AND element_id = ?', [$userRow['id'], $catalogue['element_id']]));
         self::assertSame(2, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM user_stats WHERE user_id = ? AND value = 0', [$userRow['id']]));
+    }
+
+    public function testEnsureRejectsCatalogueWhosePercentageTotalIsNotOneHundred(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $catalogue = $this->seedRuntimeCatalogue();
+        $this->connection()->update('ranks', ['percentage' => 80], ['id' => $catalogue['rank_id']]);
+
+        $client->request('PUT', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->requestAccessToken($client),
+            'CONTENT_TYPE' => 'application/json',
+        ], content: '{}');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CONFLICT);
+        $payload = $this->jsonPayload($client);
+        self::assertSame('catalogue_not_ready', $payload['error'] ?? null);
+        self::assertContains('invalid_rank_percentage_total', $payload['validation']['errors'] ?? []);
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM users'));
+    }
+
+    public function testNormalMemberCanDrawStaffRankFromItsPercentage(): void
+    {
+        $client = static::createClient();
+        $this->resetDatabase();
+        $catalogue = $this->seedRuntimeCatalogue();
+        $this->connection()->update('ranks', ['percentage' => 0], ['id' => $catalogue['rank_id']]);
+        $this->connection()->update('ranks', ['percentage' => 100], ['id' => $catalogue['staff_rank_id']]);
+
+        $client->request('PUT', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->requestAccessToken($client),
+            'CONTENT_TYPE' => 'application/json',
+        ], content: '{}');
+
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+        self::assertSame('Staff', $this->jsonPayload($client)['user']['rank']['name'] ?? null);
     }
 
     public function testBotCanForceStaffRankAndPatchRuntimeAssignments(): void
@@ -764,6 +800,19 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
             'name' => 'Aura',
         ]);
         $auraStatId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('rank_stats', [
+            'server_id' => $serverId,
+            'rank_id' => $rankId,
+            'stat_id' => $forceStatId,
+            'percentage' => 100,
+        ]);
+        $this->connection()->insert('rank_stats', [
+            'server_id' => $serverId,
+            'rank_id' => $staffRankId,
+            'stat_id' => $forceStatId,
+            'percentage' => 100,
+        ]);
 
         return [
             'server_id' => $serverId,

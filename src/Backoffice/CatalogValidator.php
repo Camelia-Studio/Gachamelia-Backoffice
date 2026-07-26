@@ -9,6 +9,7 @@ use App\Entity\CatalogTemplate;
 use App\Entity\CatalogTemplateByeMessage;
 use App\Entity\CatalogTemplateElement;
 use App\Entity\CatalogTemplateRank;
+use App\Entity\CatalogTemplateRankStat;
 use App\Entity\CatalogTemplateRole;
 use App\Entity\CatalogTemplateStat;
 use App\Entity\CatalogTemplateWelcomeMessage;
@@ -16,6 +17,7 @@ use App\Entity\CharacterRole;
 use App\Entity\DiscordServer;
 use App\Entity\Element;
 use App\Entity\Rank;
+use App\Entity\RankStat;
 use App\Entity\Stat;
 use App\Entity\WelcomeMessage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,16 +32,18 @@ final readonly class CatalogValidator
     {
         $ranks = $this->entityManager->getRepository(Rank::class)->findBy(['server' => $server]);
         $roles = $this->entityManager->getRepository(CharacterRole::class)->findBy(['server' => $server]);
+        $rankStats = $this->entityManager->getRepository(RankStat::class)->findBy(['server' => $server]);
         $nonStaffRanks = array_filter($ranks, static fn (Rank $rank): bool => !$rank->isStaff());
         $staffCount = \count($ranks) - \count($nonStaffRanks);
 
         $errors = $this->blockingErrors(
             \count($nonStaffRanks),
-            array_sum(array_map(static fn (Rank $rank): int => $rank->percentage(), $nonStaffRanks)),
+            array_sum(array_map(static fn (Rank $rank): int => $rank->percentage(), $ranks)),
             \count($roles),
             array_sum(array_map(static fn (CharacterRole $role): int => $role->percentage(), $roles)),
             $this->entityManager->getRepository(Element::class)->count(['server' => $server]),
             $staffCount,
+            $this->hasInvalidServerRankStatTotal($ranks, $rankStats),
         );
 
         $warnings = [];
@@ -69,16 +73,18 @@ final readonly class CatalogValidator
     {
         $ranks = $this->entityManager->getRepository(CatalogTemplateRank::class)->findBy(['template' => $template]);
         $roles = $this->entityManager->getRepository(CatalogTemplateRole::class)->findBy(['template' => $template]);
+        $rankStats = $this->entityManager->getRepository(CatalogTemplateRankStat::class)->findBy(['template' => $template]);
         $nonStaffRanks = array_filter($ranks, static fn (CatalogTemplateRank $rank): bool => !$rank->isStaff());
         $staffCount = \count($ranks) - \count($nonStaffRanks);
 
         $errors = $this->blockingErrors(
             \count($nonStaffRanks),
-            array_sum(array_map(static fn (CatalogTemplateRank $rank): int => $rank->percentage(), $nonStaffRanks)),
+            array_sum(array_map(static fn (CatalogTemplateRank $rank): int => $rank->percentage(), $ranks)),
             \count($roles),
             array_sum(array_map(static fn (CatalogTemplateRole $role): int => $role->percentage(), $roles)),
             $this->entityManager->getRepository(CatalogTemplateElement::class)->count(['template' => $template]),
             $staffCount,
+            $this->hasInvalidTemplateRankStatTotal($ranks, $rankStats),
         );
 
         $warnings = [];
@@ -105,6 +111,7 @@ final readonly class CatalogValidator
         int $roleWeight,
         int $elementCount,
         int $staffCount,
+        bool $invalidRankStatTotal,
     ): array {
         $errors = [];
         if (0 === $nonStaffRankCount) {
@@ -116,16 +123,65 @@ final readonly class CatalogValidator
         if (0 === $elementCount) {
             $errors[] = 'empty_elements';
         }
-        if ($nonStaffRankCount > 0 && $rankWeight <= 0) {
-            $errors[] = 'zero_rank_weight';
+        if ($nonStaffRankCount + $staffCount > 0 && 100 !== $rankWeight) {
+            $errors[] = 'invalid_rank_percentage_total';
         }
-        if ($roleCount > 0 && $roleWeight <= 0) {
-            $errors[] = 'zero_role_weight';
+        if ($roleCount > 0 && 100 !== $roleWeight) {
+            $errors[] = 'invalid_role_percentage_total';
+        }
+        if ($invalidRankStatTotal) {
+            $errors[] = 'invalid_rank_stat_percentage_total';
         }
         if ($staffCount > 1) {
             $errors[] = 'multiple_staff_ranks';
         }
 
         return $errors;
+    }
+
+    /**
+     * @param list<Rank>     $ranks
+     * @param list<RankStat> $rankStats
+     */
+    private function hasInvalidServerRankStatTotal(array $ranks, array $rankStats): bool
+    {
+        $totals = [];
+        foreach ($rankStats as $rankStat) {
+            $rankId = $rankStat->rank()->id();
+            if (null !== $rankId) {
+                $totals[$rankId] = ($totals[$rankId] ?? 0) + $rankStat->percentage();
+            }
+        }
+        foreach ($ranks as $rank) {
+            $rankId = $rank->id();
+            if (null === $rankId || 100 !== ($totals[$rankId] ?? 0)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param list<CatalogTemplateRank>     $ranks
+     * @param list<CatalogTemplateRankStat> $rankStats
+     */
+    private function hasInvalidTemplateRankStatTotal(array $ranks, array $rankStats): bool
+    {
+        $totals = [];
+        foreach ($rankStats as $rankStat) {
+            $rankId = $rankStat->rank()->id();
+            if (null !== $rankId) {
+                $totals[$rankId] = ($totals[$rankId] ?? 0) + $rankStat->percentage();
+            }
+        }
+        foreach ($ranks as $rank) {
+            $rankId = $rank->id();
+            if (null === $rankId || 100 !== ($totals[$rankId] ?? 0)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

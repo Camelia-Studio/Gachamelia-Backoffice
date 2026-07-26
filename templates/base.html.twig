@@ -64,6 +64,11 @@
                     {{ message }}
                 </div>
             {% endfor %}
+            {% for message in app.flashes('success') %}
+                <div class="mb-6 border border-camelia-leaf/30 bg-camelia-leaf/10 px-5 py-4 text-sm font-bold text-camelia-ink" data-testid="flash-success">
+                    {{ message }}
+                </div>
+            {% endfor %}
             {% block body %}{% endblock %}
         </main>
     </div>

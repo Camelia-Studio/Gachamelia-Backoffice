@@ -177,6 +177,12 @@
                 {% endif %}
 
                 {% include 'backoffice/_catalog_validation.html.twig' with { validation: validation } only %}
+                {% include 'backoffice/_catalog_csv_actions.html.twig' with {
+                    target_type: 'server',
+                    target_id: guild.id,
+                    active_section: active_section,
+                    read_only: read_only
+                } only %}
 
                 <fieldset class="contents" data-testid="configuration-read-only" {% if read_only %}disabled{% endif %}>
                 {% if is_overview %}
