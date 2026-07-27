@@ -29,7 +29,7 @@ jobs:
             - name: Install system dependencies
               run: |
                   apt-get update -qq
-                  apt-get install -y --no-install-recommends unzip git ca-certificates libzip-dev
+                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
                   docker-php-ext-install pdo_mysql zip
 
             - name: Checkout repository
@@ -69,7 +69,7 @@ jobs:
             - name: Install system dependencies
               run: |
                   apt-get update -qq
-                  apt-get install -y --no-install-recommends unzip git ca-certificates libzip-dev
+                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
                   docker-php-ext-install zip
 
             - name: Checkout repository
@@ -97,7 +97,7 @@ jobs:
             - name: Install system dependencies
               run: |
                   apt-get update -qq
-                  apt-get install -y --no-install-recommends unzip git ca-certificates libzip-dev
+                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
                   docker-php-ext-install zip
 
             - name: Checkout repository
@@ -125,7 +125,7 @@ jobs:
             - name: Install system dependencies
               run: |
                   apt-get update -qq
-                  apt-get install -y --no-install-recommends unzip git ca-certificates libzip-dev
+                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
                   docker-php-ext-install zip
 
             - name: Checkout repository
