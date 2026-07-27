@@ -59,9 +59,10 @@
                 </div>
                 <form method="post" action="{{ path('app_server_catalog_template_import_apply', { guildId: guild.id, templateId: template.id }) }}" class="grid gap-5 p-6">
                     <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                    <input type="hidden" name="import_fingerprint" value="{{ import_fingerprint }}">
                     {% if discord_resources.roles is empty %}
                         <p class="border border-camelia-rose/20 bg-camelia-ivory p-4 text-sm font-bold leading-relaxed text-camelia-muted">
-                            Rôles Discord temporairement indisponibles. Les IDs restent éditables manuellement.
+                            Rôles Discord temporairement indisponibles. L’import sera possible dès que les rôles assignables pourront être vérifiés.
                         </p>
                     {% endif %}
 
@@ -76,7 +77,7 @@
                                     {% endfor %}
                                 </select>
                             {% else %}
-                                <input name="rank_roles[{{ rank.id }}]" required inputmode="numeric" placeholder="ID du rôle Discord" class="{{ input_class }}">
+                                <input disabled placeholder="Rôles Discord indisponibles" class="{{ input_class }}">
                             {% endif %}
                         </label>
                     {% else %}
@@ -90,7 +91,7 @@
                         Je confirme que le catalogue actuel et les attributions associées seront écrasés.
                     </label>
 
-                    <button type="submit" {% if not preview.validation.ready %}disabled{% endif %} class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-rose px-5 text-sm font-black text-white transition hover:bg-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 disabled:cursor-not-allowed disabled:opacity-45">
+                    <button type="submit" {% if not preview.validation.ready or discord_resources.roles is empty %}disabled{% endif %} class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-rose px-5 text-sm font-black text-white transition hover:bg-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 disabled:cursor-not-allowed disabled:opacity-45">
                         Écraser et importer
                     </button>
                 </form>

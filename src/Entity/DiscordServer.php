@@ -103,9 +103,15 @@ class DiscordServer
 
     public function refreshCache(string $name, ?string $icon): void
     {
+        $this->refreshMetadata($name, $icon);
+        $this->markSeen();
+    }
+
+    public function refreshMetadata(string $name, ?string $icon): void
+    {
         $this->name = $name;
         $this->icon = $icon;
-        $this->markSeen();
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function markSeen(?\DateTimeImmutable $at = null): void

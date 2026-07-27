@@ -20,9 +20,13 @@ final readonly class DiscordGuildResourcesProvider implements DiscordGuildResour
     ) {
     }
 
-    public function resourcesForGuild(string $guildId): array
+    public function resourcesForGuild(string $guildId, bool $fresh = false): array
     {
         try {
+            if ($fresh) {
+                return $this->freshResourcesForGuild($guildId);
+            }
+
             if ($this->ttlSeconds <= 0) {
                 return $this->freshResourcesForGuild($guildId);
             }

@@ -33,22 +33,52 @@ final readonly class CatalogTemplateImporter
     }
 
     /**
-     * @param array<string, string> $rankDiscordRoleIds indexed by template rank id
+     * @param array<array-key, string> $rankDiscordRoleIds       indexed by template rank id
+     * @param list<string>             $assignableDiscordRoleIds
      */
-    public function import(DiscordServer $server, CatalogTemplate $template, array $rankDiscordRoleIds): void
-    {
-        if (!$server->active()) {
-            throw new \InvalidArgumentException('Cannot import a catalog into an inactive server.');
+    public function import(
+        DiscordServer $server,
+        CatalogTemplate $template,
+        array $rankDiscordRoleIds,
+        string $expectedFingerprint,
+        array $assignableDiscordRoleIds,
+    ): void {
+        $serverId = $server->id();
+        $templateId = $template->id();
+        if (null === $serverId || null === $templateId) {
+            throw new \InvalidArgumentException('Cannot import a template or a server that is not persisted.');
         }
 
-        if (!$this->catalogValidator->validateTemplate($template)->ready()) {
-            throw new \InvalidArgumentException('Catalog template is not ready for import.');
-        }
+        $this->entityManager->wrapInTransaction(function () use (
+            $server,
+            $serverId,
+            $template,
+            $templateId,
+            $rankDiscordRoleIds,
+            $expectedFingerprint,
+            $assignableDiscordRoleIds,
+        ): void {
+            $this->lockImportState($serverId, $templateId);
+            $this->entityManager->refresh($server);
+            $this->entityManager->refresh($template);
 
-        $templateRanks = $this->templateRanks($template);
-        $this->assertRankMappings($templateRanks, $rankDiscordRoleIds);
+            if (!$server->active()) {
+                throw new \InvalidArgumentException('Cannot import a catalog into an inactive server.');
+            }
+            if (!$template->published()) {
+                throw new \InvalidArgumentException('Cannot import an unpublished catalog template.');
+            }
+            if (!$this->catalogValidator->validateTemplate($template)->ready()) {
+                throw new \InvalidArgumentException('Catalog template is not ready for import.');
+            }
 
-        $this->entityManager->wrapInTransaction(function () use ($server, $template, $templateRanks, $rankDiscordRoleIds): void {
+            $preview = $this->preview($server, $template);
+            if (!hash_equals($expectedFingerprint, $preview['fingerprint'])) {
+                throw new \InvalidArgumentException('Le modèle ou le catalogue cible a changé depuis l’aperçu.');
+            }
+
+            $templateRanks = $this->templateRanks($template);
+            $this->assertRankMappings($templateRanks, $rankDiscordRoleIds, $assignableDiscordRoleIds);
             $this->clearServerCatalog($server);
 
             $rankMap = [];
@@ -123,12 +153,58 @@ final readonly class CatalogTemplateImporter
         });
     }
 
+    private function lockImportState(int $serverId, int $templateId): void
+    {
+        if (false === $this->connection->fetchOne('SELECT id FROM discord_servers WHERE id = ? FOR UPDATE', [$serverId])) {
+            throw new \InvalidArgumentException('Cannot import a template into a server that no longer exists.');
+        }
+        if (false === $this->connection->fetchOne('SELECT id FROM catalog_templates WHERE id = ? FOR UPDATE', [$templateId])) {
+            throw new \InvalidArgumentException('Cannot import a catalog template that no longer exists.');
+        }
+
+        foreach ([
+            'ranks',
+            'rank_stats',
+            'welcome_messages',
+            'bye_messages',
+            'roles',
+            'stats',
+            'elements',
+            'users',
+            'user_stats',
+            'users_elements',
+        ] as $table) {
+            $this->lockScopedRows($table, 'server_id', $serverId);
+        }
+
+        foreach ([
+            'catalog_template_ranks',
+            'catalog_template_rank_stats',
+            'catalog_template_welcome_messages',
+            'catalog_template_bye_messages',
+            'catalog_template_roles',
+            'catalog_template_stats',
+            'catalog_template_elements',
+        ] as $table) {
+            $this->lockScopedRows($table, 'template_id', $templateId);
+        }
+    }
+
+    private function lockScopedRows(string $table, string $scopeColumn, int $scopeId): void
+    {
+        $this->connection->fetchFirstColumn(
+            \sprintf('SELECT %s FROM %s WHERE %s = ? FOR UPDATE', $scopeColumn, $table, $scopeColumn),
+            [$scopeId],
+        );
+    }
+
     /**
      * @return array{
      *     current: array{ranks: int, rank_stats: int, welcome_messages: int, bye_messages: int, roles: int, stats: int, elements: int, total: int},
      *     incoming: array{ranks: int, rank_stats: int, welcome_messages: int, bye_messages: int, roles: int, stats: int, elements: int, total: int},
      *     affected_user_count: int,
-     *     validation: array{ready: bool, errors: list<string>, warnings: list<string>}
+     *     validation: array{ready: bool, errors: list<string>, warnings: list<string>},
+     *     fingerprint: string
      * }
      */
     public function preview(DiscordServer $server, CatalogTemplate $template): array
@@ -163,16 +239,22 @@ final readonly class CatalogTemplateImporter
             'incoming' => [...$incoming, 'total' => array_sum($incoming)],
             'affected_user_count' => $this->tableCount('users', 'server_id', $serverId),
             'validation' => $this->catalogValidator->validateTemplate($template)->toArray(),
+            'fingerprint' => $this->fingerprint($serverId, $templateId),
         ];
     }
 
     /**
      * @param list<CatalogTemplateRank> $templateRanks
-     * @param array<string, string>     $rankDiscordRoleIds
+     * @param array<array-key, string>  $rankDiscordRoleIds
+     * @param list<string>              $assignableDiscordRoleIds
      */
-    private function assertRankMappings(array $templateRanks, array $rankDiscordRoleIds): void
-    {
+    private function assertRankMappings(
+        array $templateRanks,
+        array $rankDiscordRoleIds,
+        array $assignableDiscordRoleIds,
+    ): void {
         $usedDiscordRoleIds = [];
+        $assignableDiscordRoleIds = array_fill_keys($assignableDiscordRoleIds, true);
         foreach ($templateRanks as $templateRank) {
             $templateRankId = (string) $templateRank->id();
             $discordRoleId = trim($rankDiscordRoleIds[$templateRankId] ?? '');
@@ -183,9 +265,56 @@ final readonly class CatalogTemplateImporter
             if (isset($usedDiscordRoleIds[$discordRoleId])) {
                 throw new \InvalidArgumentException(\sprintf('Discord role %s is mapped more than once.', $discordRoleId));
             }
+            if (!isset($assignableDiscordRoleIds[$discordRoleId])) {
+                throw new \InvalidArgumentException(\sprintf('Discord role %s is not assignable on this server.', $discordRoleId));
+            }
 
             $usedDiscordRoleIds[$discordRoleId] = true;
         }
+    }
+
+    private function fingerprint(int $serverId, int $templateId): string
+    {
+        $state = [
+            'server' => [
+                'ranks' => $this->tableRows('ranks', 'server_id', $serverId, 'id'),
+                'rank_stats' => $this->tableRows('rank_stats', 'server_id', $serverId, 'rank_id, stat_id'),
+                'welcome_messages' => $this->tableRows('welcome_messages', 'server_id', $serverId, 'id'),
+                'bye_messages' => $this->tableRows('bye_messages', 'server_id', $serverId, 'id'),
+                'roles' => $this->tableRows('roles', 'server_id', $serverId, 'id'),
+                'stats' => $this->tableRows('stats', 'server_id', $serverId, 'id'),
+                'elements' => $this->tableRows('elements', 'server_id', $serverId, 'id'),
+                'users' => $this->tableRows('users', 'server_id', $serverId, 'id'),
+                'user_stats' => $this->tableRows('user_stats', 'server_id', $serverId, 'user_id, stat_id'),
+                'users_elements' => $this->tableRows('users_elements', 'server_id', $serverId, 'user_id, element_id'),
+            ],
+            'template' => [
+                'root' => $this->connection->fetchAssociative(
+                    'SELECT id, name, description, published, updated_at FROM catalog_templates WHERE id = ?',
+                    [$templateId],
+                ),
+                'ranks' => $this->tableRows('catalog_template_ranks', 'template_id', $templateId, 'id'),
+                'rank_stats' => $this->tableRows('catalog_template_rank_stats', 'template_id', $templateId, 'rank_id, stat_id'),
+                'welcome_messages' => $this->tableRows('catalog_template_welcome_messages', 'template_id', $templateId, 'id'),
+                'bye_messages' => $this->tableRows('catalog_template_bye_messages', 'template_id', $templateId, 'id'),
+                'roles' => $this->tableRows('catalog_template_roles', 'template_id', $templateId, 'id'),
+                'stats' => $this->tableRows('catalog_template_stats', 'template_id', $templateId, 'id'),
+                'elements' => $this->tableRows('catalog_template_elements', 'template_id', $templateId, 'id'),
+            ],
+        ];
+
+        return hash('sha256', json_encode($state, JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION));
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function tableRows(string $table, string $scopeColumn, int $scopeId, string $orderBy): array
+    {
+        return $this->connection->fetchAllAssociative(
+            \sprintf('SELECT * FROM %s WHERE %s = ? ORDER BY %s', $table, $scopeColumn, $orderBy),
+            [$scopeId],
+        );
     }
 
     private function clearServerCatalog(DiscordServer $server): void

@@ -12,5 +12,5 @@ interface DiscordGuildResourcesProviderInterface
      *     roles: list<array{id: string, name: string, label: string, position: int, managed: bool}>
      * }
      */
-    public function resourcesForGuild(string $guildId): array;
+    public function resourcesForGuild(string $guildId, bool $fresh = false): array;
 }

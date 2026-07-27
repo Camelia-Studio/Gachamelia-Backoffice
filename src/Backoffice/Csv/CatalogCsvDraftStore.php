@@ -29,6 +29,17 @@ final readonly class CatalogCsvDraftStore
     ): string {
         $now ??= new \DateTimeImmutable();
         $drafts = $this->cleanExpired($this->drafts(), $now);
+        foreach ($drafts as $existingToken => $draft) {
+            if (
+                ($draft['user_id'] ?? null) === $userId
+                && ($draft['target_type'] ?? null) === $targetType
+                && ($draft['target_id'] ?? null) === $targetId
+                && ($draft['section'] ?? null) === $section->value
+            ) {
+                unset($drafts[$existingToken]);
+            }
+        }
+
         $token = bin2hex(random_bytes(32));
         $drafts[$token] = [
             'user_id' => $userId,

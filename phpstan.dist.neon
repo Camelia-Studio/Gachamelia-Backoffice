@@ -3,6 +3,8 @@ parameters:
     paths:
         - src
         - tests
+    scanFiles:
+        - migrations/Version20260721231728.php
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
     doctrine:

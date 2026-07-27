@@ -52,6 +52,36 @@ final class ApiDiscordEmojiController extends AbstractController
             return $this->json(['error' => 'invalid_payload'], Response::HTTP_BAD_REQUEST);
         }
 
+        $normalizedEmojiPayloads = [];
+        $seenDiscordIds = [];
+        foreach ($emojiPayloads as $emojiPayload) {
+            if (!\is_array($emojiPayload)) {
+                return $this->json(['error' => 'invalid_payload'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $discordId = $this->requiredString($emojiPayload, 'id');
+            $name = $this->requiredString($emojiPayload, 'name');
+            if (
+                null === $discordId
+                || null === $name
+                || \strlen($discordId) > 32
+                || \strlen($name) > 255
+                || (\array_key_exists('animated', $emojiPayload) && !\is_bool($emojiPayload['animated']))
+                || (\array_key_exists('available', $emojiPayload) && !\is_bool($emojiPayload['available']))
+                || isset($seenDiscordIds[$discordId])
+            ) {
+                return $this->json(['error' => 'invalid_payload'], Response::HTTP_BAD_REQUEST);
+            }
+
+            $seenDiscordIds[$discordId] = true;
+            $normalizedEmojiPayloads[] = [
+                'id' => $discordId,
+                'name' => $name,
+                'animated' => $emojiPayload['animated'] ?? false,
+                'available' => $emojiPayload['available'] ?? true,
+            ];
+        }
+
         $now = new \DateTimeImmutable();
         $repository = $entityManager->getRepository(DiscordEmoji::class);
         $existingByDiscordId = [];
@@ -63,20 +93,11 @@ final class ApiDiscordEmojiController extends AbstractController
 
         $received = 0;
         $available = 0;
-        $seenDiscordIds = [];
-        foreach ($emojiPayloads as $emojiPayload) {
-            if (!\is_array($emojiPayload)) {
-                continue;
-            }
-
-            $discordId = $this->requiredString($emojiPayload, 'id');
-            $name = $this->requiredString($emojiPayload, 'name');
-            if (null === $discordId || null === $name) {
-                continue;
-            }
-
-            $animated = true === ($emojiPayload['animated'] ?? false);
-            $isAvailable = false !== ($emojiPayload['available'] ?? true);
+        foreach ($normalizedEmojiPayloads as $emojiPayload) {
+            $discordId = $emojiPayload['id'];
+            $name = $emojiPayload['name'];
+            $animated = $emojiPayload['animated'];
+            $isAvailable = $emojiPayload['available'];
             $emoji = $existingByDiscordId[$discordId] ?? null;
             if (!$emoji instanceof DiscordEmoji) {
                 $emoji = new DiscordEmoji($server, $cacheKey, $source, $discordId, $name, $animated, $isAvailable, $now);
@@ -89,7 +110,6 @@ final class ApiDiscordEmojiController extends AbstractController
             if ($isAvailable) {
                 ++$available;
             }
-            $seenDiscordIds[$discordId] = true;
         }
 
         foreach ($existingByDiscordId as $discordId => $emoji) {

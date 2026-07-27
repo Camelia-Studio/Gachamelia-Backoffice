@@ -103,6 +103,22 @@ final class CatalogCsvParserTest extends TestCase
         self::assertSame('file_too_large', $oversized->errors()[0]['message']);
     }
 
+    public function testRejectsOversizedHeadersAndTooManyColumnsBeforeCsvParsing(): void
+    {
+        $parser = new CatalogCsvParser();
+        $oversizedHeader = $parser->parse(
+            $this->csv(str_repeat('n', 8193)."\n"),
+            CatalogCsvSection::Stats,
+        );
+        $tooManyColumns = $parser->parse(
+            $this->csv(implode(';', array_fill(0, 65, 'nom'))."\n"),
+            CatalogCsvSection::Stats,
+        );
+
+        self::assertSame('header_too_long', $oversizedHeader->errors()[0]['message']);
+        self::assertSame('too_many_columns', $tooManyColumns->errors()[0]['message']);
+    }
+
     public function testRejectsMoreThanOneThousandDataRowsButIgnoresBlankRows(): void
     {
         $rows = "nom\n".implode("\n", array_map(static fn (int $index): string => 'Stat '.$index, range(1, 1001)))."\n\n";

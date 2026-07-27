@@ -279,6 +279,83 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         ));
     }
 
+    public function testEmojiSnapshotRejectsMalformedEntriesWithoutMutatingTheCache(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+
+        $this->connection()->insert('discord_servers', [
+            'discord_id' => '123456789',
+            'name' => 'Serveur Test',
+            'icon' => null,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $serverId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('discord_emojis', [
+            'server_id' => $serverId,
+            'cache_key' => 'server:123456789',
+            'source' => 'server',
+            'discord_id' => '111111111111111111',
+            'name' => 'aube',
+            'animated' => 0,
+            'available' => 1,
+            'last_seen_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+
+        $client->request('PUT', '/api/discord-emojis', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->requestAccessToken($client),
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode([
+            'source' => 'server',
+            'discord_server_id' => '123456789',
+            'emojis' => [
+                ['id' => '222222222222222222', 'name' => 'eclipse', 'animated' => false, 'available' => true],
+                ['id' => '333333333333333333'],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        $this->assertJsonPayloadContains(['error' => 'invalid_payload']);
+        self::assertSame([
+            ['discord_id' => '111111111111111111', 'name' => 'aube', 'available' => 1],
+        ], $this->connection()->fetchAllAssociative(
+            'SELECT discord_id, name, available FROM discord_emojis WHERE cache_key = ? ORDER BY discord_id',
+            ['server:123456789'],
+        ));
+    }
+
+    public function testEmojiSnapshotRejectsDuplicateDiscordIds(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+
+        $this->connection()->insert('discord_servers', [
+            'discord_id' => '123456789',
+            'name' => 'Serveur Test',
+            'icon' => null,
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+
+        $client->request('PUT', '/api/discord-emojis', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$this->requestAccessToken($client),
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode([
+            'source' => 'server',
+            'discord_server_id' => '123456789',
+            'emojis' => [
+                ['id' => '222222222222222222', 'name' => 'eclipse', 'animated' => false, 'available' => true],
+                ['id' => '222222222222222222', 'name' => 'eclipse-bis', 'animated' => false, 'available' => true],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        $this->assertJsonPayloadContains(['error' => 'invalid_payload']);
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM discord_emojis'));
+    }
+
     public function testBotCanReadCompleteServerCatalogueSnapshot(): void
     {
         $client = self::createClient();
@@ -532,6 +609,46 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         ], $this->jsonPayload($client)['server']['settings']);
     }
 
+    public function testSettingsRejectInvalidTypesAndOversizedDiscordIdsWithoutChangingValues(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+
+        $this->connection()->insert('discord_servers', [
+            'discord_id' => '123456789',
+            'name' => 'Serveur Test',
+            'icon' => null,
+            'welcome_channel_id' => '111111111111111111',
+            'bye_channel_id' => '222222222222222222',
+            'staff_role_id' => '333333333333333333',
+            'created_at' => '2026-07-06 10:00:00',
+            'updated_at' => '2026-07-06 10:00:00',
+        ]);
+        $token = $this->requestAccessToken($client);
+
+        foreach ([
+            ['staff_role_id' => []],
+            ['welcome_channel_id' => str_repeat('1', 33)],
+        ] as $payload) {
+            $client->request('PATCH', '/api/discord-servers/123456789/settings', server: [
+                'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+                'CONTENT_TYPE' => 'application/json',
+            ], content: json_encode($payload, JSON_THROW_ON_ERROR));
+
+            self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+            $this->assertJsonPayloadContains(['error' => 'invalid_payload']);
+        }
+
+        self::assertSame([
+            'welcome_channel_id' => '111111111111111111',
+            'bye_channel_id' => '222222222222222222',
+            'staff_role_id' => '333333333333333333',
+        ], $this->connection()->fetchAssociative(
+            'SELECT welcome_channel_id, bye_channel_id, staff_role_id FROM discord_servers WHERE discord_id = ?',
+            ['123456789'],
+        ));
+    }
+
     public function testBotCanEnsureRuntimeUserWithDefaultAssignmentsAndStats(): void
     {
         $client = self::createClient();
@@ -657,6 +774,34 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM users_elements WHERE element_id = ?', [$catalogue['element_id']]));
     }
 
+    public function testEnsureWithTheSameElementsIsIdempotent(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        $catalogue = $this->seedRuntimeCatalogue();
+        $token = $this->requestAccessToken($client);
+        $payload = json_encode([
+            'element_ids' => [$catalogue['element_id'], $catalogue['second_element_id']],
+        ], JSON_THROW_ON_ERROR);
+
+        $client->request('PUT', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: $payload);
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+
+        $client->request('PUT', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: $payload);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(2, (int) $this->connection()->fetchOne(
+            'SELECT COUNT(*) FROM users_elements relation INNER JOIN users user ON user.id = relation.user_id WHERE user.discord_id = ?',
+            ['42'],
+        ));
+    }
+
     public function testBotCanUpsertRuntimeUserStats(): void
     {
         $client = self::createClient();
@@ -690,6 +835,34 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         $userId = (int) $this->connection()->fetchOne('SELECT id FROM users WHERE discord_id = ?', ['42']);
         self::assertSame(12, (int) $this->connection()->fetchOne('SELECT value FROM user_stats WHERE user_id = ? AND stat_id = ?', [$userId, $catalogue['force_stat_id']]));
         self::assertSame(7, (int) $this->connection()->fetchOne('SELECT value FROM user_stats WHERE user_id = ? AND stat_id = ?', [$userId, $catalogue['aura_stat_id']]));
+    }
+
+    public function testStatsPayloadRejectsDuplicateStatIdsBeforePersisting(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        $catalogue = $this->seedRuntimeCatalogue();
+        $token = $this->requestAccessToken($client);
+
+        $client->request('PUT', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode(['initialize_stats' => false], JSON_THROW_ON_ERROR));
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+
+        $client->request('PUT', '/api/discord-servers/123456789/users/42/stats', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: json_encode([
+            'stats' => [
+                ['id' => $catalogue['force_stat_id'], 'value' => 12],
+                ['id' => $catalogue['force_stat_id'], 'value' => 13],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        self::assertResponseStatusCodeSame(Response::HTTP_BAD_REQUEST);
+        $this->assertJsonPayloadContains(['error' => 'invalid_payload']);
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM user_stats'));
     }
 
     private function requestAccessToken(KernelBrowser $client): string

@@ -228,7 +228,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
 
 final class CatalogCsvFakeDiscordResourcesProvider implements DiscordGuildResourcesProviderInterface
 {
-    public function resourcesForGuild(string $guildId): array
+    public function resourcesForGuild(string $guildId, bool $fresh = false): array
     {
         return [
             'channels' => [],

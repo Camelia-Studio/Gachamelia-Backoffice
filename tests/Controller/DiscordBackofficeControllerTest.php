@@ -149,6 +149,38 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorTextNotContains('[data-testid="backoffice-dashboard"]', 'Serveur Absent');
     }
 
+    public function testDiscordCallbackRefreshesInactiveServerMetadataWithoutReactivatingIt(): void
+    {
+        $client = self::createClient();
+        $client->disableReboot();
+        $this->resetDatabase();
+        $this->seedKnownDiscordServer('admin', 'Ancien nom', 'old-icon');
+        $this->connection()->update('discord_servers', [
+            'active' => 0,
+            'inactive_at' => '2026-07-26 12:00:00',
+        ], ['discord_id' => 'admin']);
+
+        self::getContainer()->set(DiscordApiClientInterface::class, new FakeDiscordApiClient());
+
+        $client->request('GET', '/connexion/discord');
+        $location = $client->getResponse()->headers->get('Location') ?? '';
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        self::assertIsString($query['state'] ?? null);
+
+        $client->request('GET', '/connexion/discord/retour?code=valid-code&state='.$query['state']);
+
+        self::assertResponseRedirects('/app');
+        self::assertSame([
+            'name' => 'Serveur Admin',
+            'icon' => 'fresh-icon',
+            'active' => 0,
+            'inactive_at' => '2026-07-26 12:00:00',
+        ], $this->connection()->fetchAssociative(
+            'SELECT name, icon, active, inactive_at FROM discord_servers WHERE discord_id = ?',
+            ['admin'],
+        ));
+    }
+
     public function testDashboardListsDatabaseServersAndRoleSpecificLinks(): void
     {
         $client = self::createClient();
@@ -1314,7 +1346,7 @@ final readonly class FakeDiscordGuildResourcesProvider implements DiscordGuildRe
     ) {
     }
 
-    public function resourcesForGuild(string $guildId): array
+    public function resourcesForGuild(string $guildId, bool $fresh = false): array
     {
         return [
             'channels' => $this->channels,

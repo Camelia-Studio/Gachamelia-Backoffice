@@ -18,6 +18,8 @@ use App\Entity\DiscordServer;
 use App\Entity\Rank;
 use App\Entity\Stat;
 use App\Tests\Support\DatabaseResetter;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -45,6 +47,7 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $this->entityManager->persist($oldStat);
 
         $template = new CatalogTemplate('Starter Gacha', 'Catalogue de départ.');
+        $template->publish();
         $rank = new CatalogTemplateRank($template, 'Comète', 'Comète de l’Aube', 100, 'Comète filante');
         $stat = new CatalogTemplateStat($template, 'Éther');
         $role = new CatalogTemplateRole($template, 'Gardien', 100, 'unicode', '🛡️');
@@ -59,10 +62,13 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $this->entityManager->persist(new CatalogTemplateByeMessage($template, $rank, 'Au revoir, {user}.'));
         $this->entityManager->flush();
 
-        $this->importer()->import(
+        $importer = $this->importer();
+        $importer->import(
             $server,
             $template,
             [(string) $rank->id() => '777777777777777777'],
+            $importer->preview($server, $template)['fingerprint'],
+            ['777777777777777777'],
         );
 
         self::assertSame([
@@ -86,6 +92,7 @@ final class CatalogTemplateImporterTest extends KernelTestCase
     {
         $server = new DiscordServer('server-1', 'Serveur Test');
         $template = new CatalogTemplate('Starter Gacha');
+        $template->publish();
         $rank = new CatalogTemplateRank($template, 'Comète', 'Comète de l’Aube', 100);
         $stat = new CatalogTemplateStat($template, 'Éther');
         $this->entityManager->persist($server);
@@ -100,7 +107,8 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Missing Discord role mapping for rank Comète de l’Aube.');
 
-        $this->importer()->import($server, $template, []);
+        $importer = $this->importer();
+        $importer->import($server, $template, [], $importer->preview($server, $template)['fingerprint'], ['777777777777777777']);
     }
 
     public function testItRejectsInvalidTemplateWithoutAlteringServerCatalog(): void
@@ -108,13 +116,14 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $server = new DiscordServer('server-1', 'Serveur Test');
         $oldRank = new Rank($server, 'old-rank', 'Ancien rang', 100);
         $template = new CatalogTemplate('Modèle invalide');
+        $template->publish();
         $this->entityManager->persist($server);
         $this->entityManager->persist($oldRank);
         $this->entityManager->persist($template);
         $this->entityManager->flush();
 
         try {
-            $this->importer()->import($server, $template, []);
+            $this->importer()->import($server, $template, [], '', []);
             self::fail('The invalid template should have been rejected.');
         } catch (\InvalidArgumentException $exception) {
             self::assertSame('Catalog template is not ready for import.', $exception->getMessage());
@@ -122,6 +131,178 @@ final class CatalogTemplateImporterTest extends KernelTestCase
 
         self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM ranks WHERE server_id = ?', [$server->id()]));
         self::assertSame('Ancien rang', $this->connection()->fetchOne('SELECT name FROM ranks WHERE server_id = ?', [$server->id()]));
+    }
+
+    public function testPreviewFingerprintCoversTemplateAndTargetCatalogState(): void
+    {
+        $server = new DiscordServer('server-1', 'Serveur Test');
+        $oldRank = new Rank($server, 'old-rank', 'Ancien rang', 100);
+        $template = new CatalogTemplate('Starter Gacha');
+        $template->publish();
+        $templateRank = new CatalogTemplateRank($template, 'comete', 'Comète', 100);
+        $templateStat = new CatalogTemplateStat($template, 'Éther');
+        $this->entityManager->persist($server);
+        $this->entityManager->persist($oldRank);
+        $this->entityManager->persist($template);
+        $this->entityManager->persist($templateRank);
+        $this->entityManager->persist($templateStat);
+        $this->entityManager->persist(new CatalogTemplateRankStat($templateRank, $templateStat, 100));
+        $this->entityManager->persist(new CatalogTemplateRole($template, 'Gardien', 100));
+        $this->entityManager->persist(new CatalogTemplateElement($template, 'Ambre'));
+        $this->entityManager->flush();
+
+        $importer = $this->importer();
+        $initialFingerprint = $importer->preview($server, $template)['fingerprint'] ?? null;
+        self::assertIsString($initialFingerprint);
+
+        $oldRank->updateConfiguration('old-rank', 'Ancien rang modifié', 100, null, false);
+        $this->entityManager->flush();
+        $targetFingerprint = $importer->preview($server, $template)['fingerprint'] ?? null;
+        self::assertIsString($targetFingerprint);
+        self::assertNotSame($initialFingerprint, $targetFingerprint);
+
+        $templateRank->updateConfiguration('comete', 'Comète modifiée', 100, null, false);
+        $this->entityManager->flush();
+        $templateFingerprint = $importer->preview($server, $template)['fingerprint'] ?? null;
+        self::assertIsString($templateFingerprint);
+        self::assertNotSame($targetFingerprint, $templateFingerprint);
+    }
+
+    public function testConcurrentTemplateChangeIsObservedBeforeImportMutation(): void
+    {
+        if (!\function_exists('pcntl_fork')) {
+            self::markTestSkipped('The pcntl extension is required for this concurrency regression test.');
+        }
+
+        $server = new DiscordServer('server-1', 'Serveur Test');
+        $oldRank = new Rank($server, 'old-rank', 'Ancien rang', 100);
+        $template = new CatalogTemplate('Starter Gacha');
+        $template->publish();
+        $templateRank = new CatalogTemplateRank($template, 'comete', 'Comète', 100);
+        $templateStat = new CatalogTemplateStat($template, 'Éther');
+        $this->entityManager->persist($server);
+        $this->entityManager->persist($oldRank);
+        $this->entityManager->persist($template);
+        $this->entityManager->persist($templateRank);
+        $this->entityManager->persist($templateStat);
+        $this->entityManager->persist(new CatalogTemplateRankStat($templateRank, $templateStat, 100));
+        $this->entityManager->persist(new CatalogTemplateRole($template, 'Gardien', 100));
+        $this->entityManager->persist(new CatalogTemplateElement($template, 'Ambre'));
+        $this->entityManager->flush();
+
+        $fingerprint = $this->importer()->preview($server, $template)['fingerprint'];
+        $serverId = $server->id();
+        $templateId = $template->id();
+        $templateRankId = $templateRank->id();
+        self::assertNotNull($serverId);
+        self::assertNotNull($templateId);
+        self::assertNotNull($templateRankId);
+
+        $concurrentConnection = DriverManager::getConnection($this->connection()->getParams());
+        $concurrentConnection->beginTransaction();
+        $concurrentConnection->update(
+            'catalog_template_ranks',
+            ['name' => 'Comète modifiée en concurrence'],
+            ['id' => $templateRankId],
+        );
+
+        self::assertSame(
+            0,
+            $this->concurrentImportExitCode(
+                $concurrentConnection,
+                $serverId,
+                $templateId,
+                $templateRankId,
+                $fingerprint,
+                'Le modèle ou le catalogue cible a changé depuis l’aperçu.',
+            ),
+            'The import did not wait for the concurrent catalog change before checking its fingerprint.',
+        );
+        self::assertSame('Ancien rang', $this->connection()->fetchOne('SELECT name FROM ranks WHERE server_id = ?', [$serverId]));
+
+        $fingerprint = $this->importer()->preview($server, $template)['fingerprint'];
+        $concurrentConnection = DriverManager::getConnection($this->connection()->getParams());
+        $concurrentConnection->beginTransaction();
+        $concurrentConnection->update('catalog_templates', ['published' => 0], ['id' => $templateId]);
+
+        self::assertSame(
+            0,
+            $this->concurrentImportExitCode(
+                $concurrentConnection,
+                $serverId,
+                $templateId,
+                $templateRankId,
+                $fingerprint,
+                'Cannot import an unpublished catalog template.',
+            ),
+            'The import accepted a template unpublished concurrently after its preview.',
+        );
+        self::assertSame('Ancien rang', $this->connection()->fetchOne('SELECT name FROM ranks WHERE server_id = ?', [$serverId]));
+    }
+
+    private function concurrentImportExitCode(
+        Connection $concurrentConnection,
+        int $serverId,
+        int $templateId,
+        int $templateRankId,
+        string $fingerprint,
+        string $expectedMessage,
+    ): int {
+        $this->connection()->close();
+        $pid = pcntl_fork();
+        self::assertNotSame(-1, $pid, 'Unable to fork the concurrent import process.');
+        if (0 === $pid) {
+            self::ensureKernelShutdown();
+            self::bootKernel();
+
+            try {
+                $entityManager = self::getContainer()->get(EntityManagerInterface::class);
+                $childConnection = self::getContainer()->get(Connection::class);
+                $childServer = $entityManager->find(DiscordServer::class, $serverId);
+                $childTemplate = $entityManager->find(CatalogTemplate::class, $templateId);
+                if (!$childServer instanceof DiscordServer || !$childTemplate instanceof CatalogTemplate) {
+                    exit(12);
+                }
+
+                $importer = new CatalogTemplateImporter(
+                    $entityManager,
+                    $childConnection,
+                    new CatalogValidator($entityManager),
+                );
+                $importer->import(
+                    $childServer,
+                    $childTemplate,
+                    [(string) $templateRankId => '777777777777777777'],
+                    $fingerprint,
+                    ['777777777777777777'],
+                );
+
+                exit(10);
+            } catch (\InvalidArgumentException $exception) {
+                exit($expectedMessage === $exception->getMessage() ? 0 : 11);
+            } catch (\Throwable) {
+                exit(12);
+            }
+        }
+
+        $status = 0;
+        $finishedPid = 0;
+        for ($attempt = 0; $attempt < 100 && 0 === $finishedPid; ++$attempt) {
+            $finishedPid = pcntl_waitpid($pid, $status, WNOHANG);
+            if (0 === $finishedPid) {
+                usleep(20_000);
+            }
+        }
+
+        $concurrentConnection->commit();
+        $concurrentConnection->close();
+        if (0 === $finishedPid) {
+            pcntl_waitpid($pid, $status);
+        }
+
+        self::assertTrue(pcntl_wifexited($status), 'The concurrent import process did not exit normally.');
+
+        return pcntl_wexitstatus($status);
     }
 
     private function importer(): CatalogTemplateImporter

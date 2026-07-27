@@ -90,11 +90,14 @@ final class ApiDiscordServerController extends AbstractController
             return $this->json(['error' => 'server_inactive'], Response::HTTP_CONFLICT);
         }
 
-        $server->updateSettings(
-            $this->nullablePayloadStringOrCurrent($payload, 'welcome_channel_id', $server->welcomeChannelId()),
-            $this->nullablePayloadStringOrCurrent($payload, 'bye_channel_id', $server->byeChannelId()),
-            $this->nullablePayloadStringOrCurrent($payload, 'staff_role_id', $server->staffRoleId()),
-        );
+        [$validWelcomeChannelId, $welcomeChannelId] = $this->nullablePayloadStringOrCurrent($payload, 'welcome_channel_id', $server->welcomeChannelId());
+        [$validByeChannelId, $byeChannelId] = $this->nullablePayloadStringOrCurrent($payload, 'bye_channel_id', $server->byeChannelId());
+        [$validStaffRoleId, $staffRoleId] = $this->nullablePayloadStringOrCurrent($payload, 'staff_role_id', $server->staffRoleId());
+        if (!$validWelcomeChannelId || !$validByeChannelId || !$validStaffRoleId) {
+            return $this->json(['error' => 'invalid_payload'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $server->updateSettings($welcomeChannelId, $byeChannelId, $staffRoleId);
         $entityManager->flush();
 
         return $this->json([
@@ -167,13 +170,31 @@ final class ApiDiscordServerController extends AbstractController
     /**
      * @param array<string, mixed> $payload
      */
-    private function nullablePayloadStringOrCurrent(array $payload, string $key, ?string $current): ?string
+    /**
+     * @param array<string, mixed> $payload
+     *
+     * @return array{bool, ?string}
+     */
+    private function nullablePayloadStringOrCurrent(array $payload, string $key, ?string $current): array
     {
         if (!\array_key_exists($key, $payload)) {
-            return $current;
+            return [true, $current];
         }
 
-        return $this->nullableString($payload, $key);
+        $value = $payload[$key];
+        if (null === $value) {
+            return [true, null];
+        }
+        if (!\is_string($value)) {
+            return [false, null];
+        }
+
+        $value = trim($value);
+        if ('' === $value || \strlen($value) > 32) {
+            return [false, null];
+        }
+
+        return [true, $value];
     }
 
     /**

@@ -647,13 +647,16 @@ final class CatalogTemplateController extends AbstractController
         $server = $this->activeServerOr409($entityManager, $guild['id']);
         $template = $this->publishedTemplateOr404($entityManager, (int) $templateId);
         $discordResources = $discordGuildResourcesProvider->resourcesForGuild($guild['id']);
+        $discordResources['roles'] = $this->assignableDiscordRoles($discordResources['roles']);
+        $preview = $importer->preview($server, $template);
 
         return $this->render('backoffice/catalog_template_import.html.twig', [
             'guild' => $guild,
             'template' => $this->templatePayload($entityManager, $template),
             'catalog' => $this->templateCatalogPayload($entityManager, $template),
             'discord_resources' => $discordResources,
-            'preview' => $importer->preview($server, $template),
+            'preview' => $preview,
+            'import_fingerprint' => $preview['fingerprint'],
         ]);
     }
 
@@ -665,6 +668,7 @@ final class CatalogTemplateController extends AbstractController
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
+        DiscordGuildResourcesProviderInterface $discordGuildResourcesProvider,
         CatalogTemplateImporter $importer,
     ): Response {
         $guild = $this->manageableGuildOr404($guildId, $backofficeSession, $backofficeAccess);
@@ -681,9 +685,18 @@ final class CatalogTemplateController extends AbstractController
         }
 
         $rankRoles = $request->request->all('rank_roles');
+        $expectedFingerprint = $request->request->get('import_fingerprint');
+        $discordResources = $discordGuildResourcesProvider->resourcesForGuild($guild['id'], true);
+        $assignableRoleIds = array_column($this->assignableDiscordRoles($discordResources['roles']), 'id');
 
         try {
-            $importer->import($server, $template, $rankRoles);
+            $importer->import(
+                $server,
+                $template,
+                $rankRoles,
+                \is_string($expectedFingerprint) ? $expectedFingerprint : '',
+                $assignableRoleIds,
+            );
         } catch (\InvalidArgumentException $exception) {
             $this->addFlash('error', $exception->getMessage());
 
@@ -694,6 +707,19 @@ final class CatalogTemplateController extends AbstractController
         }
 
         return $this->redirectToRoute('app_server_configuration', ['guildId' => $guildId]);
+    }
+
+    /**
+     * @param list<array{id: string, name: string, label: string, position: int, managed: bool}> $roles
+     *
+     * @return list<array{id: string, name: string, label: string, position: int, managed: bool}>
+     */
+    private function assignableDiscordRoles(array $roles): array
+    {
+        return array_values(array_filter(
+            $roles,
+            static fn (array $role): bool => false === $role['managed'],
+        ));
     }
 
     private function editableTemplateOr403(

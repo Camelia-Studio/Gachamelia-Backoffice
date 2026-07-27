@@ -195,6 +195,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
             [
                 ['id' => '777777777777777777', 'name' => 'Comète', 'label' => '@Comète', 'position' => 9, 'managed' => false],
                 ['id' => '888888888888888888', 'name' => 'Staff', 'label' => '@Staff', 'position' => 8, 'managed' => false],
+                ['id' => '999999999999999999', 'name' => 'Bot', 'label' => '@Bot', 'position' => 10, 'managed' => true],
             ],
         ));
 
@@ -221,16 +222,32 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
             'updated_at' => '2026-07-07 10:00:00',
         ]);
 
-        $client->request('GET', '/app/serveurs/admin/configuration/importer/'.$templateId);
+        $crawler = $client->request('GET', '/app/serveurs/admin/configuration/importer/'.$templateId);
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('[data-testid="template-import-panel"]', 'écrasera le catalogue actuel');
         self::assertSelectorExists('form[action="/app/serveurs/admin/configuration/importer/'.$templateId.'"] select[name="rank_roles['.$templateRankId.']"] option[value="777777777777777777"]');
+        self::assertSelectorNotExists('select[name="rank_roles['.$templateRankId.']"] option[value="999999999999999999"]');
+        self::assertSelectorExists('input[name="import_fingerprint"]');
         self::assertSelectorTextContains('[data-testid="template-import-current"]', '1');
         self::assertSelectorTextContains('[data-testid="template-import-incoming"]', '7');
         self::assertSelectorTextContains('[data-testid="template-import-affected-users"]', '1 personnage');
+        $fingerprint = $crawler->filter('input[name="import_fingerprint"]')->attr('value');
+        self::assertIsString($fingerprint);
 
         $this->post($client, '/app/serveurs/admin/configuration/importer/'.$templateId, [
+            'confirm_overwrite' => '1',
+            'import_fingerprint' => $fingerprint,
+            'rank_roles' => [
+                (string) $templateRankId => '999999999999999999',
+            ],
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/importer/'.$templateId);
+        self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM ranks WHERE name = ?', ['Ancien rang']));
+
+        $this->post($client, '/app/serveurs/admin/configuration/importer/'.$templateId, [
+            'import_fingerprint' => $fingerprint,
             'rank_roles' => [
                 (string) $templateRankId => '777777777777777777',
             ],
@@ -241,6 +258,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
 
         $this->post($client, '/app/serveurs/admin/configuration/importer/'.$templateId, [
             'confirm_overwrite' => '1',
+            'import_fingerprint' => $fingerprint,
             'rank_roles' => [
                 (string) $templateRankId => '777777777777777777',
             ],
@@ -259,6 +277,50 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
         self::assertSame('Ambre', $this->connection()->fetchOne('SELECT name FROM elements WHERE server_id = ?', [$serverId]));
         self::assertSame('Bienvenue, {user}.', $this->connection()->fetchOne('SELECT message FROM welcome_messages WHERE server_id = ?', [$serverId]));
         self::assertSame('Au revoir, {user}.', $this->connection()->fetchOne('SELECT message FROM bye_messages WHERE server_id = ?', [$serverId]));
+    }
+
+    public function testTemplateImportRejectsAConfirmationWhosePreviewIsStale(): void
+    {
+        $client = self::createClient();
+        $client->disableReboot();
+        $this->resetDatabase();
+        $this->seedBackofficeAccess($client, [DiscordUser::GLOBAL_ROLE_TEMPLATE_ADMIN]);
+        self::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new CatalogTemplateFakeDiscordGuildResourcesProvider(
+            [],
+            [['id' => '777777777777777777', 'name' => 'Comète', 'label' => '@Comète', 'position' => 9, 'managed' => false]],
+        ));
+
+        $serverId = $this->serverDatabaseId('admin');
+        $this->connection()->insert('ranks', [
+            'server_id' => $serverId,
+            'discord_id' => 'old-rank',
+            'name' => 'Ancien rang',
+            'percentage' => 100,
+            'bye_title' => null,
+            'is_staff' => 0,
+            'created_at' => '2026-07-07 10:00:00',
+            'updated_at' => '2026-07-07 10:00:00',
+        ]);
+        $templateId = $this->seedPublishedTemplate();
+        $templateRankId = (int) $this->connection()->fetchOne('SELECT id FROM catalog_template_ranks WHERE template_id = ?', [$templateId]);
+
+        $crawler = $client->request('GET', '/app/serveurs/admin/configuration/importer/'.$templateId);
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('input[name="import_fingerprint"]');
+        $fingerprint = $crawler->filter('input[name="import_fingerprint"]')->attr('value');
+        self::assertIsString($fingerprint);
+
+        $this->connection()->update('catalog_template_stats', ['name' => 'Éther modifié'], ['template_id' => $templateId]);
+        $this->post($client, '/app/serveurs/admin/configuration/importer/'.$templateId, [
+            'confirm_overwrite' => '1',
+            'import_fingerprint' => $fingerprint,
+            'rank_roles' => [
+                (string) $templateRankId => '777777777777777777',
+            ],
+        ]);
+
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/importer/'.$templateId);
+        self::assertSame('Ancien rang', $this->connection()->fetchOne('SELECT name FROM ranks WHERE server_id = ?', [$serverId]));
     }
 
     public function testNonGlobalAdminCannotManageCatalogTemplates(): void
@@ -433,7 +495,7 @@ final readonly class CatalogTemplateFakeDiscordGuildResourcesProvider implements
     ) {
     }
 
-    public function resourcesForGuild(string $guildId): array
+    public function resourcesForGuild(string $guildId, bool $fresh = false): array
     {
         return [
             'channels' => $this->channels,

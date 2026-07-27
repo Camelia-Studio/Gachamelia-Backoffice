@@ -141,6 +141,8 @@ final class ApiDiscordServerUserController extends AbstractController
             return $this->json(['error' => 'invalid_payload'], Response::HTTP_BAD_REQUEST);
         }
 
+        $normalizedStats = [];
+        $seenStatIds = [];
         foreach ($stats as $statPayload) {
             if (!\is_array($statPayload)) {
                 return $this->json(['error' => 'invalid_payload'], Response::HTTP_BAD_REQUEST);
@@ -151,12 +153,20 @@ final class ApiDiscordServerUserController extends AbstractController
             if (null === $statId || null === $value) {
                 return $this->json(['error' => 'invalid_payload'], Response::HTTP_BAD_REQUEST);
             }
+            if (isset($seenStatIds[$statId])) {
+                return $this->json(['error' => 'invalid_payload'], Response::HTTP_BAD_REQUEST);
+            }
 
             $stat = $this->statOr404($entityManager, $server, $statId);
             if (!$stat instanceof Stat) {
                 return $this->json(['error' => 'stat_not_found'], Response::HTTP_NOT_FOUND);
             }
 
+            $seenStatIds[$statId] = true;
+            $normalizedStats[] = [$stat, $value];
+        }
+
+        foreach ($normalizedStats as [$stat, $value]) {
             $userStat = $entityManager->getRepository(UserStat::class)->findOneBy(['user' => $user, 'stat' => $stat]);
             if (!$userStat instanceof UserStat) {
                 $entityManager->persist(new UserStat($user, $stat, $value));

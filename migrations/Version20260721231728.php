@@ -23,6 +23,74 @@ final class Version20260721231728 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+        $this->abortIf(
+            0 < (int) $this->connection->fetchOne(
+                <<<'SQL'
+                    SELECT COUNT(*) FROM (
+                        SELECT 1 FROM ranks WHERE is_staff NOT IN (0, 1)
+                        UNION ALL
+                        SELECT 1 FROM catalog_template_ranks WHERE is_staff NOT IN (0, 1)
+                    ) invalid_staff_flags
+                    SQL,
+            ),
+            'Cannot enforce catalog invariants: an is_staff value is not 0 or 1.',
+        );
+        $this->abortIf(
+            0 < (int) $this->connection->fetchOne(
+                'SELECT COUNT(*) FROM (SELECT template_id FROM catalog_template_ranks WHERE is_staff = 1 GROUP BY template_id HAVING COUNT(*) > 1) invalid_staff_ranks',
+            ),
+            'Cannot enforce catalog invariants: more than one staff rank exists in a template.',
+        );
+        $this->abortIf(
+            0 < (int) $this->connection->fetchOne(
+                'SELECT COUNT(*) FROM (SELECT server_id FROM ranks WHERE is_staff = 1 GROUP BY server_id HAVING COUNT(*) > 1) invalid_staff_ranks',
+            ),
+            'Cannot enforce catalog invariants: more than one staff rank exists on a server.',
+        );
+        $this->abortIf(
+            0 < (int) $this->connection->fetchOne(
+                <<<'SQL'
+                    SELECT COUNT(*) FROM (
+                        SELECT 1 FROM ranks WHERE percentage NOT BETWEEN 0 AND 100
+                        UNION ALL SELECT 1 FROM roles WHERE percentage NOT BETWEEN 0 AND 100
+                        UNION ALL SELECT 1 FROM rank_stats WHERE percentage NOT BETWEEN 0 AND 100
+                        UNION ALL SELECT 1 FROM catalog_template_ranks WHERE percentage NOT BETWEEN 0 AND 100
+                        UNION ALL SELECT 1 FROM catalog_template_roles WHERE percentage NOT BETWEEN 0 AND 100
+                        UNION ALL SELECT 1 FROM catalog_template_rank_stats WHERE percentage NOT BETWEEN 0 AND 100
+                    ) invalid_percentages
+                    SQL,
+            ),
+            'Cannot enforce catalog invariants: a percentage is outside the 0-100 range.',
+        );
+        $this->abortIf(
+            0 < (int) $this->connection->fetchOne(
+                <<<'SQL'
+                    SELECT COUNT(*) FROM (
+                        SELECT 1 FROM bye_messages relation INNER JOIN ranks parent ON parent.id = relation.rank_id WHERE relation.server_id <> parent.server_id
+                        UNION ALL
+                        SELECT 1 FROM welcome_messages relation INNER JOIN ranks parent ON parent.id = relation.rank_id WHERE relation.server_id <> parent.server_id
+                        UNION ALL
+                        SELECT 1 FROM rank_stats relation INNER JOIN ranks rank_parent ON rank_parent.id = relation.rank_id INNER JOIN stats stat_parent ON stat_parent.id = relation.stat_id WHERE rank_parent.server_id <> stat_parent.server_id
+                        UNION ALL
+                        SELECT 1 FROM user_stats relation INNER JOIN users user_parent ON user_parent.id = relation.user_id INNER JOIN stats stat_parent ON stat_parent.id = relation.stat_id WHERE user_parent.server_id <> stat_parent.server_id
+                        UNION ALL
+                        SELECT 1 FROM users relation INNER JOIN ranks parent ON parent.id = relation.rank_id WHERE relation.server_id <> parent.server_id
+                        UNION ALL
+                        SELECT 1 FROM users relation INNER JOIN roles parent ON parent.id = relation.role_id WHERE relation.server_id <> parent.server_id
+                        UNION ALL
+                        SELECT 1 FROM users_elements relation INNER JOIN users user_parent ON user_parent.id = relation.user_id INNER JOIN elements element_parent ON element_parent.id = relation.element_id WHERE user_parent.server_id <> element_parent.server_id
+                        UNION ALL
+                        SELECT 1 FROM catalog_template_bye_messages relation INNER JOIN catalog_template_ranks parent ON parent.id = relation.rank_id WHERE relation.template_id <> parent.template_id
+                        UNION ALL
+                        SELECT 1 FROM catalog_template_welcome_messages relation INNER JOIN catalog_template_ranks parent ON parent.id = relation.rank_id WHERE relation.template_id <> parent.template_id
+                        UNION ALL
+                        SELECT 1 FROM catalog_template_rank_stats relation INNER JOIN catalog_template_ranks rank_parent ON rank_parent.id = relation.rank_id INNER JOIN catalog_template_stats stat_parent ON stat_parent.id = relation.stat_id WHERE rank_parent.template_id <> stat_parent.template_id
+                    ) invalid_scopes
+                    SQL,
+            ),
+            'Cannot enforce catalog invariants: catalog relations cross server or template boundaries.',
+        );
+
         foreach ([
             'ALTER TABLE catalog_template_rank_stats ADD template_id BIGINT DEFAULT NULL',
             'ALTER TABLE rank_stats ADD server_id BIGINT DEFAULT NULL',

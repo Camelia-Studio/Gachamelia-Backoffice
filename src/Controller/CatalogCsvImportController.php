@@ -357,7 +357,7 @@ final class CatalogCsvImportController extends AbstractController
         $preview = $importService->preview($target, $section, $document);
         $mappings = [];
         if ($target instanceof DiscordServer && CatalogCsvSection::Ranks === $section) {
-            $roles = $this->discordRoles($target, $section, $resourcesProvider);
+            $roles = $this->discordRoles($target, $section, $resourcesProvider, true);
             $allowed = array_fill_keys(array_column($roles, 'id'), true);
             foreach ($request->request->all('discord_roles') as $line => $discordId) {
                 if ((\is_int($line) || ctype_digit($line)) && \is_string($discordId) && isset($allowed[$discordId])) {
@@ -482,13 +482,14 @@ final class CatalogCsvImportController extends AbstractController
         DiscordServer|CatalogTemplate $target,
         CatalogCsvSection $section,
         DiscordGuildResourcesProviderInterface $resourcesProvider,
+        bool $fresh = false,
     ): array {
         if (!$target instanceof DiscordServer || CatalogCsvSection::Ranks !== $section) {
             return [];
         }
 
         try {
-            $resources = $resourcesProvider->resourcesForGuild($target->discordId());
+            $resources = $resourcesProvider->resourcesForGuild($target->discordId(), $fresh);
         } catch (\RuntimeException) {
             return [];
         }

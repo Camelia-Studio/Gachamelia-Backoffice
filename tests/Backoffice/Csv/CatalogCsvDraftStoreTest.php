@@ -40,4 +40,18 @@ final class CatalogCsvDraftStoreTest extends TestCase
         $store->remove($freshToken);
         self::assertNull($store->get($freshToken, 42, 'server', 'guild-1', CatalogCsvSection::Stats, $now));
     }
+
+    public function testNewPreviewReplacesThePreviousDraftForTheSameTargetSection(): void
+    {
+        $request = new Request();
+        $request->setSession(new Session(new MockArraySessionStorage()));
+        $store = new CatalogCsvDraftStore(new RequestStack([$request]));
+        $now = new \DateTimeImmutable('2026-07-26 20:00:00');
+
+        $oldToken = $store->put(42, 'server', 'guild-1', CatalogCsvSection::Stats, ['version' => 1], $now);
+        $newToken = $store->put(42, 'server', 'guild-1', CatalogCsvSection::Stats, ['version' => 2], $now);
+
+        self::assertNull($store->get($oldToken, 42, 'server', 'guild-1', CatalogCsvSection::Stats, $now));
+        self::assertSame(['version' => 2], $store->get($newToken, 42, 'server', 'guild-1', CatalogCsvSection::Stats, $now));
+    }
 }

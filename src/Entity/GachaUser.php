@@ -83,10 +83,10 @@ class GachaUser
      */
     public function elements(): Collection
     {
-        return new ArrayCollection(array_map(
+        return new ArrayCollection(array_values(array_map(
             static fn (UserElement $userElement): Element => $userElement->element(),
             $this->elements->toArray(),
-        ));
+        )));
     }
 
     public function updateRank(?Rank $rank): void
@@ -130,11 +130,34 @@ class GachaUser
      */
     public function replaceElements(iterable $elements): void
     {
-        $this->elements->clear();
+        $desiredElements = [];
         foreach ($elements as $element) {
-            $this->addElement($element);
+            if ($element->server() !== $this->server) {
+                throw new \InvalidArgumentException('A user element must belong to the user server.');
+            }
+
+            $desiredElements[spl_object_id($element)] = $element;
         }
-        $this->touch();
+
+        $changed = false;
+        foreach ($this->elements->toArray() as $userElement) {
+            if (!isset($desiredElements[spl_object_id($userElement->element())])) {
+                $this->elements->removeElement($userElement);
+                $changed = true;
+                continue;
+            }
+
+            unset($desiredElements[spl_object_id($userElement->element())]);
+        }
+
+        foreach ($desiredElements as $element) {
+            $this->elements->add(new UserElement($this, $element));
+            $changed = true;
+        }
+
+        if ($changed) {
+            $this->touch();
+        }
     }
 
     private function assertCatalogScope(?Rank $rank, ?CharacterRole $role): void

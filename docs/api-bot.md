@@ -188,7 +188,8 @@ Payload :
 ```
 
 Un champ absent conserve sa valeur actuelle. Un champ présent avec `null`
-désactive la valeur correspondante.
+désactive la valeur correspondante. Toute autre valeur doit être une chaîne non
+vide de 32 caractères maximum.
 
 Réponse :
 
@@ -210,6 +211,8 @@ Réponse :
 Erreurs spécifiques :
 
 - `400 invalid_json` si le body n'est pas un JSON objet.
+- `400 invalid_payload` si un ID est d'un autre type, vide ou dépasse 32
+  caractères.
 - `401 unauthorized` si le token Bearer est absent ou invalide.
 - `404 server_not_found` si le serveur n'existe pas dans le backoffice.
 
@@ -270,11 +273,15 @@ Réponse :
 ```
 
 Les emojis déjà en cache mais absents du nouveau snapshot sont marqués
-`available=false`, ils ne sont pas supprimés.
+`available=false`, ils ne sont pas supprimés. Le snapshot est validé en entier
+avant toute mutation : une entrée malformée ou deux entrées portant le même
+`id` font rejeter toute la requête.
 
 Erreurs spécifiques :
 
 - `400 invalid_source` si `source` n'est pas `bot` ou `server`.
+- `400 invalid_payload` si le snapshot est incomplet, mal typé ou contient un
+  `id` dupliqué.
 - `404 server_not_found` pour un cache serveur inconnu.
 
 ## Catalogue serveur
@@ -444,7 +451,8 @@ Comportement :
 
 - Crée la fiche si elle n'existe pas.
 - Applique d'abord `staff`, `rank_id`, `role_id`, `element_ids` si présents.
-- Si le rang manque encore, choisit un rang non-staff depuis le catalogue.
+- Si le rang manque encore, effectue le tirage pondéré parmi tous les rangs du
+  catalogue, rang staff inclus selon son pourcentage.
 - Si le rôle manque encore, choisit un rôle depuis le catalogue.
 - Si les éléments sont vides, ajoute un élément du catalogue.
 - Initialise les stats manquantes à `0`, sauf si `initialize_stats=false`.
@@ -508,6 +516,7 @@ Comportement :
 - Chaque entrée est créée ou mise à jour dans `user_stats`.
 - `value` est un entier.
 - Les `id` doivent correspondre à des stats du même serveur.
+- Un même `id` ne peut apparaître qu'une fois dans le payload.
 
 Réponse : même format `user` que la route `PUT`.
 

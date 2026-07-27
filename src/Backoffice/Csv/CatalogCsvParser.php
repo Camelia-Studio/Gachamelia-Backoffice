@@ -10,6 +10,8 @@ final class CatalogCsvParser
 {
     public const int MAX_FILE_SIZE = 5 * 1024 * 1024;
     public const int MAX_DATA_ROWS = 1000;
+    public const int MAX_HEADER_LENGTH = 8192;
+    public const int MAX_HEADER_COLUMNS = 64;
 
     public function parse(string $path, CatalogCsvSection $section): CatalogCsvDocument
     {
@@ -30,7 +32,20 @@ final class CatalogCsvParser
             return $this->invalid('invalid_utf8');
         }
 
-        $delimiter = $this->detectDelimiter($contents);
+        $firstLineLength = strcspn($contents, "\r\n");
+        $firstLine = substr($contents, 0, $firstLineLength);
+        $firstLine = preg_replace('/^\xEF\xBB\xBF/', '', $firstLine) ?? $firstLine;
+        if (\strlen($firstLine) > self::MAX_HEADER_LENGTH) {
+            return $this->invalid('header_too_long');
+        }
+        if (
+            substr_count($firstLine, ';') + 1 > self::MAX_HEADER_COLUMNS
+            || substr_count($firstLine, ',') + 1 > self::MAX_HEADER_COLUMNS
+        ) {
+            return $this->invalid('too_many_columns');
+        }
+
+        $delimiter = $this->detectDelimiter($firstLine);
         $file = new \SplFileObject($path);
         $file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::DROP_NEW_LINE);
         $file->setCsvControl($delimiter, '"', '');
@@ -99,13 +114,8 @@ final class CatalogCsvParser
         return new CatalogCsvDocument($rows, $errors);
     }
 
-    private function detectDelimiter(string $contents): string
+    private function detectDelimiter(string $firstLine): string
     {
-        $firstLine = strtok(preg_replace('/^\xEF\xBB\xBF/', '', $contents) ?? $contents, "\r\n");
-        if (false === $firstLine) {
-            return ';';
-        }
-
         return \count(str_getcsv($firstLine, ';', '"', '')) >= \count(str_getcsv($firstLine, ',', '"', ''))
             ? ';'
             : ',';

@@ -35,7 +35,7 @@ final readonly class DiscordBackofficeSynchronizer
                 continue;
             }
 
-            $server->refreshCache($guild['name'], $guild['icon']);
+            $server->refreshMetadata($guild['name'], $guild['icon']);
             $accessibleServerIds[$server->discordId()] = true;
             $this->upsertMembership($user, $server, $guild);
         }
