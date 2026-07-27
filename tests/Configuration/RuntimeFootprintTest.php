@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Configuration;
 
 use PHPUnit\Framework\TestCase;
@@ -10,7 +12,7 @@ final class RuntimeFootprintTest extends TestCase
     public function testRuntimeKeepsDoctrineSymfonyUxAndApiSecurityButDropsUnusedBundles(): void
     {
         /** @var array<class-string, array<string, bool>> $bundles */
-        $bundles = require dirname(__DIR__, 2).'/config/bundles.php';
+        $bundles = require \dirname(__DIR__, 2).'/config/bundles.php';
 
         self::assertArrayHasKey(\Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class, $bundles);
         self::assertArrayHasKey(\Doctrine\Bundle\MigrationsBundle\DoctrineMigrationsBundle::class, $bundles);
@@ -18,19 +20,19 @@ final class RuntimeFootprintTest extends TestCase
         self::assertArrayHasKey(\Symfony\UX\StimulusBundle\StimulusBundle::class, $bundles);
         self::assertArrayHasKey(\Symfony\UX\Turbo\TurboBundle::class, $bundles);
 
-        self::assertArrayNotHasKey(\Twig\Extra\TwigExtraBundle::class, $bundles);
+        self::assertArrayNotHasKey('Twig\\Extra\\TwigExtraBundle', $bundles);
     }
 
     public function testDoctrineDefaultsTargetMysql(): void
     {
-        $doctrineConfig = Yaml::parseFile(dirname(__DIR__, 2).'/config/packages/doctrine.yaml');
+        $doctrineConfig = Yaml::parseFile(\dirname(__DIR__, 2).'/config/packages/doctrine.yaml');
 
         self::assertSame(
             'identity',
             $doctrineConfig['doctrine']['orm']['identity_generation_preferences'][\Doctrine\DBAL\Platforms\MySQLPlatform::class] ?? null,
         );
 
-        $env = file_get_contents(dirname(__DIR__, 2).'/.env');
+        $env = file_get_contents(\dirname(__DIR__, 2).'/.env');
 
         self::assertIsString($env);
         self::assertMatchesRegularExpression('/^DATABASE_URL="mysql:\/\//m', $env);

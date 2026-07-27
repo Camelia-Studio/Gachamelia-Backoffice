@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Enum\GachaElementEnum;
@@ -22,7 +24,7 @@ final class HomeController extends AbstractController
         $gachaRole = GachaRoleEnum::random();
         $gachaElement = GachaElementEnum::random();
         $gachaStat = GachaStatEnum::random();
-        $gachaRarity = random_int(1,5);
+        $gachaRarity = random_int(1, 5);
 
         return $this->render('home/index.html.twig', [
             'gachaRole' => $gachaRole,

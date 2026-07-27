@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Configuration;
 
 use PHPUnit\Framework\TestCase;
@@ -24,14 +26,14 @@ final class WebpackEnvLoaderTest extends TestCase
         file_put_contents($this->temporaryDirectory.'/.env', "APP_ENV=dev\nAPP_BASE_PATH=\n");
         file_put_contents($this->temporaryDirectory.'/.env.local', "APP_BASE_PATH=/gachamelia\n");
 
-        $payload = $this->runWebpackEnvScript(<<<'JS'
-            const target = {};
-            loadSymfonyDotenvFiles({ cwd, target });
-            console.log(JSON.stringify({
-                appBasePath: target.APP_BASE_PATH,
-                normalized: normalizeBasePath(target.APP_BASE_PATH),
-            }));
-        JS);
+        $payload = $this->runWebpackEnvScript(<<<'JS_WRAP'
+                const target = {};
+                loadSymfonyDotenvFiles({ cwd, target });
+                console.log(JSON.stringify({
+                    appBasePath: target.APP_BASE_PATH,
+                    normalized: normalizeBasePath(target.APP_BASE_PATH),
+                }));
+            JS_WRAP);
 
         self::assertSame('/gachamelia', $payload['appBasePath'] ?? null);
         self::assertSame('/gachamelia', $payload['normalized'] ?? null);
@@ -42,14 +44,14 @@ final class WebpackEnvLoaderTest extends TestCase
         file_put_contents($this->temporaryDirectory.'/.env', "APP_ENV=dev\nAPP_BASE_PATH=\n");
         file_put_contents($this->temporaryDirectory.'/.env.local', "APP_BASE_PATH=/gachamelia\n");
 
-        $payload = $this->runWebpackEnvScript(<<<'JS'
-            const target = { APP_BASE_PATH: '/from-shell' };
-            loadSymfonyDotenvFiles({ cwd, target });
-            console.log(JSON.stringify({
-                appBasePath: target.APP_BASE_PATH,
-                normalized: normalizeBasePath(target.APP_BASE_PATH),
-            }));
-        JS);
+        $payload = $this->runWebpackEnvScript(<<<'JS_WRAP'
+                const target = { APP_BASE_PATH: '/from-shell' };
+                loadSymfonyDotenvFiles({ cwd, target });
+                console.log(JSON.stringify({
+                    appBasePath: target.APP_BASE_PATH,
+                    normalized: normalizeBasePath(target.APP_BASE_PATH),
+                }));
+            JS_WRAP);
 
         self::assertSame('/from-shell', $payload['appBasePath'] ?? null);
         self::assertSame('/from-shell', $payload['normalized'] ?? null);
@@ -62,10 +64,10 @@ final class WebpackEnvLoaderTest extends TestCase
     {
         $moduleUrl = 'file://'.\dirname(__DIR__, 2).'/webpack.env.js';
         $script = <<<JS
-            const cwd = {$this->jsonEncode($this->temporaryDirectory)};
-            const { loadSymfonyDotenvFiles, normalizeBasePath } = await import({$this->jsonEncode($moduleUrl)});
-            {$scriptBody}
-        JS;
+                const cwd = {$this->jsonEncode($this->temporaryDirectory)};
+                const { loadSymfonyDotenvFiles, normalizeBasePath } = await import({$this->jsonEncode($moduleUrl)});
+                {$scriptBody}
+            JS;
 
         $command = 'node --input-type=module --eval '.escapeshellarg($script);
         exec($command, $output, $exitCode);
@@ -89,7 +91,8 @@ final class WebpackEnvLoaderTest extends TestCase
             return;
         }
 
-        foreach (scandir($directory) ?: [] as $item) {
+        $items = scandir($directory);
+        foreach (false === $items ? [] : $items as $item) {
             if ('.' === $item || '..' === $item) {
                 continue;
             }

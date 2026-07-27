@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
@@ -8,7 +10,7 @@ final class HomeControllerTest extends WebTestCase
 {
     public function testHomePagePresentsGachameliaLanding(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $crawler = $client->request('GET', '/');
 
@@ -42,6 +44,10 @@ final class HomeControllerTest extends WebTestCase
             $crawler->filter('[data-testid="bot-avatar-visual"]')->attr('src'),
         );
         foreach ($crawler->filter('img[src="/images/gachamelia-bot-avatar.png"]') as $avatar) {
+            if (!$avatar instanceof \DOMElement) {
+                self::fail('Expected an image element.');
+            }
+
             self::assertStringContainsString('rounded-full', $avatar->getAttribute('class'));
         }
         self::assertStringContainsString(
@@ -52,7 +58,7 @@ final class HomeControllerTest extends WebTestCase
 
     public function testHeroKeepsSingleDiscoverActionNearIntroCopy(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $crawler = $client->request('GET', '/');
 
@@ -66,7 +72,7 @@ final class HomeControllerTest extends WebTestCase
 
     public function testHeroGachaSummaryHandlesLongRandomValues(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $crawler = $client->request('GET', '/');
 
@@ -83,10 +89,18 @@ final class HomeControllerTest extends WebTestCase
         );
 
         foreach ($summary->filter('[data-testid="hero-gacha-summary-card"]') as $card) {
+            if (!$card instanceof \DOMElement) {
+                self::fail('Expected a summary card element.');
+            }
+
             self::assertStringContainsString('min-w-0', $card->getAttribute('class'));
         }
 
         foreach ($summary->filter('[data-testid="hero-gacha-summary-value"]') as $value) {
+            if (!$value instanceof \DOMElement) {
+                self::fail('Expected a summary value element.');
+            }
+
             self::assertStringContainsString('break-words', $value->getAttribute('class'));
             self::assertStringNotContainsString('whitespace-nowrap', $value->getAttribute('class'));
         }
@@ -94,7 +108,7 @@ final class HomeControllerTest extends WebTestCase
 
     public function testHomePageExposesSeoMetadataAndDisablesTurbo(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $crawler = $client->request('GET', '/');
 
@@ -136,7 +150,7 @@ final class HomeControllerTest extends WebTestCase
         self::ensureKernelShutdown();
 
         try {
-            $client = static::createClient();
+            $client = self::createClient();
 
             $crawler = $client->request('GET', '/gachamelia/', server: [
                 'HTTP_HOST' => 'cila.camelia-studio.org',
@@ -164,7 +178,9 @@ final class HomeControllerTest extends WebTestCase
                 'https://cila.camelia-studio.org/gachamelia/images/gachamelia-hero.jpg',
                 $crawler->filter('meta[property="og:image"]')->attr('content'),
             );
-            self::assertStringNotContainsString('/gachamelia/gachamelia/', $client->getResponse()->getContent() ?: '');
+            $content = $client->getResponse()->getContent();
+            self::assertIsString($content);
+            self::assertStringNotContainsString('/gachamelia/gachamelia/', $content);
         } finally {
             $_ENV['APP_BASE_PATH'] = $_SERVER['APP_BASE_PATH'] = '';
             $_ENV['DEFAULT_URI'] = $_SERVER['DEFAULT_URI'] = 'http://localhost';
@@ -176,11 +192,9 @@ final class HomeControllerTest extends WebTestCase
 
     public function testSiteManifestUsesRelativeUrlsForSubdirectoryDeployments(): void
     {
-        $manifest = json_decode(
-            file_get_contents(\dirname(__DIR__, 2).'/public/site.webmanifest') ?: '',
-            true,
-            flags: JSON_THROW_ON_ERROR,
-        );
+        $content = file_get_contents(\dirname(__DIR__, 2).'/public/site.webmanifest');
+        self::assertIsString($content);
+        $manifest = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
 
         self::assertSame('./', $manifest['start_url']);
         self::assertSame('./', $manifest['scope']);
@@ -189,18 +203,22 @@ final class HomeControllerTest extends WebTestCase
 
     public function testSeoUtilityEndpointsUseCurrentHost(): void
     {
-        $client = static::createClient();
+        $client = self::createClient();
 
         $client->request('GET', '/robots.txt', server: ['HTTP_HOST' => 'gachamelia.example']);
 
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('content-type', 'text/plain; charset=UTF-8');
-        self::assertStringContainsString('Sitemap: http://gachamelia.example/sitemap.xml', $client->getResponse()->getContent() ?: '');
+        $robotsContent = $client->getResponse()->getContent();
+        self::assertIsString($robotsContent);
+        self::assertStringContainsString('Sitemap: http://gachamelia.example/sitemap.xml', $robotsContent);
 
         $client->request('GET', '/sitemap.xml', server: ['HTTP_HOST' => 'gachamelia.example']);
 
         self::assertResponseIsSuccessful();
         self::assertResponseHeaderSame('content-type', 'application/xml; charset=UTF-8');
-        self::assertStringContainsString('<loc>http://gachamelia.example/</loc>', $client->getResponse()->getContent() ?: '');
+        $sitemapContent = $client->getResponse()->getContent();
+        self::assertIsString($sitemapContent);
+        self::assertStringContainsString('<loc>http://gachamelia.example/</loc>', $sitemapContent);
     }
 }

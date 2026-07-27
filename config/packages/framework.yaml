@@ -5,6 +5,10 @@ framework:
     # Note that the session will be started ONLY if you read or write from it.
     session: true
 
+    exceptions:
+        Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException:
+            status_code: 403
+
     #esi: true
     #fragments: true
 

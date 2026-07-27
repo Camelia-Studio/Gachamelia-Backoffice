@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Security;
 
 use Firebase\JWT\JWT;
@@ -69,7 +71,7 @@ final readonly class BotTokenIssuer
 
     private function assertConfigured(): void
     {
-        if ('' === $this->clientId || '' === $this->clientSecret || '' === $this->jwtSecret || $this->ttlSeconds < 1) {
+        if (\in_array('', [$this->clientId, $this->clientSecret, $this->jwtSecret], true) || $this->ttlSeconds < 1) {
             throw new \LogicException('Bot API authentication is not configured.');
         }
     }

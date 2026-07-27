@@ -1,5 +1,75 @@
 {% extends 'base.html.twig' %}
 
+{% macro emoji_picker(default_source, default_value, picker, tone) %}
+    {% set groups = [
+        { id: 'standard', label: 'Standard', options: picker.standard },
+        { id: 'bot', label: 'Bot', options: picker.bot },
+        { id: 'server', label: 'Serveur', options: picker.server },
+    ] %}
+
+    <input type="hidden" name="emoji_source" value="{{ default_source }}" data-emoji-picker-target="source">
+    <input type="hidden" name="emoji_value" value="{{ default_value }}" data-emoji-picker-target="value">
+
+    <div class="grid gap-4" data-testid="emoji-picker">
+        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+            Rechercher un emoji
+            <input type="search" class="min-h-11 w-full border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50" placeholder="Nom de l’emoji" data-emoji-picker-target="search" data-action="input->emoji-picker#filter">
+        </label>
+
+        <div class="grid max-h-72 gap-4 overflow-y-auto border border-camelia-ink/10 bg-white p-3">
+            {% for group in groups %}
+                <section class="grid gap-2" data-emoji-picker-target="group">
+                    <p class="text-[0.68rem] font-black tracking-[0.16em] text-camelia-muted uppercase">{{ group.label }}</p>
+                    <div class="grid grid-cols-[repeat(auto-fill,minmax(3.25rem,1fr))] gap-2">
+                        {% for option in group.options %}
+                            {% set test_id = option.discord_id ? 'emoji-picker-option-' ~ option.source ~ '-' ~ option.discord_id : 'emoji-picker-option-standard-' ~ loop.index %}
+                            <button
+                                type="button"
+                                class="grid min-h-14 place-items-center border border-camelia-ink/10 bg-camelia-ivory p-2 text-center transition hover:border-camelia-rose/40 hover:bg-camelia-blush/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 data-[selected=true]:border-camelia-rose data-[selected=true]:bg-camelia-blush"
+                                data-emoji-picker-target="option"
+                                data-action="click->emoji-picker#choose"
+                                data-emoji-source="{{ option.source }}"
+                                data-emoji-value="{{ option.value }}"
+                                data-emoji-name="{{ option.name }}"
+                                data-emoji-cdn-url="{{ option.cdn_url }}"
+                                data-testid="{{ test_id }}"
+                                title="{{ option.name }}"
+                            >
+                                {% if option.cdn_url %}
+                                    <img src="{{ option.cdn_url }}" alt="" class="size-8 object-contain" loading="lazy">
+                                {% else %}
+                                    <span class="text-2xl leading-none">{{ option.markup }}</span>
+                                {% endif %}
+                                <span class="mt-1 max-w-full truncate text-[0.62rem] font-black text-camelia-muted">{{ option.name }}</span>
+                            </button>
+                        {% else %}
+                            <span class="col-span-full border border-dashed border-camelia-ink/15 bg-camelia-blush/30 px-3 py-2 text-xs font-bold text-camelia-muted">Aucun emoji en cache.</span>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endfor %}
+        </div>
+
+        <div class="grid gap-4 border border-camelia-ink/10 bg-camelia-blush/50 p-4 sm:grid-cols-[5rem_minmax(0,1fr)] sm:items-center" data-testid="emoji-preview">
+            <span class="relative flex size-20 shrink-0 items-center justify-center overflow-hidden {{ tone }}">
+                <img
+                    alt=""
+                    class="hidden size-full object-contain"
+                    data-emoji-picker-target="image"
+                    data-action="load->emoji-picker#imageLoaded error->emoji-picker#imageError"
+                >
+                <span class="flex size-full items-center justify-center font-display text-2xl font-black text-camelia-rose" data-emoji-picker-target="glyph">{{ default_value }}</span>
+            </span>
+            <div>
+                <strong class="text-sm">Prévisualisation Discord</strong>
+                <p class="mt-1 text-xs font-bold leading-relaxed text-camelia-muted" data-emoji-picker-target="status">Emoji sélectionné pour les fiches.</p>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{% import _self as ui %}
+
 {% block title %}Configuration - {{ guild.name }} - Gachamélia Backoffice{% endblock %}
 
 {% block navbar_actions %}
@@ -12,17 +82,791 @@
 {% endblock %}
 
 {% block body %}
-    <section class="grid gap-8" data-testid="server-configuration">
-        <div class="grid gap-3 border-b border-camelia-ink/10 pb-6">
-            <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">{{ guild.name }}</p>
-            <h1 class="font-display text-4xl leading-tight md:text-5xl">Configuration du serveur</h1>
-        </div>
+    {% set is_overview = active_section == 'overview' %}
+    {% set page_icon = is_overview ? 'CF' : active_configuration_section.icon %}
+    {% set page_title = is_overview ? 'Configuration du serveur' : active_configuration_section.label %}
+    {% set page_description = is_overview ? 'Choisis une partie du catalogue à compléter pour ce serveur.' : active_configuration_section.description %}
 
-        <div class="grid gap-4 border border-camelia-ink/10 bg-white p-6 shadow-sm">
-            <p class="text-lg font-black">Socle prêt</p>
-            <p class="max-w-2xl text-sm leading-6 text-camelia-muted">
-                Les réglages multi-serveur seront branchés ici.
-            </p>
+    <section class="grid gap-10" data-testid="server-configuration">
+        <div class="grid gap-8 lg:grid-cols-[16.5rem_minmax(0,1fr)] xl:gap-12">
+            <aside class="lg:sticky lg:top-28 lg:self-start">
+                <div class="grid gap-7">
+                    <div class="flex items-center gap-4 border border-camelia-ink/10 bg-camelia-ivory p-4 shadow-sm">
+                        {% if guild.icon_url %}
+                            <img
+                                src="{{ guild.icon_url }}"
+                                alt="Logo {{ guild.name }}"
+                                width="48"
+                                height="48"
+                                class="size-12 shrink-0 rounded-full border border-camelia-ink/10 bg-camelia-blush object-cover"
+                                loading="lazy"
+                            >
+                        {% else %}
+                            <span
+                                class="flex size-12 shrink-0 items-center justify-center rounded-full border border-camelia-ink/10 bg-camelia-blush font-display text-2xl font-black text-camelia-rose"
+                                data-testid="guild-icon-fallback"
+                                aria-hidden="true"
+                            >
+                                {{ guild.name|slice(0, 1)|upper }}
+                            </span>
+                        {% endif %}
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-black leading-tight">{{ guild.name }}</p>
+                            <p class="mt-1 text-xs font-bold leading-tight text-camelia-muted">{{ read_only ? 'Catalogue inactif' : 'Catalogue actif' }}</p>
+                        </div>
+                    </div>
+
+                    <nav class="grid gap-7" aria-label="Sections de configuration" data-testid="configuration-sidebar">
+                        <div class="grid gap-2">
+                            <p class="px-3 text-[0.68rem] font-black tracking-[0.16em] text-camelia-muted uppercase">Serveur</p>
+                            <a
+                                href="{{ path('app_character_sheet', { guildId: guild.id }) }}"
+                                class="grid min-h-12 grid-cols-[1.8rem_minmax(0,1fr)] items-center gap-3 px-3 text-sm font-black text-camelia-muted transition hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+                            >
+                                <span class="flex size-7 items-center justify-center border border-camelia-ink/10 bg-white text-[0.68rem] font-black text-camelia-rose">FP</span>
+                                Fiche personnage
+                            </a>
+                            <a
+                                href="{{ path('app_server_configuration', { guildId: guild.id }) }}"
+                                class="relative grid min-h-12 grid-cols-[1.8rem_minmax(0,1fr)] items-center gap-3 px-3 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 {{ is_overview ? 'bg-camelia-blush text-camelia-ink before:absolute before:left-0 before:h-7 before:w-1 before:rounded-full before:bg-camelia-rose' : 'text-camelia-muted hover:text-camelia-rose' }}"
+                                data-testid="configuration-nav-overview"
+                                {% if is_overview %}aria-current="page"{% endif %}
+                            >
+                                <span class="flex size-7 items-center justify-center border border-camelia-ink/10 bg-white text-[0.68rem] font-black text-camelia-rose">CF</span>
+                                Configuration
+                            </a>
+                        </div>
+
+                        <div class="grid gap-2">
+                            <p class="px-3 text-[0.68rem] font-black tracking-[0.16em] text-camelia-muted uppercase">Catalogue</p>
+                            {% for section in configuration_sections %}
+                                {% set is_active = section.id == active_section %}
+                                <a
+                                    href="{{ path('app_server_configuration_section', { guildId: guild.id, section: section.id }) }}"
+                                    class="relative grid min-h-12 grid-cols-[1.8rem_minmax(0,1fr)_auto] items-center gap-3 px-3 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 {{ is_active ? 'bg-camelia-blush text-camelia-ink before:absolute before:left-0 before:h-7 before:w-1 before:rounded-full before:bg-camelia-rose' : 'text-camelia-muted hover:text-camelia-rose' }}"
+                                    data-testid="configuration-nav-{{ section.id }}"
+                                    {% if is_active %}aria-current="page"{% endif %}
+                                >
+                                    <span class="flex size-7 items-center justify-center border border-camelia-ink/10 bg-white text-[0.68rem] font-black text-camelia-rose">{{ section.icon }}</span>
+                                    <span>{{ section.label }}</span>
+                                    <span class="text-xs font-black text-camelia-rose">{{ section.count }}</span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </nav>
+                </div>
+            </aside>
+
+            <div class="grid min-w-0 gap-8">
+                <header class="flex items-start gap-5 border-b border-camelia-ink/10 pb-8">
+                    <span class="flex size-16 shrink-0 items-center justify-center border border-camelia-ink/10 bg-camelia-blush font-display text-2xl font-black text-camelia-rose">
+                        {{ page_icon }}
+                    </span>
+                    <div class="min-w-0">
+                        <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">{{ guild.name }} · Catalogue</p>
+                        <h1 class="mt-2 font-display text-4xl leading-tight md:text-5xl">{{ page_title }}</h1>
+                        <p class="mt-4 max-w-3xl text-base font-bold leading-relaxed text-camelia-muted">{{ page_description }}</p>
+                    </div>
+                </header>
+
+                {% if read_only %}
+                    <div class="border border-camelia-gold/40 bg-camelia-gold/10 p-5" data-testid="inactive-server-notice">
+                        <p class="font-black text-camelia-ink">Serveur inactif</p>
+                        <p class="mt-1 text-sm font-bold leading-relaxed text-camelia-muted">Le catalogue est conservé en lecture seule. Il redeviendra modifiable dès que le bot signalera son retour sur le serveur.</p>
+                    </div>
+                {% endif %}
+
+                {% include 'backoffice/_catalog_validation.html.twig' with { validation: validation } only %}
+                {% include 'backoffice/_catalog_csv_actions.html.twig' with {
+                    target_type: 'server',
+                    target_id: guild.id,
+                    active_section: active_section,
+                    read_only: read_only
+                } only %}
+
+                <fieldset class="contents" data-testid="configuration-read-only" {% if read_only %}disabled{% endif %}>
+                {% if is_overview %}
+                    <section class="grid gap-7" data-testid="configuration-overview">
+                        <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                            {% for section in configuration_sections %}
+                                {% set tone = loop.index == 2 ? 'bg-camelia-gold/20 text-[#7a5415]' : (loop.index == 3 ? 'bg-camelia-leaf/15 text-camelia-leaf' : 'bg-camelia-blush text-camelia-rose') %}
+                                <article
+                                    class="grid min-h-72 gap-6 border border-camelia-ink/10 bg-camelia-ivory p-7 shadow-sm"
+                                    data-testid="configuration-overview-card-{{ section.id }}"
+                                >
+                                    <div class="flex items-start justify-between gap-4">
+                                        <span class="flex size-14 items-center justify-center {{ tone }} font-display text-xl font-black">{{ section.icon }}</span>
+                                        <span class="inline-flex min-h-8 items-center rounded-full bg-camelia-gold/20 px-4 text-xs font-black text-[#7a5415]">{{ section.count }} entrées</span>
+                                    </div>
+                                    <div class="grid gap-3">
+                                        <h2 class="text-xl font-black">{{ section.label }}</h2>
+                                        <p class="max-w-sm text-base font-bold leading-relaxed text-camelia-muted">{{ section.description }}</p>
+                                    </div>
+                                    <a
+                                        href="{{ path('app_server_configuration_section', { guildId: guild.id, section: section.id }) }}"
+                                        class="mt-auto inline-flex min-h-11 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+                                    >
+                                        Configurer
+                                    </a>
+                                </article>
+                            {% endfor %}
+                        </div>
+
+                        <article class="grid gap-5 border border-camelia-rose/20 bg-camelia-blush/40 p-7 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-center" data-testid="configuration-template-import-card">
+                            <div>
+                                <h2 class="text-xl font-black">Importer un modèle de catalogue</h2>
+                                <p class="mt-2 max-w-2xl text-base font-bold leading-relaxed text-camelia-muted">Démarre depuis un catalogue global préparé par les admins du bot. L’import demande une confirmation car il remplace le catalogue actuel.</p>
+                            </div>
+                            {% if read_only %}
+                                <span class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink/10 px-5 text-sm font-black text-camelia-muted">Import indisponible</span>
+                            {% else %}
+                                <a
+                                    href="{{ path('app_server_catalog_template_imports', { guildId: guild.id }) }}"
+                                    class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
+                                >
+                                    Importer
+                                </a>
+                            {% endif %}
+                        </article>
+                    </section>
+                {% else %}
+                    <div data-testid="configuration-panel">
+                        {% if active_section == 'settings' %}
+                            {% set settings_input_class = 'min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50' %}
+                            <div class="grid gap-8 xl:grid-cols-[minmax(24rem,32rem)_minmax(0,1fr)] xl:items-start">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
+                                        <h2 class="text-lg font-black">Canaux et rôle staff</h2>
+                                        <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Ces valeurs Discord sont utilisées par le bot pour poster les messages et reconnaître le staff.</p>
+                                    </div>
+                                    <form method="post" action="{{ path('app_server_settings_update', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                        {% if discord_resources.channels is empty and discord_resources.roles is empty %}
+                                            <p class="border border-camelia-rose/20 bg-camelia-blush/70 p-4 text-sm font-bold leading-relaxed text-camelia-muted">Ressources Discord temporairement indisponibles. Les IDs restent éditables manuellement.</p>
+                                        {% endif %}
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Salon d’arrivée
+                                            {% if discord_resources.channels is not empty %}
+                                                <select name="welcome_channel_id" class="{{ settings_input_class }}">
+                                                    <option value="" {% if not catalog.settings.welcome_channel_id %}selected{% endif %}>Non configuré</option>
+                                                    {% if catalog.settings.welcome_channel_id and catalog.settings.welcome_channel_id not in discord_resource_ids.channels %}
+                                                        <option value="{{ catalog.settings.welcome_channel_id }}" selected>ID actuel introuvable ({{ catalog.settings.welcome_channel_id }})</option>
+                                                    {% endif %}
+                                                    {% for channel in discord_resources.channels %}
+                                                        <option value="{{ channel.id }}" {% if catalog.settings.welcome_channel_id == channel.id %}selected{% endif %}>{{ channel.label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% else %}
+                                                <input name="welcome_channel_id" value="{{ catalog.settings.welcome_channel_id }}" inputmode="numeric" placeholder="ID du salon welcome" class="{{ settings_input_class }}">
+                                            {% endif %}
+                                        </label>
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Salon de départ
+                                            {% if discord_resources.channels is not empty %}
+                                                <select name="bye_channel_id" class="{{ settings_input_class }}">
+                                                    <option value="" {% if not catalog.settings.bye_channel_id %}selected{% endif %}>Non configuré</option>
+                                                    {% if catalog.settings.bye_channel_id and catalog.settings.bye_channel_id not in discord_resource_ids.channels %}
+                                                        <option value="{{ catalog.settings.bye_channel_id }}" selected>ID actuel introuvable ({{ catalog.settings.bye_channel_id }})</option>
+                                                    {% endif %}
+                                                    {% for channel in discord_resources.channels %}
+                                                        <option value="{{ channel.id }}" {% if catalog.settings.bye_channel_id == channel.id %}selected{% endif %}>{{ channel.label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% else %}
+                                                <input name="bye_channel_id" value="{{ catalog.settings.bye_channel_id }}" inputmode="numeric" placeholder="ID du salon bye" class="{{ settings_input_class }}">
+                                            {% endif %}
+                                        </label>
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Rôle staff Discord
+                                            {% if discord_resources.roles is not empty %}
+                                                <select name="staff_role_id" class="{{ settings_input_class }}">
+                                                    <option value="" {% if not catalog.settings.staff_role_id %}selected{% endif %}>Non configuré</option>
+                                                    {% if catalog.settings.staff_role_id and catalog.settings.staff_role_id not in discord_resource_ids.roles %}
+                                                        <option value="{{ catalog.settings.staff_role_id }}" selected>ID actuel introuvable ({{ catalog.settings.staff_role_id }})</option>
+                                                    {% endif %}
+                                                    {% for role in discord_resources.roles %}
+                                                        <option value="{{ role.id }}" {% if catalog.settings.staff_role_id == role.id %}selected{% endif %}>{{ role.label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% else %}
+                                                <input name="staff_role_id" value="{{ catalog.settings.staff_role_id }}" inputmode="numeric" placeholder="ID du rôle staff" class="{{ settings_input_class }}">
+                                            {% endif %}
+                                        </label>
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                            Enregistrer les réglages
+                                        </button>
+                                    </form>
+                                </section>
+
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                                        <div>
+                                            <h2 class="text-lg font-black">Réglages actuels</h2>
+                                            <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Le catalogue API expose ces valeurs au bot avec les autres données du serveur.</p>
+                                        </div>
+                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ active_configuration_section.count }} configurés</span>
+                                    </div>
+                                    <div class="grid gap-4 p-6">
+                                        {% set setting_rows = [
+                                            { label: 'Salon d’arrivée', value: discord_settings_labels.welcome_channel_id, raw: catalog.settings.welcome_channel_id, empty: 'Aucun salon d’arrivée configuré' },
+                                            { label: 'Salon de départ', value: discord_settings_labels.bye_channel_id, raw: catalog.settings.bye_channel_id, empty: 'Aucun salon de départ configuré' },
+                                            { label: 'Rôle staff Discord', value: discord_settings_labels.staff_role_id, raw: catalog.settings.staff_role_id, empty: 'Aucun rôle staff configuré' },
+                                        ] %}
+                                        {% for setting in setting_rows %}
+                                            <article class="grid gap-3 border border-camelia-ink/10 bg-white p-5" data-testid="server-setting-card">
+                                                <p class="text-sm font-black text-camelia-muted">{{ setting.label }}</p>
+                                                {% if setting.value %}
+                                                    <strong class="break-all text-lg">{{ setting.value }}</strong>
+                                                    {% if setting.raw and setting.raw != setting.value %}
+                                                        <span class="break-all text-xs font-black uppercase tracking-[0.12em] text-camelia-muted">{{ setting.raw }}</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <p class="text-sm font-bold leading-relaxed text-camelia-muted">{{ setting.empty }}</p>
+                                                {% endif %}
+                                            </article>
+                                        {% endfor %}
+                                    </div>
+                                </section>
+                            </div>
+                        {% elseif active_section == 'ranks' %}
+                            {% set rank_input_class = 'min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50' %}
+                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
+                                        <h2 class="text-lg font-black">Ajouter un rang</h2>
+                                        <p class="mt-1 text-sm font-bold text-camelia-muted">Renseigne les infos minimales pour alimenter le bot.</p>
+                                    </div>
+                                    <form method="post" action="{{ path('app_server_catalog_rank_create', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                        {% if discord_resources.roles is empty %}
+                                            <p class="border border-camelia-rose/20 bg-camelia-blush/70 p-4 text-sm font-bold leading-relaxed text-camelia-muted">Rôles Discord temporairement indisponibles. L’ID reste éditable manuellement.</p>
+                                        {% endif %}
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Rôle Discord
+                                            {% if discord_resources.roles is not empty %}
+                                                <select name="discord_id" required class="{{ rank_input_class }}">
+                                                    <option value="">Choisis un rôle Discord</option>
+                                                    {% for role in discord_resources.roles %}
+                                                        <option value="{{ role.id }}">{{ role.label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            {% else %}
+                                                <input name="discord_id" required inputmode="numeric" placeholder="ID du rôle Discord" class="{{ rank_input_class }}">
+                                            {% endif %}
+                                        </label>
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Nom
+                                            <input name="name" required class="{{ rank_input_class }}">
+                                        </label>
+                                        <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                Titre du message de départ
+                                                <input name="bye_title" class="{{ rank_input_class }}">
+                                            </label>
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                %
+                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="{{ rank_input_class }}">
+                                            </label>
+                                        </div>
+                                        <label class="flex items-center justify-between gap-3 border border-camelia-ink/10 bg-camelia-blush/60 px-3 py-3 text-sm font-black text-camelia-ink">
+                                            Rang staff prioritaire
+                                            <input name="is_staff" type="checkbox" value="1" class="size-4 accent-camelia-rose">
+                                        </label>
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                            Ajouter le rang
+                                        </button>
+                                    </form>
+                                </section>
+
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                                        <div>
+                                            <h2 class="text-lg font-black">Rangs existants</h2>
+                                            <p class="mt-1 text-sm font-bold text-camelia-muted">Les données affichées restent strictement celles de ce serveur.</p>
+                                        </div>
+                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ catalog.ranks|length }} entrées</span>
+                                    </div>
+                                    <div class="grid gap-4 p-6">
+                                        {% for rank in catalog.ranks %}
+                                            <article class="grid gap-5 border border-camelia-ink/10 bg-white p-5 text-sm" data-testid="rank-card">
+                                                <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                                                    <div class="flex min-w-0 items-center gap-3">
+                                                        <span class="flex size-12 shrink-0 items-center justify-center bg-camelia-blush font-display text-lg font-black text-camelia-rose">{{ rank.name|slice(0, 1)|upper }}</span>
+                                                        <div class="min-w-0">
+                                                            <strong class="block truncate">{{ rank.name }}</strong>
+                                                            {% set rank_discord_label = discord_resource_labels.roles[rank.discord_id]|default(rank.discord_id) %}
+                                                            <p class="mt-1 truncate font-semibold text-camelia-muted">{{ rank_discord_label }}{% if rank.bye_title %} · {{ rank.bye_title }}{% endif %}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex flex-wrap gap-2 md:justify-end">
+                                                        {% if rank.is_staff %}
+                                                            <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-leaf/15 px-3 text-xs font-black text-camelia-leaf">Staff</span>
+                                                        {% endif %}
+                                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-blush px-3 text-xs font-black text-camelia-rose">{{ rank.percentage }}%</span>
+                                                    </div>
+                                                </div>
+                                                <details class="group border-t border-camelia-ink/10 pt-4">
+                                                    <summary class="cursor-pointer text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Configurer le rang</summary>
+                                                    <div class="mt-5 grid gap-6">
+                                                        <form method="post" action="{{ path('app_server_catalog_rank_update', { guildId: guild.id, rankId: rank.id }) }}" class="grid gap-4 border border-camelia-ink/10 bg-camelia-ivory p-4">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                            <div class="grid gap-3 md:grid-cols-2">
+                                                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                    Rôle Discord
+                                                                    {% if discord_resources.roles is not empty %}
+                                                                        <select name="discord_id" required class="{{ rank_input_class }}">
+                                                                            {% if rank.discord_id not in discord_resource_ids.roles %}
+                                                                                <option value="{{ rank.discord_id }}" selected>ID actuel introuvable ({{ rank.discord_id }})</option>
+                                                                            {% endif %}
+                                                                            {% for role in discord_resources.roles %}
+                                                                                <option value="{{ role.id }}" {% if rank.discord_id == role.id %}selected{% endif %}>{{ role.label }}</option>
+                                                                            {% endfor %}
+                                                                        </select>
+                                                                    {% else %}
+                                                                        <input name="discord_id" value="{{ rank.discord_id }}" required inputmode="numeric" placeholder="ID du rôle Discord" class="{{ rank_input_class }}">
+                                                                    {% endif %}
+                                                                </label>
+                                                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                    Nom
+                                                                    <input name="name" value="{{ rank.name }}" required class="{{ rank_input_class }}">
+                                                                </label>
+                                                            </div>
+                                                            <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
+                                                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                    Titre du message de départ
+                                                                    <input name="bye_title" value="{{ rank.bye_title }}" class="{{ rank_input_class }}">
+                                                                </label>
+                                                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                    %
+                                                                    <input name="percentage" type="number" min="0" max="100" value="{{ rank.percentage }}" required class="{{ rank_input_class }}">
+                                                                </label>
+                                                            </div>
+                                                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                                                <label class="inline-flex min-h-10 items-center gap-3 border border-camelia-ink/10 bg-white px-3 text-sm font-black text-camelia-ink">
+                                                                    <input name="is_staff" type="checkbox" value="1" class="size-4 accent-camelia-rose" {% if rank.is_staff %}checked{% endif %}>
+                                                                    Rang staff
+                                                                </label>
+                                                                <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                    Enregistrer
+                                                                </button>
+                                                            </div>
+                                                        </form>
+
+                                                        <form method="post" action="{{ path('app_server_catalog_rank_delete', { guildId: guild.id, rankId: rank.id }) }}" class="justify-self-start">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                Supprimer le rang
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </details>
+                                            </article>
+                                        {% else %}
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted">Aucun rang pour l’instant. Ajoute le premier rang de ce serveur.</p>
+                                        {% endfor %}
+                                    </div>
+                                </section>
+                            </div>
+                        {% elseif active_section == 'rank-stats' %}
+                            <div class="grid gap-8 xl:grid-cols-[minmax(22rem,28rem)_minmax(0,1fr)] xl:items-start">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
+                                        <h2 class="text-lg font-black">Lier une stat à un rang</h2>
+                                        <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Cette probabilité nourrit le catalogue du rang sans encombrer sa fiche principale.</p>
+                                    </div>
+                                    <form method="post" action="{{ path('app_server_catalog_rank_stat_upsert_dedicated', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Rang
+                                            <select name="rank_id" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                {% for rank in catalog.ranks %}
+                                                    <option value="{{ rank.id }}">{{ rank.name }}</option>
+                                                {% else %}
+                                                    <option value="">Ajoute un rang d’abord</option>
+                                                {% endfor %}
+                                            </select>
+                                        </label>
+                                        <div class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem]">
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                Stat
+                                                <select name="stat_id" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                    {% for stat in catalog.stats %}
+                                                        <option value="{{ stat.id }}">{{ stat.name }}</option>
+                                                    {% else %}
+                                                        <option value="">Ajoute une stat d’abord</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </label>
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                %
+                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                            </label>
+                                        </div>
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                            Enregistrer la probabilité
+                                        </button>
+                                    </form>
+                                </section>
+
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                                        <div>
+                                            <h2 class="text-lg font-black">Stats liées aux rangs</h2>
+                                            <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Chaque ligne associe une caractéristique à un rang de ce serveur.</p>
+                                        </div>
+                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ catalog.rank_stats|length }} entrées</span>
+                                    </div>
+                                    <div class="grid gap-4 p-6">
+                                        {% for rank_stat in catalog.rank_stats %}
+                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="rank-stat-card">
+                                                <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                                                    <div class="min-w-0">
+                                                        <strong class="block truncate">{{ rank_stat.rank_name }}</strong>
+                                                        <p class="mt-1 font-semibold text-camelia-muted">{{ rank_stat.stat_name }}</p>
+                                                    </div>
+                                                    <span class="inline-flex min-h-8 items-center rounded-full bg-camelia-gold/20 px-4 text-sm font-black text-[#7a5415] md:justify-self-end">{{ rank_stat.percentage }}%</span>
+                                                </div>
+                                                <details class="group border-t border-camelia-ink/10 pt-3">
+                                                    <summary class="cursor-pointer text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Modifier</summary>
+                                                    <div class="mt-4 grid gap-4">
+                                                        <form method="post" action="{{ path('app_server_catalog_rank_stat_upsert_dedicated', { guildId: guild.id }) }}" class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem_auto] sm:items-end">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                            <input type="hidden" name="rank_id" value="{{ rank_stat.rank_id }}">
+                                                            <input type="hidden" name="stat_id" value="{{ rank_stat.stat_id }}">
+                                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                Association
+                                                                <input value="{{ rank_stat.rank_name }} · {{ rank_stat.stat_name }}" disabled class="min-h-11 border border-camelia-ink/10 bg-camelia-ivory px-3 font-semibold text-camelia-muted">
+                                                            </label>
+                                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                %
+                                                                <input name="percentage" type="number" min="0" max="100" value="{{ rank_stat.percentage }}" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                            </label>
+                                                            <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                Enregistrer
+                                                            </button>
+                                                        </form>
+                                                        <form method="post" action="{{ path('app_server_catalog_rank_stat_delete_dedicated', { guildId: guild.id, rankId: rank_stat.rank_id, statId: rank_stat.stat_id }) }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                Supprimer
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </details>
+                                            </article>
+                                        {% else %}
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted">Aucune stat n’est liée à un rang pour l’instant.</p>
+                                        {% endfor %}
+                                    </div>
+                                </section>
+                            </div>
+                        {% elseif active_section in ['welcome-messages', 'bye-messages'] %}
+                            {% set is_welcome_messages = active_section == 'welcome-messages' %}
+                            {% set messages = is_welcome_messages ? catalog.welcome_messages : catalog.bye_messages %}
+                            {% set create_route = is_welcome_messages ? 'app_server_catalog_welcome_message_create' : 'app_server_catalog_bye_message_create' %}
+                            {% set update_route = is_welcome_messages ? 'app_server_catalog_welcome_message_update' : 'app_server_catalog_bye_message_update' %}
+                            {% set delete_route = is_welcome_messages ? 'app_server_catalog_welcome_message_delete' : 'app_server_catalog_bye_message_delete' %}
+                            {% set create_title = is_welcome_messages ? 'Ajouter un message d’arrivée' : 'Ajouter un message de départ' %}
+                            {% set list_title = is_welcome_messages ? 'Messages d’arrivée' : 'Messages de départ' %}
+                            {% set submit_label = is_welcome_messages ? 'Ajouter le message d’arrivée' : 'Ajouter le message de départ' %}
+                            <div class="grid gap-8 xl:grid-cols-[minmax(23rem,30rem)_minmax(0,1fr)] xl:items-start">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
+                                        <h2 class="text-lg font-black">{{ create_title }}</h2>
+                                        <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Le message reste rattaché au rang sélectionné et uniquement à ce serveur.</p>
+                                    </div>
+                                    <form method="post" action="{{ path(create_route, { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Rang
+                                            <select name="rank_id" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                {% for rank in catalog.ranks %}
+                                                    <option value="{{ rank.id }}">{{ rank.name }}</option>
+                                                {% else %}
+                                                    <option value="">Ajoute un rang d’abord</option>
+                                                {% endfor %}
+                                            </select>
+                                        </label>
+                                        <label class="grid gap-2 text-sm font-bold text-camelia-muted">
+                                            Message
+                                            <textarea name="message" required maxlength="255" rows="5" class="min-h-32 resize-y border border-camelia-ink/10 bg-white px-3 py-3 font-semibold leading-relaxed text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50"></textarea>
+                                        </label>
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                            {{ submit_label }}
+                                        </button>
+                                    </form>
+                                </section>
+
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                                        <div>
+                                            <h2 class="text-lg font-black">{{ list_title }}</h2>
+                                            <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">Une page dédiée pour relire, corriger et supprimer les variantes.</p>
+                                        </div>
+                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-blush px-3 text-xs font-black text-camelia-rose">{{ messages|length }} entrées</span>
+                                    </div>
+                                    <div class="grid gap-4 p-6">
+                                        {% for message in messages %}
+                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="message-card">
+                                                <div class="flex flex-wrap items-center justify-between gap-3">
+                                                    <div class="min-w-0">
+                                                        <strong class="block truncate">{{ message.rank_name }}</strong>
+                                                        <p class="mt-1 text-xs font-black tracking-[0.14em] text-camelia-rose uppercase">Rang lié</p>
+                                                    </div>
+                                                    <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">#{{ message.id }}</span>
+                                                </div>
+                                                <form method="post" action="{{ path(update_route, { guildId: guild.id, messageId: message.id }) }}" class="grid gap-4">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                    <label class="grid gap-2 text-sm font-bold text-camelia-muted">
+                                                        Message
+                                                        <textarea name="message" required maxlength="255" rows="4" class="min-h-28 resize-y border border-camelia-ink/10 bg-camelia-ivory px-3 py-3 font-semibold leading-relaxed text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">{{ message.message }}</textarea>
+                                                    </label>
+                                                    <div class="flex flex-wrap gap-3">
+                                                        <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                            Enregistrer
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                                <form method="post" action="{{ path(delete_route, { guildId: guild.id, messageId: message.id }) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                    <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                        Supprimer
+                                                    </button>
+                                                </form>
+                                            </article>
+                                        {% else %}
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted">Aucun message enregistré pour l’instant.</p>
+                                        {% endfor %}
+                                    </div>
+                                </section>
+                            </div>
+                        {% elseif active_section == 'roles' %}
+                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)] xl:items-start">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
+                                        <h2 class="text-lg font-black">Ajouter un rôle</h2>
+                                        <p class="mt-1 text-sm font-bold text-camelia-muted">L’emoji sera affiché sur les fiches Discord et les tirages.</p>
+                                    </div>
+                                    <form method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="grid gap-5 p-6" data-controller="emoji-picker" data-emoji-picker-default-value="🎭">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                        <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                Nom
+                                                <input name="name" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                            </label>
+                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                %
+                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                            </label>
+                                        </div>
+                                        {{ ui.emoji_picker('unicode', '🎭', emoji_picker, 'bg-camelia-gold/20') }}
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                            Ajouter le rôle
+                                        </button>
+                                    </form>
+                                </section>
+
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                                        <div>
+                                            <h2 class="text-lg font-black">Rôles existants</h2>
+                                            <p class="mt-1 text-sm font-bold text-camelia-muted">Chaque rôle reste attaché uniquement à ce serveur.</p>
+                                        </div>
+                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ catalog.roles|length }} entrées</span>
+                                    </div>
+                                    <div class="grid gap-4 p-6">
+                                        {% for role in catalog.roles %}
+                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-4 text-sm" data-testid="role-card">
+                                                <div class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+                                                    <div class="flex min-w-0 items-center gap-4">
+                                                        <span class="flex size-16 shrink-0 items-center justify-center overflow-hidden bg-camelia-gold/20">
+                                                            {% if role.emoji_cdn_url %}
+                                                                <img src="{{ role.emoji_cdn_url }}" alt="Emoji du rôle {{ role.name }}" class="size-full object-contain" loading="lazy">
+                                                            {% else %}
+                                                                <span class="font-display text-xl font-black text-[#7a5415]">{{ role.emoji_markup }}</span>
+                                                            {% endif %}
+                                                        </span>
+                                                        <div class="min-w-0">
+                                                            <strong class="block truncate">{{ role.name }}</strong>
+                                                            <p class="mt-1 truncate font-semibold text-camelia-muted">{{ role.emoji_source_label }} · {{ role.emoji_markup }}</p>
+                                                        </div>
+                                                    </div>
+                                                    <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415] md:justify-self-end">{{ role.percentage }}%</span>
+                                                </div>
+                                                <details class="group border-t border-camelia-ink/10 pt-3">
+                                                    <summary class="cursor-pointer text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Modifier</summary>
+                                                    <div class="mt-4 grid gap-4">
+                                                        <form method="post" action="{{ path('app_server_catalog_role_update', { guildId: guild.id, roleId: role.id }) }}" class="grid gap-4" data-controller="emoji-picker" data-emoji-picker-default-value="{{ role.emoji_markup }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                            <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
+                                                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                    Nom
+                                                                    <input name="name" value="{{ role.name }}" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                                </label>
+                                                                <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                    %
+                                                                    <input name="percentage" type="number" min="0" max="100" value="{{ role.percentage }}" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                                </label>
+                                                            </div>
+                                                            {{ ui.emoji_picker(role.emoji_source, role.emoji_markup, emoji_picker, 'bg-camelia-gold/20') }}
+                                                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                Enregistrer
+                                                            </button>
+                                                        </form>
+                                                        <form method="post" action="{{ path('app_server_catalog_role_delete', { guildId: guild.id, roleId: role.id }) }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                Supprimer
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </details>
+                                            </article>
+                                        {% else %}
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted">Aucun rôle pour l’instant. Ajoute le premier rôle de ce serveur.</p>
+                                        {% endfor %}
+                                    </div>
+                                </section>
+                            </div>
+                        {% elseif active_section == 'stats' %}
+                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,24rem)_minmax(0,1fr)]">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
+                                        <h2 class="text-lg font-black">Ajouter une stat</h2>
+                                        <p class="mt-1 text-sm font-bold text-camelia-muted">Une stat est simplement un nom pour l’instant.</p>
+                                    </div>
+                                    <form method="post" action="{{ path('app_server_catalog_stat_create', { guildId: guild.id }) }}" class="grid gap-5 p-6">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Nom
+                                            <input name="name" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                        </label>
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                            Ajouter la stat
+                                        </button>
+                                    </form>
+                                </section>
+
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                                        <div>
+                                            <h2 class="text-lg font-black">Stats existantes</h2>
+                                            <p class="mt-1 text-sm font-bold text-camelia-muted">Une vue scannable pour les catalogues du serveur.</p>
+                                        </div>
+                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-leaf/15 px-3 text-xs font-black text-camelia-leaf">{{ catalog.stats|length }} entrées</span>
+                                    </div>
+                                    <div class="grid gap-4 p-6 sm:grid-cols-2">
+                                        {% for stat in catalog.stats %}
+                                            <article class="grid min-h-32 gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="stat-card">
+                                                <div class="flex items-center justify-between gap-3">
+                                                    <strong>{{ stat.name }}</strong>
+                                                    <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-leaf/15 px-3 text-xs font-black text-camelia-leaf">Stat</span>
+                                                </div>
+                                                <p class="text-sm font-semibold leading-relaxed text-camelia-muted">Disponible sur les fiches et futures distributions.</p>
+                                                <details class="group border-t border-camelia-ink/10 pt-3">
+                                                    <summary class="cursor-pointer text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Modifier</summary>
+                                                    <div class="mt-4 grid gap-4">
+                                                        <form method="post" action="{{ path('app_server_catalog_stat_update', { guildId: guild.id, statId: stat.id }) }}" class="grid gap-3">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                Nom
+                                                                <input name="name" value="{{ stat.name }}" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                            </label>
+                                                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                Enregistrer
+                                                            </button>
+                                                        </form>
+                                                        <form method="post" action="{{ path('app_server_catalog_stat_delete', { guildId: guild.id, statId: stat.id }) }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                Supprimer
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </details>
+                                            </article>
+                                        {% else %}
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-leaf/10 p-5 text-sm font-bold text-camelia-muted sm:col-span-2">Aucune stat pour l’instant. Ajoute la première caractéristique du serveur.</p>
+                                        {% endfor %}
+                                    </div>
+                                </section>
+                            </div>
+                        {% elseif active_section == 'elements' %}
+                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,24rem)_minmax(0,1fr)]">
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
+                                    <div class="border-b border-camelia-ink/10 p-6">
+                                        <h2 class="text-lg font-black">Ajouter un élément</h2>
+                                        <p class="mt-1 text-sm font-bold text-camelia-muted">L’emoji sera affiché dans les fiches Discord.</p>
+                                    </div>
+                                    <form method="post" action="{{ path('app_server_catalog_element_create', { guildId: guild.id }) }}" class="grid gap-5 p-6" data-controller="emoji-picker" data-emoji-picker-default-value="✨">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            Nom
+                                            <input name="name" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                        </label>
+                                        {{ ui.emoji_picker('unicode', '✨', emoji_picker, 'bg-camelia-blush') }}
+                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                            Ajouter l’élément
+                                        </button>
+                                    </form>
+                                </section>
+
+                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
+                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                                        <div>
+                                            <h2 class="text-lg font-black">Éléments existants</h2>
+                                            <p class="mt-1 text-sm font-bold text-camelia-muted">Une grille lisible pour les affinités du serveur.</p>
+                                        </div>
+                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-blush px-3 text-xs font-black text-camelia-rose">{{ catalog.elements|length }} entrées</span>
+                                    </div>
+                                    <div class="grid gap-4 p-6 sm:grid-cols-2 2xl:grid-cols-3">
+                                        {% for element in catalog.elements %}
+                                            <article class="grid min-h-32 gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="element-card">
+                                                <div class="flex items-center gap-3">
+                                                    <span class="flex size-12 shrink-0 items-center justify-center overflow-hidden bg-camelia-blush font-display text-lg font-black text-camelia-rose">
+                                                        {% if element.emoji_cdn_url %}
+                                                            <img src="{{ element.emoji_cdn_url }}" alt="Emoji de l’élément {{ element.name }}" class="size-full object-cover" loading="lazy">
+                                                        {% else %}
+                                                            {{ element.emoji_markup }}
+                                                        {% endif %}
+                                                    </span>
+                                                    <strong>{{ element.name }}</strong>
+                                                </div>
+                                                <p class="text-sm font-semibold leading-relaxed text-camelia-muted">{{ element.emoji_source_label }} · {{ element.emoji_markup }}</p>
+                                                <details class="group border-t border-camelia-ink/10 pt-3">
+                                                    <summary class="cursor-pointer text-sm font-black text-camelia-rose transition hover:text-camelia-ink">Modifier</summary>
+                                                    <div class="mt-4 grid gap-4">
+                                                        <form method="post" action="{{ path('app_server_catalog_element_update', { guildId: guild.id, elementId: element.id }) }}" class="grid gap-4" data-controller="emoji-picker" data-emoji-picker-default-value="{{ element.emoji_markup }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                                                Nom
+                                                                <input name="name" value="{{ element.name }}" required class="min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
+                                                            </label>
+                                                            {{ ui.emoji_picker(element.emoji_source, element.emoji_markup, emoji_picker, 'bg-camelia-blush') }}
+                                                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                Enregistrer
+                                                            </button>
+                                                        </form>
+                                                        <form method="post" action="{{ path('app_server_catalog_element_delete', { guildId: guild.id, elementId: element.id }) }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                                            <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-rose/30 bg-white px-5 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                                                Supprimer
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </details>
+                                            </article>
+                                        {% else %}
+                                            <p class="border border-dashed border-camelia-ink/20 bg-camelia-blush/50 p-5 text-sm font-bold text-camelia-muted sm:col-span-2 2xl:col-span-3">Aucun élément pour l’instant. Ajoute la première affinité du serveur.</p>
+                                        {% endfor %}
+                                    </div>
+                                </section>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                </fieldset>
+            </div>
         </div>
     </section>
 {% endblock %}

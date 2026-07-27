@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Controller;
 
 use Symfony\Bridge\Twig\ErrorRenderer\TwigErrorRenderer;
@@ -15,7 +17,7 @@ final class FrontErrorPageTest extends WebTestCase
         self::bootKernel(['debug' => false]);
 
         /** @var Environment $twig */
-        $twig = static::getContainer()->get('twig');
+        $twig = self::getContainer()->get('twig');
         $flattenException = (new TwigErrorRenderer($twig, debug: false))->render(new NotFoundHttpException());
         $crawler = new Crawler($flattenException->getAsString());
 
@@ -38,7 +40,7 @@ final class FrontErrorPageTest extends WebTestCase
         self::bootKernel();
 
         /** @var Environment $twig */
-        $twig = static::getContainer()->get('twig');
+        $twig = self::getContainer()->get('twig');
 
         if (!$twig->getLoader()->exists('@Twig/Exception/error.html.twig')) {
             self::fail('The generic backoffice error template must exist.');

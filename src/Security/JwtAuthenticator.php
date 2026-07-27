@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Security;
 
 use Firebase\JWT\JWT;
@@ -23,7 +25,7 @@ final class JwtAuthenticator extends AbstractAuthenticator implements Authentica
     ) {
     }
 
-    public function supports(Request $request): ?bool
+    public function supports(Request $request): bool
     {
         $authorizationHeader = $request->headers->get('Authorization');
 
@@ -64,7 +66,7 @@ final class JwtAuthenticator extends AbstractAuthenticator implements Authentica
         return null;
     }
 
-    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
+    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): Response
     {
         return $this->unauthorized();
     }

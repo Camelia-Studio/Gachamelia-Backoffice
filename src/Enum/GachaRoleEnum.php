@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Enum;
+declare(strict_types=1);
 
+namespace App\Enum;
 
 // Temp : Le temps de setup toute la DB
 use Random\RandomException;
@@ -11,9 +12,9 @@ enum GachaRoleEnum: string
     case PROTECTEUR_ADAMANT = "Protecteur d'Adamant";
     case GARDIEN_OBSIDIENNE = "Gardien d'Obsidienne";
     case COMETE_AUBE = "Comète de l'Aube";
-    case ECLIPSE_CREPUSCULE = "Éclipse du Crépuscule";
-    case ARCHIMAGE_CELESTE = "Archimage Céleste";
-    case LAME_STELLAIRE = "Lame Stellaire";
+    case ECLIPSE_CREPUSCULE = 'Éclipse du Crépuscule';
+    case ARCHIMAGE_CELESTE = 'Archimage Céleste';
+    case LAME_STELLAIRE = 'Lame Stellaire';
 
     /**
      * @throws RandomException
@@ -22,6 +23,6 @@ enum GachaRoleEnum: string
     {
         $cases = self::cases();
 
-        return $cases[random_int(0, count($cases) - 1)];
+        return $cases[random_int(0, \count($cases) - 1)];
     }
 }

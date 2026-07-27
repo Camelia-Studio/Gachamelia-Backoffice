@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Discord;
 
 interface DiscordApiClientInterface
@@ -15,9 +17,4 @@ interface DiscordApiClientInterface
      * @return list<array<string, mixed>>
      */
     public function fetchCurrentUserGuilds(string $accessToken): array;
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    public function fetchBotGuilds(): array;
 }

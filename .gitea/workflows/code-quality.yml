@@ -1,0 +1,144 @@
+name: CI
+
+on:
+    push:
+
+jobs:
+    tests:
+        name: Tests
+        runs-on: ubuntu-latest
+        container:
+            image: php:8.3-cli
+        services:
+            mysql:
+                image: mysql:8.0
+                env:
+                    MYSQL_DATABASE: gacham_test
+                    MYSQL_USER: gachamelia
+                    MYSQL_PASSWORD: gachamelia
+                    MYSQL_ROOT_PASSWORD: root
+                options: >-
+                    --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+                    --health-interval=5s
+                    --health-timeout=5s
+                    --health-retries=20
+        env:
+            DATABASE_URL: mysql://gachamelia:gachamelia@mysql:3306/gacham?serverVersion=8.0.32&charset=utf8mb4
+
+        steps:
+            - name: Install system dependencies
+              run: |
+                  apt-get update -qq
+                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
+                  docker-php-ext-install pdo_mysql pcntl zip
+
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Install Composer
+              run: |
+                  php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+                  php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+                  rm composer-setup.php
+
+            - name: Validate composer.json
+              run: composer validate --strict
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction
+            - uses: actions/setup-node@v7
+              with:
+                node-version: 22
+                package-manager-cache: false
+            -   run: npm ci
+            -   run: npm run build
+
+            - name: Prepare test database
+              run: php bin/console doctrine:migrations:migrate --env=test --no-interaction
+
+            - name: Run PHPUnit tests
+              run: php vendor/bin/phpunit --no-coverage
+
+    phpstan:
+        name: PHPStan
+        runs-on: ubuntu-latest
+        container:
+            image: php:8.3-cli
+
+        steps:
+            - name: Install system dependencies
+              run: |
+                  apt-get update -qq
+                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
+                  docker-php-ext-install zip
+
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Install Composer
+              run: |
+                  php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+                  php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+                  rm composer-setup.php
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction
+
+            - name: Run PHPStan
+              run: php vendor/bin/phpstan analyse --no-progress --memory-limit=512M
+
+    cs-fixer:
+        name: PHP-CS-Fixer
+        runs-on: ubuntu-latest
+        container:
+            image: php:8.3-cli
+
+        steps:
+            - name: Install system dependencies
+              run: |
+                  apt-get update -qq
+                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
+                  docker-php-ext-install zip
+
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Install Composer
+              run: |
+                  php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+                  php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+                  rm composer-setup.php
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction
+
+            - name: Check code style
+              run: php vendor/bin/php-cs-fixer check --diff --no-interaction
+
+    rector:
+        name: Rector
+        runs-on: ubuntu-latest
+        container:
+            image: php:8.3-cli
+
+        steps:
+            - name: Install system dependencies
+              run: |
+                  apt-get update -qq
+                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
+                  docker-php-ext-install zip
+
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Install Composer
+              run: |
+                  php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+                  php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+                  rm composer-setup.php
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress --no-interaction
+
+            - name: Run Rector (dry-run)
+              run: php vendor/bin/rector --dry-run --no-progress-bar
