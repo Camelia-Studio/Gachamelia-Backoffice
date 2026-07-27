@@ -30,7 +30,7 @@ jobs:
               run: |
                   apt-get update -qq
                   apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
-                  docker-php-ext-install pdo_mysql zip
+                  docker-php-ext-install pdo_mysql pcntl zip
 
             - name: Checkout repository
               uses: actions/checkout@v4
