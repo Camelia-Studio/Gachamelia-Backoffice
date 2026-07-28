@@ -13,7 +13,7 @@ use App\Entity\CatalogTemplate;
 use App\Entity\CatalogTemplateByeMessage;
 use App\Entity\CatalogTemplateElement;
 use App\Entity\CatalogTemplateRank;
-use App\Entity\CatalogTemplateRankStat;
+use App\Entity\CatalogTemplateRoleStat;
 use App\Entity\CatalogTemplateRole;
 use App\Entity\CatalogTemplateStat;
 use App\Entity\CatalogTemplateWelcomeMessage;
@@ -66,10 +66,10 @@ final class CatalogTemplateController extends AbstractController
             'catalog_key' => 'ranks',
             'icon' => 'R',
         ],
-        'rank-stats' => [
-            'label' => 'Stats de rang',
-            'description' => 'Les probabilités de caractéristiques associées à chaque rang.',
-            'catalog_key' => 'rank_stats',
+        'role-stats' => [
+            'label' => 'Stats de rôle',
+            'description' => 'Les probabilités de caractéristiques associées à chaque rôle.',
+            'catalog_key' => 'role_stats',
             'icon' => 'RS',
         ],
         'welcome-messages' => [
@@ -285,8 +285,8 @@ final class CatalogTemplateController extends AbstractController
         return $this->redirectToRoute('app_catalog_template_configuration_section', ['templateId' => $templateId, 'section' => 'ranks']);
     }
 
-    #[Route('/app/modeles-catalogue/{templateId}/catalogue/rank-stats', name: 'app_catalog_template_rank_stat_upsert', requirements: ['templateId' => '\d+'], methods: ['POST'])]
-    public function upsertRankStat(
+    #[Route('/app/modeles-catalogue/{templateId}/catalogue/role-stats', name: 'app_catalog_template_role_stat_upsert', requirements: ['templateId' => '\d+'], methods: ['POST'])]
+    public function upsertRoleStat(
         string $templateId,
         Request $request,
         BackofficeSession $backofficeSession,
@@ -294,45 +294,45 @@ final class CatalogTemplateController extends AbstractController
         EntityManagerInterface $entityManager,
     ): Response {
         $template = $this->editableTemplateOr403($templateId, $backofficeSession, $backofficeAccess, $entityManager);
-        $rankId = (int) $request->request->get('rank_id', 0);
+        $roleId = (int) $request->request->get('role_id', 0);
         $statId = (int) $request->request->get('stat_id', 0);
 
-        if ($rankId > 0 && $statId > 0) {
-            $rank = $this->templateRankOr404($entityManager, $template, $rankId);
+        if ($roleId > 0 && $statId > 0) {
+            $role = $this->templateRoleOr404($entityManager, $template, $roleId);
             $stat = $this->templateStatOr404($entityManager, $template, $statId);
-            $rankStat = $entityManager->getRepository(CatalogTemplateRankStat::class)->findOneBy(['rank' => $rank, 'stat' => $stat]);
-            if (!$rankStat instanceof CatalogTemplateRankStat) {
-                $rankStat = new CatalogTemplateRankStat($rank, $stat, $this->requestPercentage($request));
-                $entityManager->persist($rankStat);
+            $roleStat = $entityManager->getRepository(CatalogTemplateRoleStat::class)->findOneBy(['role' => $role, 'stat' => $stat]);
+            if (!$roleStat instanceof CatalogTemplateRoleStat) {
+                $roleStat = new CatalogTemplateRoleStat($role, $stat, $this->requestPercentage($request));
+                $entityManager->persist($roleStat);
             } else {
-                $rankStat->updatePercentage($this->requestPercentage($request));
+                $roleStat->updatePercentage($this->requestPercentage($request));
             }
 
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_catalog_template_configuration_section', ['templateId' => $templateId, 'section' => 'rank-stats']);
+        return $this->redirectToRoute('app_catalog_template_configuration_section', ['templateId' => $templateId, 'section' => 'role-stats']);
     }
 
-    #[Route('/app/modeles-catalogue/{templateId}/catalogue/rank-stats/{rankId}/{statId}/supprimer', name: 'app_catalog_template_rank_stat_delete', requirements: ['templateId' => '\d+', 'rankId' => '\d+', 'statId' => '\d+'], methods: ['POST'])]
-    public function deleteRankStat(
+    #[Route('/app/modeles-catalogue/{templateId}/catalogue/role-stats/{roleId}/{statId}/supprimer', name: 'app_catalog_template_role_stat_delete', requirements: ['templateId' => '\d+', 'roleId' => '\d+', 'statId' => '\d+'], methods: ['POST'])]
+    public function deleteRoleStat(
         string $templateId,
-        string $rankId,
+        string $roleId,
         string $statId,
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
     ): Response {
         $template = $this->editableTemplateOr403($templateId, $backofficeSession, $backofficeAccess, $entityManager);
-        $rank = $this->templateRankOr404($entityManager, $template, (int) $rankId);
+        $role = $this->templateRoleOr404($entityManager, $template, (int) $roleId);
         $stat = $this->templateStatOr404($entityManager, $template, (int) $statId);
-        $rankStat = $entityManager->getRepository(CatalogTemplateRankStat::class)->findOneBy(['rank' => $rank, 'stat' => $stat]);
-        if ($rankStat instanceof CatalogTemplateRankStat) {
-            $entityManager->remove($rankStat);
+        $roleStat = $entityManager->getRepository(CatalogTemplateRoleStat::class)->findOneBy(['role' => $role, 'stat' => $stat]);
+        if ($roleStat instanceof CatalogTemplateRoleStat) {
+            $entityManager->remove($roleStat);
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_catalog_template_configuration_section', ['templateId' => $templateId, 'section' => 'rank-stats']);
+        return $this->redirectToRoute('app_catalog_template_configuration_section', ['templateId' => $templateId, 'section' => 'role-stats']);
     }
 
     #[Route('/app/modeles-catalogue/{templateId}/catalogue/roles', name: 'app_catalog_template_role_create', requirements: ['templateId' => '\d+'], methods: ['POST'])]
@@ -926,13 +926,12 @@ final class CatalogTemplateController extends AbstractController
                     'percentage' => $rank->percentage(),
                     'bye_title' => $rank->byeTitle(),
                     'is_staff' => $rank->isStaff(),
-                    'rank_stats' => $this->templateRankStatsPayload($entityManager, $rank),
                     'welcome_messages' => $this->templateWelcomeMessagesPayload($entityManager, $template, $rank),
                     'bye_messages' => $this->templateByeMessagesPayload($entityManager, $template, $rank),
                 ],
                 $ranks,
             ),
-            'rank_stats' => $this->templateRankStatsListPayload($entityManager, $template),
+            'role_stats' => $this->templateRoleStatsListPayload($entityManager, $template),
             'welcome_messages' => $this->templateWelcomeMessagesListPayload($entityManager, $template),
             'bye_messages' => $this->templateByeMessagesListPayload($entityManager, $template),
             'roles' => array_map(
@@ -1003,53 +1002,38 @@ final class CatalogTemplateController extends AbstractController
     }
 
     /**
-     * @return list<array{stat_id: int, stat_name: string, percentage: int}>
+     * @return list<array{role_id: int, role_name: string, stat_id: int, stat_name: string, percentage: int}>
      */
-    private function templateRankStatsPayload(EntityManagerInterface $entityManager, CatalogTemplateRank $rank): array
+    private function templateRoleStatsListPayload(EntityManagerInterface $entityManager, CatalogTemplate $template): array
     {
         return array_map(
-            static fn (CatalogTemplateRankStat $rankStat): array => [
-                'stat_id' => (int) $rankStat->stat()->id(),
-                'stat_name' => $rankStat->stat()->name(),
-                'percentage' => $rankStat->percentage(),
+            static fn (CatalogTemplateRoleStat $roleStat): array => [
+                'role_id' => (int) $roleStat->role()->id(),
+                'role_name' => $roleStat->role()->name(),
+                'stat_id' => (int) $roleStat->stat()->id(),
+                'stat_name' => $roleStat->stat()->name(),
+                'percentage' => $roleStat->percentage(),
             ],
-            $entityManager->getRepository(CatalogTemplateRankStat::class)->findBy(['rank' => $rank], ['percentage' => 'ASC']),
+            $this->templateRoleStats($entityManager, $template),
         );
     }
 
     /**
-     * @return list<array{rank_id: int, rank_name: string, stat_id: int, stat_name: string, percentage: int}>
+     * @return list<CatalogTemplateRoleStat>
      */
-    private function templateRankStatsListPayload(EntityManagerInterface $entityManager, CatalogTemplate $template): array
-    {
-        return array_map(
-            static fn (CatalogTemplateRankStat $rankStat): array => [
-                'rank_id' => (int) $rankStat->rank()->id(),
-                'rank_name' => $rankStat->rank()->name(),
-                'stat_id' => (int) $rankStat->stat()->id(),
-                'stat_name' => $rankStat->stat()->name(),
-                'percentage' => $rankStat->percentage(),
-            ],
-            $this->templateRankStats($entityManager, $template),
-        );
-    }
-
-    /**
-     * @return list<CatalogTemplateRankStat>
-     */
-    private function templateRankStats(EntityManagerInterface $entityManager, CatalogTemplate $template): array
+    private function templateRoleStats(EntityManagerInterface $entityManager, CatalogTemplate $template): array
     {
         return $entityManager->createQueryBuilder()
-            ->select('rankStat')
-            ->from(CatalogTemplateRankStat::class, 'rankStat')
-            ->innerJoin('rankStat.rank', 'rankEntity')
-            ->innerJoin('rankStat.stat', 'statEntity')
-            ->andWhere('rankEntity.template = :template')
+            ->select('roleStat')
+            ->from(CatalogTemplateRoleStat::class, 'roleStat')
+            ->innerJoin('roleStat.role', 'roleEntity')
+            ->innerJoin('roleStat.stat', 'statEntity')
+            ->andWhere('roleEntity.template = :template')
             ->andWhere('statEntity.template = :template')
             ->setParameter('template', $template)
-            ->orderBy('rankEntity.percentage', 'ASC')
-            ->addOrderBy('rankEntity.name', 'ASC')
-            ->addOrderBy('rankStat.percentage', 'ASC')
+            ->orderBy('roleEntity.percentage', 'ASC')
+            ->addOrderBy('roleEntity.name', 'ASC')
+            ->addOrderBy('roleStat.percentage', 'ASC')
             ->getQuery()
             ->getResult();
     }

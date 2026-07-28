@@ -14,7 +14,7 @@ use App\Entity\CatalogTemplate;
 use App\Entity\CatalogTemplateByeMessage;
 use App\Entity\CatalogTemplateElement;
 use App\Entity\CatalogTemplateRank;
-use App\Entity\CatalogTemplateRankStat;
+use App\Entity\CatalogTemplateRoleStat;
 use App\Entity\CatalogTemplateRole;
 use App\Entity\CatalogTemplateStat;
 use App\Entity\CatalogTemplateWelcomeMessage;
@@ -22,7 +22,7 @@ use App\Entity\CharacterRole;
 use App\Entity\DiscordServer;
 use App\Entity\Element;
 use App\Entity\Rank;
-use App\Entity\RankStat;
+use App\Entity\RoleStat;
 use App\Entity\Stat;
 use App\Entity\WelcomeMessage;
 use App\Tests\Support\DatabaseResetter;
@@ -54,13 +54,13 @@ final class CatalogCsvImportServiceTest extends KernelTestCase
         $novice = new Rank($server, 'discord-novice', 'Novice', 60);
         $staff = new Rank($server, 'discord-staff', 'Staff', 40, staff: true);
         $force = new Stat($server, 'Force');
+        $guerrier = new CharacterRole($server, 'Guerrier', 100, emojiUnicode: '⚔️');
         $this->entityManager->persist($server);
         foreach ([$novice, $staff, $force] as $entity) {
             $this->entityManager->persist($entity);
         }
-        $this->entityManager->persist(new RankStat($novice, $force, 100));
-        $this->entityManager->persist(new RankStat($staff, $force, 100));
-        $this->entityManager->persist(new CharacterRole($server, 'Guerrier', 100, emojiUnicode: '⚔️'));
+        $this->entityManager->persist(new RoleStat($guerrier, $force, 100));
+        $this->entityManager->persist($guerrier);
         $this->entityManager->persist(new Element($server, 'Feu', emojiUnicode: '🔥'));
         $this->entityManager->persist(new WelcomeMessage($server, $novice, 'Bienvenue.'));
         $this->entityManager->flush();
@@ -87,14 +87,14 @@ final class CatalogCsvImportServiceTest extends KernelTestCase
             ['nom' => ' force '],
             ['nom' => 'Agilité'],
         ]);
-        $this->apply($server, CatalogCsvSection::RankStats, [
-            ['rang' => 'Novice', 'stat' => 'Force', 'pourcentage' => 50],
-            ['rang' => 'Novice', 'stat' => 'Agilité', 'pourcentage' => 50],
-            ['rang' => 'Gardien', 'stat' => 'Force', 'pourcentage' => 100],
-        ]);
         $this->apply($server, CatalogCsvSection::Roles, [
             ['nom' => 'Guerrier', 'pourcentage' => 70, 'emoji' => '🗡️'],
             ['nom' => 'Oracle', 'pourcentage' => 30, 'emoji' => '🔮'],
+        ]);
+        $this->apply($server, CatalogCsvSection::RoleStats, [
+            ['role' => 'Guerrier', 'stat' => 'Force', 'pourcentage' => 50],
+            ['role' => 'Guerrier', 'stat' => 'Agilité', 'pourcentage' => 50],
+            ['role' => 'Oracle', 'stat' => 'Force', 'pourcentage' => 100],
         ]);
         $this->apply($server, CatalogCsvSection::Elements, [
             ['nom' => 'Feu', 'emoji' => null],
@@ -113,7 +113,7 @@ final class CatalogCsvImportServiceTest extends KernelTestCase
         self::assertSame('discord-novice', $this->connection()->fetchOne('SELECT discord_id FROM ranks WHERE server_id = ? AND name = ?', [$server->id(), 'novice']));
         self::assertSame('discord-gardien', $this->connection()->fetchOne('SELECT discord_id FROM ranks WHERE server_id = ? AND name = ?', [$server->id(), 'Gardien']));
         self::assertSame(2, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM stats WHERE server_id = ?', [$server->id()]));
-        self::assertSame(4, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM rank_stats WHERE server_id = ?', [$server->id()]));
+        self::assertSame(3, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM role_stats WHERE server_id = ?', [$server->id()]));
         self::assertSame(2, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM roles WHERE server_id = ?', [$server->id()]));
         self::assertSame(2, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM elements WHERE server_id = ?', [$server->id()]));
         self::assertSame(Element::DEFAULT_EMOJI, $this->connection()->fetchOne('SELECT emoji_unicode FROM elements WHERE server_id = ? AND name = ?', [$server->id(), 'Feu']));
@@ -126,11 +126,12 @@ final class CatalogCsvImportServiceTest extends KernelTestCase
         $template = new CatalogTemplate('Starter');
         $novice = new CatalogTemplateRank($template, 'novice-key', 'Novice', 100);
         $force = new CatalogTemplateStat($template, 'Force');
+        $guerrier = new CatalogTemplateRole($template, 'Guerrier', 100, emojiUnicode: '⚔️');
         $this->entityManager->persist($template);
         $this->entityManager->persist($novice);
         $this->entityManager->persist($force);
-        $this->entityManager->persist(new CatalogTemplateRankStat($novice, $force, 100));
-        $this->entityManager->persist(new CatalogTemplateRole($template, 'Guerrier', 100, emojiUnicode: '⚔️'));
+        $this->entityManager->persist(new CatalogTemplateRoleStat($guerrier, $force, 100));
+        $this->entityManager->persist($guerrier);
         $this->entityManager->persist(new CatalogTemplateElement($template, 'Feu', emojiUnicode: '🔥'));
         $this->entityManager->persist(new CatalogTemplateWelcomeMessage($template, $novice, 'Bienvenue.'));
         $this->entityManager->persist(new CatalogTemplateByeMessage($template, $novice, 'À bientôt.'));
@@ -144,12 +145,12 @@ final class CatalogCsvImportServiceTest extends KernelTestCase
             ['nom' => 'Force'],
             ['nom' => 'Agilité'],
         ]);
-        $this->apply($template, CatalogCsvSection::RankStats, [
-            ['rang' => 'Gardien céleste', 'stat' => 'Force', 'pourcentage' => 100],
-        ]);
         $this->apply($template, CatalogCsvSection::Roles, [
             ['nom' => 'Guerrier', 'pourcentage' => 60, 'emoji' => '🗡️'],
             ['nom' => 'Oracle', 'pourcentage' => 40, 'emoji' => '🔮'],
+        ]);
+        $this->apply($template, CatalogCsvSection::RoleStats, [
+            ['role' => 'Oracle', 'stat' => 'Force', 'pourcentage' => 100],
         ]);
         $this->apply($template, CatalogCsvSection::Elements, [
             ['nom' => 'Feu', 'emoji' => '🔥'],
@@ -195,11 +196,11 @@ final class CatalogCsvImportServiceTest extends KernelTestCase
         self::assertFalse($invalidTotal->valid());
         self::assertSame('invalid_role_percentage_total', $invalidTotal->errors()[0]['message']);
 
-        $missingReference = $this->service->preview($server, CatalogCsvSection::RankStats, $this->document(CatalogCsvSection::RankStats, [
-            ['rang' => 'Externe', 'stat' => 'Externe', 'pourcentage' => 100],
+        $missingReference = $this->service->preview($server, CatalogCsvSection::RoleStats, $this->document(CatalogCsvSection::RoleStats, [
+            ['role' => 'Externe', 'stat' => 'Externe', 'pourcentage' => 100],
         ]));
         self::assertFalse($missingReference->valid());
-        self::assertSame('rank_not_found', $missingReference->errors()[0]['message']);
+        self::assertSame('role_not_found', $missingReference->errors()[0]['message']);
 
         $ranks = $this->document(CatalogCsvSection::Ranks, [
             ['nom' => 'Novice', 'pourcentage' => 50, 'titre_depart' => null, 'est_staff' => false],

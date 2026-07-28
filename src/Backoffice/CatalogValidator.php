@@ -9,7 +9,7 @@ use App\Entity\CatalogTemplate;
 use App\Entity\CatalogTemplateByeMessage;
 use App\Entity\CatalogTemplateElement;
 use App\Entity\CatalogTemplateRank;
-use App\Entity\CatalogTemplateRankStat;
+use App\Entity\CatalogTemplateRoleStat;
 use App\Entity\CatalogTemplateRole;
 use App\Entity\CatalogTemplateStat;
 use App\Entity\CatalogTemplateWelcomeMessage;
@@ -17,7 +17,7 @@ use App\Entity\CharacterRole;
 use App\Entity\DiscordServer;
 use App\Entity\Element;
 use App\Entity\Rank;
-use App\Entity\RankStat;
+use App\Entity\RoleStat;
 use App\Entity\Stat;
 use App\Entity\WelcomeMessage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -32,7 +32,7 @@ final readonly class CatalogValidator
     {
         $ranks = $this->entityManager->getRepository(Rank::class)->findBy(['server' => $server]);
         $roles = $this->entityManager->getRepository(CharacterRole::class)->findBy(['server' => $server]);
-        $rankStats = $this->entityManager->getRepository(RankStat::class)->findBy(['server' => $server]);
+        $roleStats = $this->entityManager->getRepository(RoleStat::class)->findBy(['server' => $server]);
         $nonStaffRanks = array_filter($ranks, static fn (Rank $rank): bool => !$rank->isStaff());
         $staffCount = \count($ranks) - \count($nonStaffRanks);
 
@@ -43,7 +43,7 @@ final readonly class CatalogValidator
             array_sum(array_map(static fn (CharacterRole $role): int => $role->percentage(), $roles)),
             $this->entityManager->getRepository(Element::class)->count(['server' => $server]),
             $staffCount,
-            $this->hasInvalidServerRankStatTotal($ranks, $rankStats),
+            $this->hasInvalidServerRoleStatTotal($roles, $roleStats),
         );
 
         $warnings = [];
@@ -73,7 +73,7 @@ final readonly class CatalogValidator
     {
         $ranks = $this->entityManager->getRepository(CatalogTemplateRank::class)->findBy(['template' => $template]);
         $roles = $this->entityManager->getRepository(CatalogTemplateRole::class)->findBy(['template' => $template]);
-        $rankStats = $this->entityManager->getRepository(CatalogTemplateRankStat::class)->findBy(['template' => $template]);
+        $roleStats = $this->entityManager->getRepository(CatalogTemplateRoleStat::class)->findBy(['template' => $template]);
         $nonStaffRanks = array_filter($ranks, static fn (CatalogTemplateRank $rank): bool => !$rank->isStaff());
         $staffCount = \count($ranks) - \count($nonStaffRanks);
 
@@ -84,7 +84,7 @@ final readonly class CatalogValidator
             array_sum(array_map(static fn (CatalogTemplateRole $role): int => $role->percentage(), $roles)),
             $this->entityManager->getRepository(CatalogTemplateElement::class)->count(['template' => $template]),
             $staffCount,
-            $this->hasInvalidTemplateRankStatTotal($ranks, $rankStats),
+            $this->hasInvalidTemplateRoleStatTotal($roles, $roleStats),
         );
 
         $warnings = [];
@@ -111,7 +111,7 @@ final readonly class CatalogValidator
         int $roleWeight,
         int $elementCount,
         int $staffCount,
-        bool $invalidRankStatTotal,
+        bool $invalidRoleStatTotal,
     ): array {
         $errors = [];
         if (0 === $nonStaffRankCount) {
@@ -129,8 +129,8 @@ final readonly class CatalogValidator
         if ($roleCount > 0 && 100 !== $roleWeight) {
             $errors[] = 'invalid_role_percentage_total';
         }
-        if ($invalidRankStatTotal) {
-            $errors[] = 'invalid_rank_stat_percentage_total';
+        if ($invalidRoleStatTotal) {
+            $errors[] = 'invalid_role_stat_percentage_total';
         }
         if ($staffCount > 1) {
             $errors[] = 'multiple_staff_ranks';
@@ -140,21 +140,21 @@ final readonly class CatalogValidator
     }
 
     /**
-     * @param list<Rank>     $ranks
-     * @param list<RankStat> $rankStats
+     * @param list<CharacterRole> $roles
+     * @param list<RoleStat>      $roleStats
      */
-    private function hasInvalidServerRankStatTotal(array $ranks, array $rankStats): bool
+    private function hasInvalidServerRoleStatTotal(array $roles, array $roleStats): bool
     {
         $totals = [];
-        foreach ($rankStats as $rankStat) {
-            $rankId = $rankStat->rank()->id();
-            if (null !== $rankId) {
-                $totals[$rankId] = ($totals[$rankId] ?? 0) + $rankStat->percentage();
+        foreach ($roleStats as $roleStat) {
+            $roleId = $roleStat->role()->id();
+            if (null !== $roleId) {
+                $totals[$roleId] = ($totals[$roleId] ?? 0) + $roleStat->percentage();
             }
         }
-        foreach ($ranks as $rank) {
-            $rankId = $rank->id();
-            if (null === $rankId || 100 !== ($totals[$rankId] ?? 0)) {
+        foreach ($roles as $role) {
+            $roleId = $role->id();
+            if (null === $roleId || 100 !== ($totals[$roleId] ?? 0)) {
                 return true;
             }
         }
@@ -163,21 +163,21 @@ final readonly class CatalogValidator
     }
 
     /**
-     * @param list<CatalogTemplateRank>     $ranks
-     * @param list<CatalogTemplateRankStat> $rankStats
+     * @param list<CatalogTemplateRole>     $roles
+     * @param list<CatalogTemplateRoleStat> $roleStats
      */
-    private function hasInvalidTemplateRankStatTotal(array $ranks, array $rankStats): bool
+    private function hasInvalidTemplateRoleStatTotal(array $roles, array $roleStats): bool
     {
         $totals = [];
-        foreach ($rankStats as $rankStat) {
-            $rankId = $rankStat->rank()->id();
-            if (null !== $rankId) {
-                $totals[$rankId] = ($totals[$rankId] ?? 0) + $rankStat->percentage();
+        foreach ($roleStats as $roleStat) {
+            $roleId = $roleStat->role()->id();
+            if (null !== $roleId) {
+                $totals[$roleId] = ($totals[$roleId] ?? 0) + $roleStat->percentage();
             }
         }
-        foreach ($ranks as $rank) {
-            $rankId = $rank->id();
-            if (null === $rankId || 100 !== ($totals[$rankId] ?? 0)) {
+        foreach ($roles as $role) {
+            $roleId = $role->id();
+            if (null === $roleId || 100 !== ($totals[$roleId] ?? 0)) {
                 return true;
             }
         }

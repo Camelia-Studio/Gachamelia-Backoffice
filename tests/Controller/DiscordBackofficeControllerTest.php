@@ -226,7 +226,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('[data-testid="configuration-overview-card-roles"] a[href="/app/serveurs/admin/configuration/roles"]');
         self::assertSelectorExists('[data-testid="configuration-overview-card-stats"] a[href="/app/serveurs/admin/configuration/stats"]');
         self::assertSelectorExists('[data-testid="configuration-overview-card-elements"] a[href="/app/serveurs/admin/configuration/elements"]');
-        self::assertSelectorExists('[data-testid="configuration-overview-card-rank-stats"] a[href="/app/serveurs/admin/configuration/rank-stats"]');
+        self::assertSelectorExists('[data-testid="configuration-overview-card-role-stats"] a[href="/app/serveurs/admin/configuration/role-stats"]');
         self::assertSelectorExists('[data-testid="configuration-overview-card-welcome-messages"] a[href="/app/serveurs/admin/configuration/welcome-messages"]');
         self::assertSelectorExists('[data-testid="configuration-overview-card-bye-messages"] a[href="/app/serveurs/admin/configuration/bye-messages"]');
 
@@ -341,7 +341,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('[data-testid="configuration-nav-roles"][href="/app/serveurs/admin/configuration/roles"]');
         self::assertSelectorExists('[data-testid="configuration-nav-stats"][href="/app/serveurs/admin/configuration/stats"]');
         self::assertSelectorExists('[data-testid="configuration-nav-elements"][href="/app/serveurs/admin/configuration/elements"]');
-        self::assertSelectorExists('[data-testid="configuration-nav-rank-stats"][href="/app/serveurs/admin/configuration/rank-stats"]');
+        self::assertSelectorExists('[data-testid="configuration-nav-role-stats"][href="/app/serveurs/admin/configuration/role-stats"]');
         self::assertSelectorExists('[data-testid="configuration-nav-welcome-messages"][href="/app/serveurs/admin/configuration/welcome-messages"]');
         self::assertSelectorExists('[data-testid="configuration-nav-bye-messages"][href="/app/serveurs/admin/configuration/bye-messages"]');
         self::assertSelectorExists('[data-testid="catalog-create-panel"]');
@@ -462,7 +462,29 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             'created_at' => '2026-07-06 10:00:00',
             'updated_at' => '2026-07-06 10:00:00',
         ]);
-        $otherRankId = (int) $this->connection()->lastInsertId();
+        $this->connection()->insert('roles', [
+            'server_id' => $adminServerId,
+            'name' => 'Guerrier',
+            'percentage' => 100,
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '⚔️',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
+        ]);
+        $roleId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('roles', [
+            'server_id' => $otherServerId,
+            'name' => 'Rôle externe',
+            'percentage' => 100,
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '🌒',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
+        ]);
+        $otherRoleId = (int) $this->connection()->lastInsertId();
 
         $this->connection()->insert('stats', [
             'server_id' => $adminServerId,
@@ -476,15 +498,15 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         ]);
         $otherStatId = (int) $this->connection()->lastInsertId();
 
-        $this->connection()->insert('rank_stats', [
+        $this->connection()->insert('role_stats', [
             'server_id' => $adminServerId,
-            'rank_id' => $rankId,
+            'role_id' => $roleId,
             'stat_id' => $statId,
             'percentage' => 70,
         ]);
-        $this->connection()->insert('rank_stats', [
+        $this->connection()->insert('role_stats', [
             'server_id' => $otherServerId,
-            'rank_id' => $otherRankId,
+            'role_id' => $otherRoleId,
             'stat_id' => $otherStatId,
             'percentage' => 99,
         ]);
@@ -503,14 +525,14 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         ]);
         $byeMessageId = (int) $this->connection()->lastInsertId();
 
-        $client->request('GET', '/app/serveurs/admin/configuration/rank-stats');
+        $client->request('GET', '/app/serveurs/admin/configuration/role-stats');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('[data-testid="configuration-nav-rank-stats"][aria-current="page"]');
-        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Novice');
+        self::assertSelectorExists('[data-testid="configuration-nav-role-stats"][aria-current="page"]');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Guerrier');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Force');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', '70%');
-        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Rang externe');
+        self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Rôle externe');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Stat externe');
 
         $client->request('GET', '/app/serveurs/admin/configuration/welcome-messages');
@@ -862,7 +884,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSame(1, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM elements WHERE server_id = ?', [$otherServerId]));
     }
 
-    public function testAdministratorCanManageRankStatsAndMessages(): void
+    public function testAdministratorCanManageRoleStatsAndMessages(): void
     {
         $client = self::createClient();
         $this->resetDatabase();
@@ -882,36 +904,48 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         ]);
         $rankId = (int) $this->connection()->lastInsertId();
 
+        $this->connection()->insert('roles', [
+            'server_id' => $adminServerId,
+            'name' => 'Guerrier',
+            'percentage' => 100,
+            'emoji_source' => 'unicode',
+            'emoji_unicode' => '⚔️',
+            'emoji_id' => null,
+            'emoji_name' => null,
+            'emoji_animated' => 0,
+        ]);
+        $roleId = (int) $this->connection()->lastInsertId();
+
         $this->connection()->insert('stats', [
             'server_id' => $adminServerId,
             'name' => 'Force',
         ]);
         $statId = (int) $this->connection()->lastInsertId();
 
-        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats', [
+        $this->post($client, '/app/serveurs/admin/catalogue/roles/'.$roleId.'/stats', [
             'stat_id' => (string) $statId,
             'percentage' => '80',
         ]);
 
-        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/role-stats');
         self::assertSame(80, (int) $this->connection()->fetchOne(
-            'SELECT percentage FROM rank_stats WHERE rank_id = ? AND stat_id = ?',
-            [$rankId, $statId],
+            'SELECT percentage FROM role_stats WHERE role_id = ? AND stat_id = ?',
+            [$roleId, $statId],
         ));
 
-        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats', [
+        $this->post($client, '/app/serveurs/admin/catalogue/roles/'.$roleId.'/stats', [
             'stat_id' => (string) $statId,
             'percentage' => '25',
         ]);
 
-        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/role-stats');
         self::assertSame(1, (int) $this->connection()->fetchOne(
-            'SELECT COUNT(*) FROM rank_stats WHERE rank_id = ? AND stat_id = ?',
-            [$rankId, $statId],
+            'SELECT COUNT(*) FROM role_stats WHERE role_id = ? AND stat_id = ?',
+            [$roleId, $statId],
         ));
         self::assertSame(25, (int) $this->connection()->fetchOne(
-            'SELECT percentage FROM rank_stats WHERE rank_id = ? AND stat_id = ?',
-            [$rankId, $statId],
+            'SELECT percentage FROM role_stats WHERE role_id = ? AND stat_id = ?',
+            [$roleId, $statId],
         ));
 
         $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/welcome-messages', [
@@ -930,9 +964,9 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $byeMessageId = (int) $this->connection()->fetchOne('SELECT id FROM bye_messages WHERE rank_id = ?', [$rankId]);
         self::assertSame('À la prochaine.', $this->connection()->fetchOne('SELECT message FROM bye_messages WHERE id = ?', [$byeMessageId]));
 
-        $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/stats/'.$statId.'/supprimer');
-        self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');
-        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM rank_stats WHERE rank_id = ?', [$rankId]));
+        $this->post($client, '/app/serveurs/admin/catalogue/roles/'.$roleId.'/stats/'.$statId.'/supprimer');
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/role-stats');
+        self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM role_stats WHERE role_id = ?', [$roleId]));
 
         $this->post($client, '/app/serveurs/admin/catalogue/ranks/'.$rankId.'/welcome-messages/'.$welcomeMessageId.'/supprimer');
         self::assertResponseRedirects('/app/serveurs/admin/configuration/ranks');

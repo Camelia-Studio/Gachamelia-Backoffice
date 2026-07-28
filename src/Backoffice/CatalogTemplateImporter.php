@@ -9,7 +9,7 @@ use App\Entity\CatalogTemplate;
 use App\Entity\CatalogTemplateByeMessage;
 use App\Entity\CatalogTemplateElement;
 use App\Entity\CatalogTemplateRank;
-use App\Entity\CatalogTemplateRankStat;
+use App\Entity\CatalogTemplateRoleStat;
 use App\Entity\CatalogTemplateRole;
 use App\Entity\CatalogTemplateStat;
 use App\Entity\CatalogTemplateWelcomeMessage;
@@ -17,7 +17,7 @@ use App\Entity\CharacterRole;
 use App\Entity\DiscordServer;
 use App\Entity\Element;
 use App\Entity\Rank;
-use App\Entity\RankStat;
+use App\Entity\RoleStat;
 use App\Entity\Stat;
 use App\Entity\WelcomeMessage;
 use Doctrine\DBAL\Connection;
@@ -95,8 +95,9 @@ final readonly class CatalogTemplateImporter
                 $rankMap[$templateRank->id()] = $rank;
             }
 
+            $roleMap = [];
             foreach ($this->templateRoles($template) as $templateRole) {
-                $this->entityManager->persist(new CharacterRole(
+                $role = new CharacterRole(
                     $server,
                     $templateRole->name(),
                     $templateRole->percentage(),
@@ -105,7 +106,9 @@ final readonly class CatalogTemplateImporter
                     $templateRole->emojiId(),
                     $templateRole->emojiName(),
                     $templateRole->emojiAnimated(),
-                ));
+                );
+                $this->entityManager->persist($role);
+                $roleMap[$templateRole->id()] = $role;
             }
 
             $statMap = [];
@@ -127,11 +130,11 @@ final readonly class CatalogTemplateImporter
                 ));
             }
 
-            foreach ($this->templateRankStats($template) as $templateRankStat) {
-                $rank = $rankMap[$templateRankStat->rank()->id()] ?? null;
-                $stat = $statMap[$templateRankStat->stat()->id()] ?? null;
-                if ($rank instanceof Rank && $stat instanceof Stat) {
-                    $this->entityManager->persist(new RankStat($rank, $stat, $templateRankStat->percentage()));
+            foreach ($this->templateRoleStats($template) as $templateRoleStat) {
+                $role = $roleMap[$templateRoleStat->role()->id()] ?? null;
+                $stat = $statMap[$templateRoleStat->stat()->id()] ?? null;
+                if ($role instanceof CharacterRole && $stat instanceof Stat) {
+                    $this->entityManager->persist(new RoleStat($role, $stat, $templateRoleStat->percentage()));
                 }
             }
 
@@ -164,7 +167,7 @@ final readonly class CatalogTemplateImporter
 
         foreach ([
             'ranks',
-            'rank_stats',
+            'role_stats',
             'welcome_messages',
             'bye_messages',
             'roles',
@@ -179,7 +182,7 @@ final readonly class CatalogTemplateImporter
 
         foreach ([
             'catalog_template_ranks',
-            'catalog_template_rank_stats',
+            'catalog_template_role_stats',
             'catalog_template_welcome_messages',
             'catalog_template_bye_messages',
             'catalog_template_roles',
@@ -200,8 +203,8 @@ final readonly class CatalogTemplateImporter
 
     /**
      * @return array{
-     *     current: array{ranks: int, rank_stats: int, welcome_messages: int, bye_messages: int, roles: int, stats: int, elements: int, total: int},
-     *     incoming: array{ranks: int, rank_stats: int, welcome_messages: int, bye_messages: int, roles: int, stats: int, elements: int, total: int},
+     *     current: array{ranks: int, role_stats: int, welcome_messages: int, bye_messages: int, roles: int, stats: int, elements: int, total: int},
+     *     incoming: array{ranks: int, role_stats: int, welcome_messages: int, bye_messages: int, roles: int, stats: int, elements: int, total: int},
      *     affected_user_count: int,
      *     validation: array{ready: bool, errors: list<string>, warnings: list<string>},
      *     fingerprint: string
@@ -217,7 +220,7 @@ final readonly class CatalogTemplateImporter
 
         $current = [
             'ranks' => $this->tableCount('ranks', 'server_id', $serverId),
-            'rank_stats' => (int) $this->connection->fetchOne('SELECT COUNT(*) FROM rank_stats rs INNER JOIN ranks r ON r.id = rs.rank_id WHERE r.server_id = ?', [$serverId]),
+            'role_stats' => (int) $this->connection->fetchOne('SELECT COUNT(*) FROM role_stats rs INNER JOIN roles r ON r.id = rs.role_id WHERE r.server_id = ?', [$serverId]),
             'welcome_messages' => $this->tableCount('welcome_messages', 'server_id', $serverId),
             'bye_messages' => $this->tableCount('bye_messages', 'server_id', $serverId),
             'roles' => $this->tableCount('roles', 'server_id', $serverId),
@@ -226,7 +229,7 @@ final readonly class CatalogTemplateImporter
         ];
         $incoming = [
             'ranks' => $this->tableCount('catalog_template_ranks', 'template_id', $templateId),
-            'rank_stats' => (int) $this->connection->fetchOne('SELECT COUNT(*) FROM catalog_template_rank_stats rs INNER JOIN catalog_template_ranks r ON r.id = rs.rank_id WHERE r.template_id = ?', [$templateId]),
+            'role_stats' => (int) $this->connection->fetchOne('SELECT COUNT(*) FROM catalog_template_role_stats rs INNER JOIN catalog_template_roles r ON r.id = rs.role_id WHERE r.template_id = ?', [$templateId]),
             'welcome_messages' => $this->tableCount('catalog_template_welcome_messages', 'template_id', $templateId),
             'bye_messages' => $this->tableCount('catalog_template_bye_messages', 'template_id', $templateId),
             'roles' => $this->tableCount('catalog_template_roles', 'template_id', $templateId),
@@ -278,7 +281,7 @@ final readonly class CatalogTemplateImporter
         $state = [
             'server' => [
                 'ranks' => $this->tableRows('ranks', 'server_id', $serverId, 'id'),
-                'rank_stats' => $this->tableRows('rank_stats', 'server_id', $serverId, 'rank_id, stat_id'),
+                'role_stats' => $this->tableRows('role_stats', 'server_id', $serverId, 'role_id, stat_id'),
                 'welcome_messages' => $this->tableRows('welcome_messages', 'server_id', $serverId, 'id'),
                 'bye_messages' => $this->tableRows('bye_messages', 'server_id', $serverId, 'id'),
                 'roles' => $this->tableRows('roles', 'server_id', $serverId, 'id'),
@@ -294,7 +297,7 @@ final readonly class CatalogTemplateImporter
                     [$templateId],
                 ),
                 'ranks' => $this->tableRows('catalog_template_ranks', 'template_id', $templateId, 'id'),
-                'rank_stats' => $this->tableRows('catalog_template_rank_stats', 'template_id', $templateId, 'rank_id, stat_id'),
+                'role_stats' => $this->tableRows('catalog_template_role_stats', 'template_id', $templateId, 'role_id, stat_id'),
                 'welcome_messages' => $this->tableRows('catalog_template_welcome_messages', 'template_id', $templateId, 'id'),
                 'bye_messages' => $this->tableRows('catalog_template_bye_messages', 'template_id', $templateId, 'id'),
                 'roles' => $this->tableRows('catalog_template_roles', 'template_id', $templateId, 'id'),
@@ -329,7 +332,7 @@ final readonly class CatalogTemplateImporter
         $this->connection->executeStatement('DELETE FROM user_stats WHERE stat_id IN (SELECT id FROM stats WHERE server_id = ?)', [$serverId]);
         $this->connection->delete('bye_messages', ['server_id' => $serverId]);
         $this->connection->delete('welcome_messages', ['server_id' => $serverId]);
-        $this->connection->executeStatement('DELETE FROM rank_stats WHERE rank_id IN (SELECT id FROM ranks WHERE server_id = ?) OR stat_id IN (SELECT id FROM stats WHERE server_id = ?)', [$serverId, $serverId]);
+        $this->connection->executeStatement('DELETE FROM role_stats WHERE role_id IN (SELECT id FROM roles WHERE server_id = ?) OR stat_id IN (SELECT id FROM stats WHERE server_id = ?)', [$serverId, $serverId]);
         $this->connection->delete('ranks', ['server_id' => $serverId]);
         $this->connection->delete('roles', ['server_id' => $serverId]);
         $this->connection->delete('elements', ['server_id' => $serverId]);
@@ -377,15 +380,15 @@ final readonly class CatalogTemplateImporter
     }
 
     /**
-     * @return list<CatalogTemplateRankStat>
+     * @return list<CatalogTemplateRoleStat>
      */
-    private function templateRankStats(CatalogTemplate $template): array
+    private function templateRoleStats(CatalogTemplate $template): array
     {
         return $this->entityManager->createQueryBuilder()
-            ->select('rankStat')
-            ->from(CatalogTemplateRankStat::class, 'rankStat')
-            ->innerJoin('rankStat.rank', 'rank')
-            ->andWhere('rank.template = :template')
+            ->select('roleStat')
+            ->from(CatalogTemplateRoleStat::class, 'roleStat')
+            ->innerJoin('roleStat.role', 'role')
+            ->andWhere('role.template = :template')
             ->setParameter('template', $template)
             ->getQuery()
             ->getResult();

@@ -10,7 +10,7 @@ use App\Entity\CatalogTemplate;
 use App\Entity\CatalogTemplateByeMessage;
 use App\Entity\CatalogTemplateElement;
 use App\Entity\CatalogTemplateRank;
-use App\Entity\CatalogTemplateRankStat;
+use App\Entity\CatalogTemplateRoleStat;
 use App\Entity\CatalogTemplateRole;
 use App\Entity\CatalogTemplateStat;
 use App\Entity\CatalogTemplateWelcomeMessage;
@@ -57,7 +57,7 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $this->entityManager->persist($stat);
         $this->entityManager->persist($role);
         $this->entityManager->persist($element);
-        $this->entityManager->persist(new CatalogTemplateRankStat($rank, $stat, 100));
+        $this->entityManager->persist(new CatalogTemplateRoleStat($role, $stat, 100));
         $this->entityManager->persist(new CatalogTemplateWelcomeMessage($template, $rank, 'Bienvenue, {user}.'));
         $this->entityManager->persist(new CatalogTemplateByeMessage($template, $rank, 'Au revoir, {user}.'));
         $this->entityManager->flush();
@@ -81,7 +81,7 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         self::assertSame('Gardien', $this->connection()->fetchOne('SELECT name FROM roles WHERE server_id = ?', [$server->id()]));
         self::assertSame('Éther', $this->connection()->fetchOne('SELECT name FROM stats WHERE server_id = ?', [$server->id()]));
         self::assertSame('Ambre', $this->connection()->fetchOne('SELECT name FROM elements WHERE server_id = ?', [$server->id()]));
-        self::assertSame(100, (int) $this->connection()->fetchOne('SELECT percentage FROM rank_stats'));
+        self::assertSame(100, (int) $this->connection()->fetchOne('SELECT percentage FROM role_stats'));
         self::assertSame('Bienvenue, {user}.', $this->connection()->fetchOne('SELECT message FROM welcome_messages'));
         self::assertSame('Au revoir, {user}.', $this->connection()->fetchOne('SELECT message FROM bye_messages'));
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM ranks WHERE name = ?', ['Ancien rang']));
@@ -95,12 +95,13 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $template->publish();
         $rank = new CatalogTemplateRank($template, 'Comète', 'Comète de l’Aube', 100);
         $stat = new CatalogTemplateStat($template, 'Éther');
+        $role = new CatalogTemplateRole($template, 'Gardien', 100);
         $this->entityManager->persist($server);
         $this->entityManager->persist($template);
         $this->entityManager->persist($rank);
         $this->entityManager->persist($stat);
-        $this->entityManager->persist(new CatalogTemplateRankStat($rank, $stat, 100));
-        $this->entityManager->persist(new CatalogTemplateRole($template, 'Gardien', 100));
+        $this->entityManager->persist(new CatalogTemplateRoleStat($role, $stat, 100));
+        $this->entityManager->persist($role);
         $this->entityManager->persist(new CatalogTemplateElement($template, 'Ambre'));
         $this->entityManager->flush();
 
@@ -141,13 +142,14 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $template->publish();
         $templateRank = new CatalogTemplateRank($template, 'comete', 'Comète', 100);
         $templateStat = new CatalogTemplateStat($template, 'Éther');
+        $templateRole = new CatalogTemplateRole($template, 'Gardien', 100);
         $this->entityManager->persist($server);
         $this->entityManager->persist($oldRank);
         $this->entityManager->persist($template);
         $this->entityManager->persist($templateRank);
         $this->entityManager->persist($templateStat);
-        $this->entityManager->persist(new CatalogTemplateRankStat($templateRank, $templateStat, 100));
-        $this->entityManager->persist(new CatalogTemplateRole($template, 'Gardien', 100));
+        $this->entityManager->persist(new CatalogTemplateRoleStat($templateRole, $templateStat, 100));
+        $this->entityManager->persist($templateRole);
         $this->entityManager->persist(new CatalogTemplateElement($template, 'Ambre'));
         $this->entityManager->flush();
 
@@ -180,13 +182,14 @@ final class CatalogTemplateImporterTest extends KernelTestCase
         $template->publish();
         $templateRank = new CatalogTemplateRank($template, 'comete', 'Comète', 100);
         $templateStat = new CatalogTemplateStat($template, 'Éther');
+        $templateRole = new CatalogTemplateRole($template, 'Gardien', 100);
         $this->entityManager->persist($server);
         $this->entityManager->persist($oldRank);
         $this->entityManager->persist($template);
         $this->entityManager->persist($templateRank);
         $this->entityManager->persist($templateStat);
-        $this->entityManager->persist(new CatalogTemplateRankStat($templateRank, $templateStat, 100));
-        $this->entityManager->persist(new CatalogTemplateRole($template, 'Gardien', 100));
+        $this->entityManager->persist(new CatalogTemplateRoleStat($templateRole, $templateStat, 100));
+        $this->entityManager->persist($templateRole);
         $this->entityManager->persist(new CatalogTemplateElement($template, 'Ambre'));
         $this->entityManager->flush();
 

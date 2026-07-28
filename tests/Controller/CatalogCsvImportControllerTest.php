@@ -28,7 +28,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         $this->resetDatabase();
         [, , $template] = $this->seedAccess($client);
 
-        foreach (['ranks', 'rank-stats', 'welcome-messages', 'bye-messages', 'roles', 'stats', 'elements'] as $section) {
+        foreach (['ranks', 'role-stats', 'welcome-messages', 'bye-messages', 'roles', 'stats', 'elements'] as $section) {
             $client->request('GET', '/app/serveurs/guild/configuration/'.$section);
             self::assertResponseIsSuccessful();
             self::assertSelectorExists('[data-testid="catalog-csv-actions"] a[href="/app/serveurs/guild/configuration/'.$section.'/csv"]');
@@ -57,6 +57,29 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         self::assertSame('attachment; filename=exemple-rangs.csv', $client->getResponse()->headers->get('Content-Disposition'));
         self::assertStringStartsWith("\xEF\xBB\xBFnom;pourcentage;titre_depart;est_staff\n", $client->getResponse()->getContent());
         self::assertStringNotContainsString('discord', strtolower($client->getResponse()->getContent()));
+    }
+
+    public function testCsvUploadAndBackofficeControlsExposeClearInteractiveAffordances(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        $this->seedAccess($client);
+
+        $crawler = $client->request('GET', '/app/serveurs/guild/configuration/roles/csv');
+
+        self::assertResponseIsSuccessful();
+        $bodyClasses = $crawler->filter('body')->attr('class') ?? '';
+        self::assertStringContainsString('[&_button:not(:disabled)]:cursor-pointer', $bodyClasses);
+        self::assertStringContainsString('[&_button:not(:disabled):hover]:brightness-90', $bodyClasses);
+        self::assertStringContainsString('[&_button:disabled]:cursor-not-allowed', $bodyClasses);
+        self::assertStringContainsString('[&_a[href]:hover]:brightness-90', $bodyClasses);
+        self::assertStringContainsString('[&_select:not(:disabled)]:cursor-pointer', $bodyClasses);
+        self::assertStringContainsString('[&_input[type=checkbox]:not(:disabled)]:cursor-pointer', $bodyClasses);
+
+        $fileClasses = $crawler->filter('input[type="file"][name="csv_file"]')->attr('class') ?? '';
+        self::assertStringContainsString('cursor-pointer', $fileClasses);
+        self::assertStringContainsString('file:cursor-pointer', $fileClasses);
+        self::assertStringContainsString('file:hover:bg-camelia-rose', $fileClasses);
     }
 
     public function testInvalidFileShowsStructuredErrorsAndDoesNotWrite(): void

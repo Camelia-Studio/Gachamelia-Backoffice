@@ -391,6 +391,18 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         ]);
         $rankId = (int) $this->connection()->lastInsertId();
 
+        $this->connection()->insert('roles', [
+            'server_id' => $serverId,
+            'name' => 'Comète',
+            'percentage' => 100,
+            'emoji_source' => 'server',
+            'emoji_unicode' => null,
+            'emoji_id' => '123456789012345678',
+            'emoji_name' => 'comete',
+            'emoji_animated' => 0,
+        ]);
+        $roleId = (int) $this->connection()->lastInsertId();
+
         $this->connection()->insert('ranks', [
             'server_id' => $otherServerId,
             'discord_id' => 'rank-externe',
@@ -408,9 +420,9 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         ]);
         $statId = (int) $this->connection()->lastInsertId();
 
-        $this->connection()->insert('rank_stats', [
+        $this->connection()->insert('role_stats', [
             'server_id' => $serverId,
-            'rank_id' => $rankId,
+            'role_id' => $roleId,
             'stat_id' => $statId,
             'percentage' => 100,
         ]);
@@ -428,18 +440,6 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
             'message' => 'À bientôt.',
         ]);
         $byeMessageId = (int) $this->connection()->lastInsertId();
-
-        $this->connection()->insert('roles', [
-            'server_id' => $serverId,
-            'name' => 'Comète',
-            'percentage' => 100,
-            'emoji_source' => 'server',
-            'emoji_unicode' => null,
-            'emoji_id' => '123456789012345678',
-            'emoji_name' => 'comete',
-            'emoji_animated' => 0,
-        ]);
-        $roleId = (int) $this->connection()->lastInsertId();
 
         $this->connection()->insert('elements', [
             'server_id' => $serverId,
@@ -487,11 +487,6 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
                     'percentage' => 100,
                     'bye_title' => 'Novice sortant',
                     'is_staff' => false,
-                    'stats' => [[
-                        'id' => $statId,
-                        'name' => 'Force',
-                        'percentage' => 100,
-                    ]],
                     'welcome_messages' => [[
                         'id' => $welcomeMessageId,
                         'message' => 'Bienvenue parmi nous.',
@@ -514,6 +509,11 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
                         'markup' => '<:comete:123456789012345678>',
                         'cdn_url' => 'https://cdn.discordapp.com/emojis/123456789012345678.webp?size=64&quality=lossless',
                     ],
+                    'stats' => [[
+                        'id' => $statId,
+                        'name' => 'Force',
+                        'percentage' => 100,
+                    ]],
                 ]],
                 'stats' => [[
                     'id' => $statId,
@@ -976,15 +976,15 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         ]);
         $auraStatId = (int) $this->connection()->lastInsertId();
 
-        $this->connection()->insert('rank_stats', [
+        $this->connection()->insert('role_stats', [
             'server_id' => $serverId,
-            'rank_id' => $rankId,
+            'role_id' => $roleId,
             'stat_id' => $forceStatId,
             'percentage' => 100,
         ]);
-        $this->connection()->insert('rank_stats', [
+        $this->connection()->insert('role_stats', [
             'server_id' => $serverId,
-            'rank_id' => $staffRankId,
+            'role_id' => $secondRoleId,
             'stat_id' => $forceStatId,
             'percentage' => 100,
         ]);

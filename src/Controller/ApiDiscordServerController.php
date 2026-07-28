@@ -10,7 +10,7 @@ use App\Entity\CharacterRole;
 use App\Entity\DiscordServer;
 use App\Entity\Element;
 use App\Entity\Rank;
-use App\Entity\RankStat;
+use App\Entity\RoleStat;
 use App\Entity\Stat;
 use App\Entity\WelcomeMessage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -221,8 +221,8 @@ final class ApiDiscordServerController extends AbstractController
 
     /**
      * @return array{
-     *     ranks: list<array{id: int, discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool, stats: list<array{id: int, name: string, percentage: int}>, welcome_messages: list<array{id: int, message: string}>, bye_messages: list<array{id: int, message: string}>}>,
-     *     roles: list<array{id: int, name: string, percentage: int, emoji: array{source: string, unicode: ?string, id: ?string, name: ?string, animated: bool, markup: string, cdn_url: ?string}}>,
+     *     ranks: list<array{id: int, discord_id: string, name: string, percentage: int, bye_title: ?string, is_staff: bool, welcome_messages: list<array{id: int, message: string}>, bye_messages: list<array{id: int, message: string}>}>,
+     *     roles: list<array{id: int, name: string, percentage: int, emoji: array{source: string, unicode: ?string, id: ?string, name: ?string, animated: bool, markup: string, cdn_url: ?string}, stats: list<array{id: int, name: string, percentage: int}>}>,
      *     stats: list<array{id: int, name: string}>,
      *     elements: list<array{id: int, name: string, emoji: array{source: string, unicode: ?string, id: ?string, name: ?string, animated: bool, markup: string, cdn_url: ?string}}>
      * }
@@ -238,14 +238,13 @@ final class ApiDiscordServerController extends AbstractController
                     'percentage' => $rank->percentage(),
                     'bye_title' => $rank->byeTitle(),
                     'is_staff' => $rank->isStaff(),
-                    'stats' => $this->rankStatsPayload($entityManager, $rank),
                     'welcome_messages' => $this->welcomeMessagesPayload($entityManager, $server, $rank),
                     'bye_messages' => $this->byeMessagesPayload($entityManager, $server, $rank),
                 ],
                 $entityManager->getRepository(Rank::class)->findBy(['server' => $server], ['percentage' => 'ASC', 'name' => 'ASC']),
             ),
             'roles' => array_map(
-                static fn (CharacterRole $role): array => [
+                fn (CharacterRole $role): array => [
                     'id' => (int) $role->id(),
                     'name' => $role->name(),
                     'percentage' => $role->percentage(),
@@ -258,6 +257,7 @@ final class ApiDiscordServerController extends AbstractController
                         'markup' => $role->emojiMarkup(),
                         'cdn_url' => $role->emojiCdnUrl(),
                     ],
+                    'stats' => $this->roleStatsPayload($entityManager, $role),
                 ],
                 $entityManager->getRepository(CharacterRole::class)->findBy(['server' => $server], ['percentage' => 'ASC', 'name' => 'ASC']),
             ),
@@ -290,15 +290,15 @@ final class ApiDiscordServerController extends AbstractController
     /**
      * @return list<array{id: int, name: string, percentage: int}>
      */
-    private function rankStatsPayload(EntityManagerInterface $entityManager, Rank $rank): array
+    private function roleStatsPayload(EntityManagerInterface $entityManager, CharacterRole $role): array
     {
         return array_map(
-            static fn (RankStat $rankStat): array => [
-                'id' => (int) $rankStat->stat()->id(),
-                'name' => $rankStat->stat()->name(),
-                'percentage' => $rankStat->percentage(),
+            static fn (RoleStat $roleStat): array => [
+                'id' => (int) $roleStat->stat()->id(),
+                'name' => $roleStat->stat()->name(),
+                'percentage' => $roleStat->percentage(),
             ],
-            $entityManager->getRepository(RankStat::class)->findBy(['rank' => $rank], ['percentage' => 'ASC']),
+            $entityManager->getRepository(RoleStat::class)->findBy(['role' => $role], ['percentage' => 'ASC']),
         );
     }
 

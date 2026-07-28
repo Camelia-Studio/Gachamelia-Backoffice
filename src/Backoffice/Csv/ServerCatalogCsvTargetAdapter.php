@@ -10,7 +10,7 @@ use App\Entity\CharacterRole;
 use App\Entity\DiscordServer;
 use App\Entity\Element;
 use App\Entity\Rank;
-use App\Entity\RankStat;
+use App\Entity\RoleStat;
 use App\Entity\Stat;
 use App\Entity\WelcomeMessage;
 
@@ -25,7 +25,7 @@ final class ServerCatalogCsvTargetAdapter extends AbstractCatalogCsvTargetAdapte
     {
         return match ($section) {
             CatalogCsvSection::Ranks => Rank::class,
-            CatalogCsvSection::RankStats => RankStat::class,
+            CatalogCsvSection::RoleStats => RoleStat::class,
             CatalogCsvSection::WelcomeMessages => WelcomeMessage::class,
             CatalogCsvSection::ByeMessages => ByeMessage::class,
             CatalogCsvSection::Roles => CharacterRole::class,

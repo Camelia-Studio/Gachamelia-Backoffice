@@ -16,7 +16,7 @@ trait DatabaseResetter
         foreach ([
             'catalog_template_bye_messages',
             'catalog_template_welcome_messages',
-            'catalog_template_rank_stats',
+            'catalog_template_role_stats',
             'catalog_template_elements',
             'catalog_template_stats',
             'catalog_template_roles',
@@ -28,7 +28,7 @@ trait DatabaseResetter
             'welcome_messages',
             'users_elements',
             'user_stats',
-            'rank_stats',
+            'role_stats',
             'users',
             'elements',
             'stats',

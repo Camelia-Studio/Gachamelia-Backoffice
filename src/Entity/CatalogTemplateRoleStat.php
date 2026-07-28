@@ -7,32 +7,32 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ORM\Table(name: 'catalog_template_rank_stats')]
-class CatalogTemplateRankStat
+#[ORM\Table(name: 'catalog_template_role_stats')]
+class CatalogTemplateRoleStat
 {
     #[ORM\ManyToOne(targetEntity: CatalogTemplate::class)]
     #[ORM\JoinColumn(name: 'template_id', nullable: false, onDelete: 'CASCADE')]
     private CatalogTemplate $template;
 
     #[ORM\Id]
-    #[ORM\ManyToOne(targetEntity: CatalogTemplateRank::class)]
-    #[ORM\JoinColumn(name: 'rank_id', nullable: false, onDelete: 'CASCADE')]
-    private CatalogTemplateRank $rank;
+    #[ORM\ManyToOne(targetEntity: CatalogTemplateRole::class)]
+    #[ORM\JoinColumn(name: 'role_id', nullable: false, onDelete: 'CASCADE')]
+    private CatalogTemplateRole $role;
 
     #[ORM\Id]
     #[ORM\ManyToOne(targetEntity: CatalogTemplateStat::class)]
     #[ORM\JoinColumn(name: 'stat_id', nullable: false, onDelete: 'CASCADE')]
     private CatalogTemplateStat $stat;
 
-    public function __construct(CatalogTemplateRank $rank, CatalogTemplateStat $stat, #[ORM\Column]
+    public function __construct(CatalogTemplateRole $role, CatalogTemplateStat $stat, #[ORM\Column]
         private int $percentage)
     {
-        if ($rank->template() !== $stat->template()) {
-            throw new \InvalidArgumentException('A template rank stat must belong to one template.');
+        if ($role->template() !== $stat->template()) {
+            throw new \InvalidArgumentException('A template role stat must belong to one template.');
         }
 
-        $this->template = $rank->template();
-        $this->rank = $rank;
+        $this->template = $role->template();
+        $this->role = $role;
         $this->stat = $stat;
     }
 
@@ -41,9 +41,9 @@ class CatalogTemplateRankStat
         return $this->template;
     }
 
-    public function rank(): CatalogTemplateRank
+    public function role(): CatalogTemplateRole
     {
-        return $this->rank;
+        return $this->role;
     }
 
     public function stat(): CatalogTemplateStat

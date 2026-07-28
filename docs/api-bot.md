@@ -316,9 +316,6 @@ Réponse :
         "percentage": 35,
         "bye_title": "Novice sortant",
         "is_staff": false,
-        "stats": [
-          { "id": 10, "name": "Force", "percentage": 70 }
-        ],
         "welcome_messages": [
           { "id": 100, "message": "Bienvenue %username%." }
         ],
@@ -340,7 +337,10 @@ Réponse :
           "animated": false,
           "markup": "<:comete:123456789012345678>",
           "cdn_url": "https://cdn.discordapp.com/emojis/123456789012345678.webp?size=64&quality=lossless"
-        }
+        },
+        "stats": [
+          { "id": 10, "name": "Force", "percentage": 70 }
+        ]
       }
     ],
     "stats": [
@@ -371,6 +371,7 @@ Utilisation actuelle côté bot :
 - `roles` remplace `RoleRepository.findAll()`.
 - `elements` remplace `ElementRepository.findAll()`.
 - `stats` remplace `StatRepository.findAll()`.
+- `role.stats` fournit la distribution des statistiques propre à chaque rôle.
 - `rank.welcome_messages` remplace `getRandomWelcomeMessage(rank)`.
 - `rank.bye_messages` remplace `getRandomByeMessage(rank)`.
 - `server.settings.welcome_channel_id` indique le salon d'arrivée.

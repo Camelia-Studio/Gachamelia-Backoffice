@@ -8,7 +8,7 @@ use App\Entity\CatalogTemplate;
 use App\Entity\CatalogTemplateByeMessage;
 use App\Entity\CatalogTemplateElement;
 use App\Entity\CatalogTemplateRank;
-use App\Entity\CatalogTemplateRankStat;
+use App\Entity\CatalogTemplateRoleStat;
 use App\Entity\CatalogTemplateRole;
 use App\Entity\CatalogTemplateStat;
 use App\Entity\CatalogTemplateWelcomeMessage;
@@ -26,7 +26,7 @@ final class TemplateCatalogCsvTargetAdapter extends AbstractCatalogCsvTargetAdap
     {
         return match ($section) {
             CatalogCsvSection::Ranks => CatalogTemplateRank::class,
-            CatalogCsvSection::RankStats => CatalogTemplateRankStat::class,
+            CatalogCsvSection::RoleStats => CatalogTemplateRoleStat::class,
             CatalogCsvSection::WelcomeMessages => CatalogTemplateWelcomeMessage::class,
             CatalogCsvSection::ByeMessages => CatalogTemplateByeMessage::class,
             CatalogCsvSection::Roles => CatalogTemplateRole::class,

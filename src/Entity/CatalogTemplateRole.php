@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Table(name: 'catalog_template_roles')]
 #[ORM\UniqueConstraint(name: 'uniq_catalog_template_roles_name', columns: ['template_id', 'name'])]
+#[ORM\UniqueConstraint(name: 'uniq_catalog_template_roles_id_template', columns: ['id', 'template_id'])]
 class CatalogTemplateRole
 {
     public const string DEFAULT_EMOJI = CharacterRole::DEFAULT_EMOJI;

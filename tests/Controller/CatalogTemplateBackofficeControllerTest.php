@@ -80,7 +80,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Configuration du modèle');
         self::assertSelectorExists('[data-testid="catalog-validation"][data-ready="false"]');
         self::assertSelectorExists('[data-testid="template-configuration-overview-card-ranks"] a[href="/app/modeles-catalogue/'.$templateId.'/configuration/ranks"]');
-        self::assertSelectorExists('[data-testid="template-configuration-overview-card-rank-stats"]');
+        self::assertSelectorExists('[data-testid="template-configuration-overview-card-role-stats"]');
         self::assertSelectorExists('[data-testid="template-configuration-overview-card-welcome-messages"]');
         self::assertSelectorExists('[data-testid="template-configuration-overview-card-bye-messages"]');
 
@@ -102,14 +102,6 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
         self::assertResponseRedirects('/app/modeles-catalogue/'.$templateId.'/configuration/stats');
         $statId = (int) $this->connection()->fetchOne('SELECT id FROM catalog_template_stats WHERE template_id = ?', [$templateId]);
 
-        $this->post($client, '/app/modeles-catalogue/'.$templateId.'/catalogue/rank-stats', [
-            'rank_id' => (string) $rankId,
-            'stat_id' => (string) $statId,
-            'percentage' => '80',
-        ]);
-
-        self::assertResponseRedirects('/app/modeles-catalogue/'.$templateId.'/configuration/rank-stats');
-
         $this->post($client, '/app/modeles-catalogue/'.$templateId.'/catalogue/roles', [
             'name' => 'Gardien',
             'percentage' => '45',
@@ -118,6 +110,15 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
         ]);
 
         self::assertResponseRedirects('/app/modeles-catalogue/'.$templateId.'/configuration/roles');
+        $roleId = (int) $this->connection()->fetchOne('SELECT id FROM catalog_template_roles WHERE template_id = ?', [$templateId]);
+
+        $this->post($client, '/app/modeles-catalogue/'.$templateId.'/catalogue/role-stats', [
+            'role_id' => (string) $roleId,
+            'stat_id' => (string) $statId,
+            'percentage' => '80',
+        ]);
+
+        self::assertResponseRedirects('/app/modeles-catalogue/'.$templateId.'/configuration/role-stats');
 
         $this->post($client, '/app/modeles-catalogue/'.$templateId.'/catalogue/elements', [
             'name' => 'Ambre',
@@ -142,7 +143,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
         self::assertResponseRedirects('/app/modeles-catalogue/'.$templateId.'/configuration/bye-messages');
 
         self::assertSame('Comète de l’Aube', $this->connection()->fetchOne('SELECT name FROM catalog_template_ranks WHERE id = ?', [$rankId]));
-        self::assertSame(80, (int) $this->connection()->fetchOne('SELECT percentage FROM catalog_template_rank_stats WHERE rank_id = ? AND stat_id = ?', [$rankId, $statId]));
+        self::assertSame(80, (int) $this->connection()->fetchOne('SELECT percentage FROM catalog_template_role_stats WHERE role_id = ? AND stat_id = ?', [$roleId, $statId]));
         self::assertSame('Gardien', $this->connection()->fetchOne('SELECT name FROM catalog_template_roles WHERE template_id = ?', [$templateId]));
         self::assertSame('Ambre', $this->connection()->fetchOne('SELECT name FROM catalog_template_elements WHERE template_id = ?', [$templateId]));
         self::assertSame('Bienvenue, {user}.', $this->connection()->fetchOne('SELECT message FROM catalog_template_welcome_messages WHERE rank_id = ?', [$rankId]));
@@ -182,6 +183,23 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="template-imports"]');
         self::assertSelectorTextContains('[data-testid="importable-template-card"]', 'Starter officiel');
+    }
+
+    public function testTemplateEditorsKeepTheirNaturalHeightBesideLongLists(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        $this->seedBackofficeAccess($client, [DiscordUser::GLOBAL_ROLE_TEMPLATE_ADMIN]);
+        $templateId = $this->seedPublishedTemplate();
+
+        foreach (['ranks', 'role-stats', 'welcome-messages', 'bye-messages', 'roles', 'elements', 'stats'] as $section) {
+            $crawler = $client->request('GET', '/app/modeles-catalogue/'.$templateId.'/configuration/'.$section);
+
+            self::assertResponseIsSuccessful();
+            $layout = $crawler->filter('[data-testid="template-catalog-layout"]');
+            self::assertSame(1, $layout->count(), $section);
+            self::assertStringContainsString('xl:items-start', $layout->attr('class') ?? '', $section);
+        }
     }
 
     public function testServerAdminCanImportPublishedTemplateWithDiscordRoleMapping(): void
@@ -420,12 +438,6 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
         ]);
         $statId = (int) $this->connection()->lastInsertId();
 
-        $this->connection()->insert('catalog_template_rank_stats', [
-            'template_id' => $templateId,
-            'rank_id' => $rankId,
-            'stat_id' => $statId,
-            'percentage' => 100,
-        ]);
         $this->connection()->insert('catalog_template_roles', [
             'template_id' => $templateId,
             'name' => 'Gardien',
@@ -435,6 +447,14 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
             'emoji_id' => null,
             'emoji_name' => null,
             'emoji_animated' => 0,
+        ]);
+        $roleId = (int) $this->connection()->lastInsertId();
+
+        $this->connection()->insert('catalog_template_role_stats', [
+            'template_id' => $templateId,
+            'role_id' => $roleId,
+            'stat_id' => $statId,
+            'percentage' => 100,
         ]);
         $this->connection()->insert('catalog_template_elements', [
             'template_id' => $templateId,

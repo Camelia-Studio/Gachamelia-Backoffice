@@ -20,15 +20,15 @@ final class CatalogCsvSampleGeneratorTest extends TestCase
         $csv = (new CatalogCsvSampleGenerator())->generate($section);
 
         self::assertStringStartsWith("\xEF\xBB\xBF".implode(';', $headers)."\n", $csv);
-        self::assertSame(CatalogCsvSection::RankStats === $section ? 4 : 3, substr_count($csv, "\n"));
+        self::assertSame(CatalogCsvSection::RoleStats === $section ? 4 : 3, substr_count($csv, "\n"));
         self::assertSame($filename, $section->exampleFilename());
     }
 
-    public function testRankStatExampleCompletesTheStaffRankFromTheRankExample(): void
+    public function testRoleStatExampleCompletesEveryRoleFromTheRoleExample(): void
     {
-        $csv = (new CatalogCsvSampleGenerator())->generate(CatalogCsvSection::RankStats);
+        $csv = (new CatalogCsvSampleGenerator())->generate(CatalogCsvSection::RoleStats);
 
-        self::assertStringContainsString("Gardien;Force;100\n", $csv);
+        self::assertStringContainsString("Oracle;Force;100\n", $csv);
     }
 
     /**
@@ -37,7 +37,7 @@ final class CatalogCsvSampleGeneratorTest extends TestCase
     public static function provideGeneratesFrenchExcelFriendlyExampleCases(): iterable
     {
         yield 'rangs' => [CatalogCsvSection::Ranks, ['nom', 'pourcentage', 'titre_depart', 'est_staff'], 'exemple-rangs.csv'];
-        yield 'probabilités' => [CatalogCsvSection::RankStats, ['rang', 'stat', 'pourcentage'], 'exemple-probabilites-rang-stat.csv'];
+        yield 'probabilités' => [CatalogCsvSection::RoleStats, ['role', 'stat', 'pourcentage'], 'exemple-probabilites-role-stat.csv'];
         yield 'arrivées' => [CatalogCsvSection::WelcomeMessages, ['rang', 'message'], 'exemple-messages-arrivee.csv'];
         yield 'départs' => [CatalogCsvSection::ByeMessages, ['rang', 'message'], 'exemple-messages-depart.csv'];
         yield 'rôles' => [CatalogCsvSection::Roles, ['nom', 'pourcentage', 'emoji'], 'exemple-roles.csv'];

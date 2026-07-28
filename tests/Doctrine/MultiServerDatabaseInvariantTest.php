@@ -46,14 +46,14 @@ final class MultiServerDatabaseInvariantTest extends KernelTestCase
     public function testRuntimeRelationsCannotMixServerCatalogs(): void
     {
         [$firstServerId, $secondServerId] = $this->seedServers();
-        $rankId = $this->seedRank($firstServerId, 'rank-first', 'Premier rang');
+        $roleId = $this->seedRole($firstServerId, 'Premier rôle');
         $statId = $this->seedStat($secondServerId, 'Stat externe');
         $userId = $this->seedUser($firstServerId, 'runtime-user');
         $elementId = $this->seedElement($secondServerId, 'Élément externe');
 
         $this->assertDatabaseRejects(
-            fn () => $this->connection()->insert('rank_stats', ['server_id' => $firstServerId, 'rank_id' => $rankId, 'stat_id' => $statId, 'percentage' => 50]),
-            'fk_rank_stats_stat_scope',
+            fn () => $this->connection()->insert('role_stats', ['server_id' => $firstServerId, 'role_id' => $roleId, 'stat_id' => $statId, 'percentage' => 50]),
+            'fk_role_stats_stat_scope',
         );
         $this->assertDatabaseRejects(
             fn () => $this->connection()->insert('user_stats', ['server_id' => $firstServerId, 'user_id' => $userId, 'stat_id' => $statId, 'value' => 1]),
@@ -85,18 +85,18 @@ final class MultiServerDatabaseInvariantTest extends KernelTestCase
     public function testTemplateRelationsCannotCrossTemplateBoundaries(): void
     {
         [$firstTemplateId, $secondTemplateId] = $this->seedTemplates();
-        $rankId = $this->seedTemplateRank($firstTemplateId, 'rank-first', 'Premier rang');
+        $roleId = $this->seedTemplateRole($firstTemplateId, 'Premier rôle', 50);
         $otherRankId = $this->seedTemplateRank($secondTemplateId, 'rank-other', 'Autre rang');
         $statId = $this->seedTemplateStat($secondTemplateId, 'Stat externe');
 
         $this->assertDatabaseRejects(
-            fn () => $this->connection()->insert('catalog_template_rank_stats', [
+            fn () => $this->connection()->insert('catalog_template_role_stats', [
                 'template_id' => $firstTemplateId,
-                'rank_id' => $rankId,
+                'role_id' => $roleId,
                 'stat_id' => $statId,
                 'percentage' => 50,
             ]),
-            'fk_template_rank_stats_stat_scope',
+            'fk_template_role_stats_stat_scope',
         );
 
         foreach (['catalog_template_welcome_messages', 'catalog_template_bye_messages'] as $table) {
@@ -131,6 +131,18 @@ final class MultiServerDatabaseInvariantTest extends KernelTestCase
         $this->assertDatabaseRejects(
             fn () => $this->seedTemplateRole($templateId, 'Rôle invalide', -1),
             'chk_catalog_template_roles_percentage',
+        );
+
+        $roleId = $this->seedRole($serverId, 'Rôle valide', 100);
+        $statId = $this->seedStat($serverId, 'Stat valide');
+        $this->assertDatabaseRejects(
+            fn () => $this->connection()->insert('role_stats', [
+                'server_id' => $serverId,
+                'role_id' => $roleId,
+                'stat_id' => $statId,
+                'percentage' => 101,
+            ]),
+            'chk_role_stats_percentage',
         );
     }
 
