@@ -9,7 +9,7 @@ use App\Entity\CatalogTemplate;
 use App\Entity\CatalogTemplateByeMessage;
 use App\Entity\CatalogTemplateElement;
 use App\Entity\CatalogTemplateRank;
-use App\Entity\CatalogTemplateRankStat;
+use App\Entity\CatalogTemplateRoleStat;
 use App\Entity\CatalogTemplateRole;
 use App\Entity\CatalogTemplateStat;
 use App\Entity\CatalogTemplateWelcomeMessage;
@@ -17,7 +17,7 @@ use App\Entity\CharacterRole;
 use App\Entity\DiscordServer;
 use App\Entity\Element;
 use App\Entity\Rank;
-use App\Entity\RankStat;
+use App\Entity\RoleStat;
 use App\Entity\Stat;
 use App\Entity\WelcomeMessage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -53,7 +53,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
         return match ($section) {
             CatalogCsvSection::Ranks => $this->previewRanks($entities, $rows, $state),
             CatalogCsvSection::Roles => $this->previewRoles($entities, $rows, $state),
-            CatalogCsvSection::RankStats => $this->previewRankStats($target, $entities, $rows, $state),
+            CatalogCsvSection::RoleStats => $this->previewRoleStats($target, $entities, $rows, $state),
             CatalogCsvSection::WelcomeMessages, CatalogCsvSection::ByeMessages => $this->previewMessages($target, $section, $entities, $rows, $state),
             CatalogCsvSection::Stats, CatalogCsvSection::Elements => $this->previewSimple($section, $entities, $rows, $state),
         };
@@ -72,7 +72,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
         match ($section) {
             CatalogCsvSection::Ranks => $this->applyRanks($target, $preview, $discordRoleIdsByLine),
             CatalogCsvSection::Roles => $this->applyRoles($target, $preview),
-            CatalogCsvSection::RankStats => $this->applyRankStats($target, $preview),
+            CatalogCsvSection::RoleStats => $this->applyRoleStats($target, $preview),
             CatalogCsvSection::WelcomeMessages, CatalogCsvSection::ByeMessages => $this->applyMessages($target, $section, $preview),
             CatalogCsvSection::Stats => $this->applyStats($target, $preview),
             CatalogCsvSection::Elements => $this->applyElements($target, $preview),
@@ -213,68 +213,68 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
      * @param list<array{line: int, key: string, values: array<string, string|int|bool|null>}> $rows
      * @param list<array<string, mixed>>                                                       $state
      */
-    private function previewRankStats(
+    private function previewRoleStats(
         DiscordServer|CatalogTemplate $target,
         array $entities,
         array $rows,
         array $state,
     ): CatalogCsvPreview {
-        $ranks = $this->entities($target, CatalogCsvSection::Ranks);
+        $roles = $this->entities($target, CatalogCsvSection::Roles);
         $stats = $this->entities($target, CatalogCsvSection::Stats);
-        $ranksByKey = $this->byNaturalKey(CatalogCsvSection::Ranks, $ranks);
+        $rolesByKey = $this->byNaturalKey(CatalogCsvSection::Roles, $roles);
         $statsByKey = $this->byNaturalKey(CatalogCsvSection::Stats, $stats);
-        $existing = $this->byNaturalKey(CatalogCsvSection::RankStats, $entities);
+        $existing = $this->byNaturalKey(CatalogCsvSection::RoleStats, $entities);
         $operations = [];
         $errors = [];
-        $touchedRanks = [];
+        $touchedRoles = [];
 
         foreach ($rows as $row) {
-            $rankKey = CatalogCsvSection::Ranks->naturalKey(['nom' => $row['values']['rang']]);
+            $roleKey = CatalogCsvSection::Roles->naturalKey(['nom' => $row['values']['role']]);
             $statKey = CatalogCsvSection::Stats->naturalKey(['nom' => $row['values']['stat']]);
-            if (!isset($ranksByKey[$rankKey])) {
-                $errors[] = $this->error('rank_not_found', (string) $row['values']['rang'], $row['line'], 'rang');
+            if (!isset($rolesByKey[$roleKey])) {
+                $errors[] = $this->error('role_not_found', (string) $row['values']['role'], $row['line'], 'role');
                 continue;
             }
             if (!isset($statsByKey[$statKey])) {
                 $errors[] = $this->error('stat_not_found', (string) $row['values']['stat'], $row['line'], 'stat');
                 continue;
             }
-            $touchedRanks[$rankKey] = (string) $row['values']['rang'];
+            $touchedRoles[$roleKey] = (string) $row['values']['role'];
             $operations[] = $this->operation(
                 $row,
                 $existing[$row['key']] ?? null,
-                CatalogCsvSection::RankStats,
+                CatalogCsvSection::RoleStats,
             );
         }
 
-        $currentByRank = [];
-        $projectedByRank = [];
-        foreach ($entities as $rankStat) {
-            $rankKey = CatalogCsvSection::Ranks->naturalKey(['nom' => $this->rankName($rankStat)]);
-            $key = CatalogCsvSection::RankStats->naturalKey($this->payload(CatalogCsvSection::RankStats, $rankStat));
-            $currentByRank[$rankKey] = ($currentByRank[$rankKey] ?? 0) + $this->percentage($rankStat);
-            $projectedByRank[$rankKey][$key] = $this->percentage($rankStat);
+        $currentByRole = [];
+        $projectedByRole = [];
+        foreach ($entities as $roleStat) {
+            $roleKey = CatalogCsvSection::Roles->naturalKey(['nom' => $this->roleName($roleStat)]);
+            $key = CatalogCsvSection::RoleStats->naturalKey($this->payload(CatalogCsvSection::RoleStats, $roleStat));
+            $currentByRole[$roleKey] = ($currentByRole[$roleKey] ?? 0) + $this->percentage($roleStat);
+            $projectedByRole[$roleKey][$key] = $this->percentage($roleStat);
         }
         foreach ($rows as $row) {
-            $rankKey = CatalogCsvSection::Ranks->naturalKey(['nom' => $row['values']['rang']]);
-            if (isset($touchedRanks[$rankKey])) {
-                $projectedByRank[$rankKey][$row['key']] = (int) $row['values']['pourcentage'];
+            $roleKey = CatalogCsvSection::Roles->naturalKey(['nom' => $row['values']['role']]);
+            if (isset($touchedRoles[$roleKey])) {
+                $projectedByRole[$roleKey][$row['key']] = (int) $row['values']['pourcentage'];
             }
         }
 
         $totals = [];
-        foreach ($touchedRanks as $rankKey => $rankName) {
-            $projectedTotal = array_sum($projectedByRank[$rankKey] ?? []);
+        foreach ($touchedRoles as $roleKey => $roleName) {
+            $projectedTotal = array_sum($projectedByRole[$roleKey] ?? []);
             $totals[] = [
-                'label' => \sprintf('Rang %s', $rankName),
-                'current' => $currentByRank[$rankKey] ?? 0,
+                'label' => \sprintf('Rôle %s', $roleName),
+                'current' => $currentByRole[$roleKey] ?? 0,
                 'projected' => $projectedTotal,
                 'valid' => 100 === $projectedTotal,
             ];
             if (100 !== $projectedTotal) {
                 $errors[] = $this->error(
-                    'invalid_rank_stat_percentage_total',
-                    \sprintf('%s : %d %%', $rankName, $projectedTotal),
+                    'invalid_role_stat_percentage_total',
+                    \sprintf('%s : %d %%', $roleName, $projectedTotal),
                 );
             }
         }
@@ -369,13 +369,13 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
         $current = null === $existing ? null : $this->payload($section, $existing);
         $comparableCurrent = $current;
         if (null !== $comparableCurrent && \in_array($section, [
-            CatalogCsvSection::RankStats,
             CatalogCsvSection::WelcomeMessages,
             CatalogCsvSection::ByeMessages,
         ], true)) {
             $comparableCurrent['rang'] = $row['values']['rang'];
         }
-        if (null !== $comparableCurrent && CatalogCsvSection::RankStats === $section) {
+        if (null !== $comparableCurrent && CatalogCsvSection::RoleStats === $section) {
+            $comparableCurrent['role'] = $row['values']['role'];
             $comparableCurrent['stat'] = $row['values']['stat'];
         }
         $action = null === $current ? 'create' : ($comparableCurrent === $row['values'] ? 'unchanged' : 'update');
@@ -436,8 +436,8 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
                 'titre_depart' => $this->byeTitle($entity),
                 'est_staff' => $this->isStaff($entity),
             ],
-            CatalogCsvSection::RankStats => [
-                'rang' => $this->rankName($entity),
+            CatalogCsvSection::RoleStats => [
+                'role' => $this->roleName($entity),
                 'stat' => $this->statName($entity),
                 'pourcentage' => $this->percentage($entity),
             ],
@@ -472,7 +472,7 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
         }
 
         $section = match (true) {
-            $entity instanceof RankStat, $entity instanceof CatalogTemplateRankStat => CatalogCsvSection::RankStats,
+            $entity instanceof RoleStat, $entity instanceof CatalogTemplateRoleStat => CatalogCsvSection::RoleStats,
             $entity instanceof CharacterRole, $entity instanceof CatalogTemplateRole => CatalogCsvSection::Roles,
             $entity instanceof Stat, $entity instanceof CatalogTemplateStat => CatalogCsvSection::Stats,
             $entity instanceof Element, $entity instanceof CatalogTemplateElement => CatalogCsvSection::Elements,
@@ -581,23 +581,23 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
         }
     }
 
-    private function applyRankStats(DiscordServer|CatalogTemplate $target, CatalogCsvPreview $preview): void
+    private function applyRoleStats(DiscordServer|CatalogTemplate $target, CatalogCsvPreview $preview): void
     {
-        $ranks = $this->byNaturalKey(CatalogCsvSection::Ranks, $this->entities($target, CatalogCsvSection::Ranks));
+        $roles = $this->byNaturalKey(CatalogCsvSection::Roles, $this->entities($target, CatalogCsvSection::Roles));
         $stats = $this->byNaturalKey(CatalogCsvSection::Stats, $this->entities($target, CatalogCsvSection::Stats));
-        $byKey = $this->byNaturalKey(CatalogCsvSection::RankStats, $this->entities($target, CatalogCsvSection::RankStats));
+        $byKey = $this->byNaturalKey(CatalogCsvSection::RoleStats, $this->entities($target, CatalogCsvSection::RoleStats));
         foreach ($preview->operations() as $operation) {
             $values = $operation['incoming'];
-            $rank = $ranks[CatalogCsvSection::Ranks->naturalKey(['nom' => $values['rang']])];
+            $role = $roles[CatalogCsvSection::Roles->naturalKey(['nom' => $values['role']])];
             $stat = $stats[CatalogCsvSection::Stats->naturalKey(['nom' => $values['stat']])];
             if ('create' === $operation['action']) {
-                $entity = $rank instanceof Rank && $stat instanceof Stat
-                    ? new RankStat($rank, $stat, (int) $values['pourcentage'])
-                    : new CatalogTemplateRankStat($rank, $stat, (int) $values['pourcentage']);
+                $entity = $role instanceof CharacterRole && $stat instanceof Stat
+                    ? new RoleStat($role, $stat, (int) $values['pourcentage'])
+                    : new CatalogTemplateRoleStat($role, $stat, (int) $values['pourcentage']);
                 $this->entityManager->persist($entity);
             } elseif ('update' === $operation['action']) {
                 $entity = $byKey[$operation['key']];
-                if ($entity instanceof RankStat || $entity instanceof CatalogTemplateRankStat) {
+                if ($entity instanceof RoleStat || $entity instanceof CatalogTemplateRoleStat) {
                     $entity->updatePercentage((int) $values['pourcentage']);
                 }
             }
@@ -650,8 +650,8 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
             $entity instanceof CatalogTemplateRank,
             $entity instanceof CharacterRole,
             $entity instanceof CatalogTemplateRole,
-            $entity instanceof RankStat,
-            $entity instanceof CatalogTemplateRankStat => $entity->percentage(),
+            $entity instanceof RoleStat,
+            $entity instanceof CatalogTemplateRoleStat => $entity->percentage(),
             default => throw new \LogicException('Entity has no catalogue percentage.'),
         };
     }
@@ -675,8 +675,8 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
     private function rankName(object $entity): string
     {
         return match (true) {
-            $entity instanceof RankStat,
-            $entity instanceof CatalogTemplateRankStat,
+            $entity instanceof RoleStat,
+            $entity instanceof CatalogTemplateRoleStat,
             $entity instanceof WelcomeMessage,
             $entity instanceof ByeMessage,
             $entity instanceof CatalogTemplateWelcomeMessage,
@@ -688,8 +688,16 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
     private function statName(object $entity): string
     {
         return match (true) {
-            $entity instanceof RankStat, $entity instanceof CatalogTemplateRankStat => $entity->stat()->name(),
+            $entity instanceof RoleStat, $entity instanceof CatalogTemplateRoleStat => $entity->stat()->name(),
             default => throw new \LogicException('Entity has no catalogue stat.'),
+        };
+    }
+
+    private function roleName(object $entity): string
+    {
+        return match (true) {
+            $entity instanceof RoleStat, $entity instanceof CatalogTemplateRoleStat => $entity->role()->name(),
+            default => throw new \LogicException('Entity has no catalogue role.'),
         };
     }
 

@@ -10,8 +10,8 @@ use App\Entity\CatalogTemplate;
 use App\Entity\CatalogTemplateByeMessage;
 use App\Entity\CatalogTemplateElement;
 use App\Entity\CatalogTemplateRank;
-use App\Entity\CatalogTemplateRankStat;
 use App\Entity\CatalogTemplateRole;
+use App\Entity\CatalogTemplateRoleStat;
 use App\Entity\CatalogTemplateStat;
 use App\Entity\CatalogTemplateWelcomeMessage;
 use App\Entity\DiscordServer;
@@ -21,7 +21,7 @@ use App\Entity\DiscordUser;
 use App\Entity\Element;
 use App\Entity\GachaUser;
 use App\Entity\Rank;
-use App\Entity\RankStat;
+use App\Entity\RoleStat;
 use App\Entity\Stat;
 use App\Entity\UserStat;
 use App\Entity\UserElement;
@@ -134,10 +134,10 @@ final class MultiServerEntityMappingTest extends KernelTestCase
 
     public function testCompositeRelationMappings(): void
     {
-        $rankStat = $this->metadata(RankStat::class);
-        self::assertSame(['rank', 'stat'], $rankStat->identifier);
-        self::assertSame('rank_stats', $rankStat->getTableName());
-        self::assertTrue($rankStat->hasAssociation('server'));
+        $roleStat = $this->metadata(RoleStat::class);
+        self::assertSame(['role', 'stat'], $roleStat->identifier);
+        self::assertSame('role_stats', $roleStat->getTableName());
+        self::assertTrue($roleStat->hasAssociation('server'));
 
         $userStat = $this->metadata(UserStat::class);
         self::assertSame(['user', 'stat'], $userStat->identifier);
@@ -203,11 +203,11 @@ final class MultiServerEntityMappingTest extends KernelTestCase
         $element = $this->metadata(CatalogTemplateElement::class);
         self::assertSame('catalog_template_elements', $element->getTableName());
 
-        $rankStat = $this->metadata(CatalogTemplateRankStat::class);
-        self::assertSame('catalog_template_rank_stats', $rankStat->getTableName());
-        self::assertSame(['rank', 'stat'], $rankStat->identifier);
-        self::assertTrue($rankStat->hasAssociation('template'));
-        self::assertTrue($rankStat->hasField('percentage'));
+        $roleStat = $this->metadata(CatalogTemplateRoleStat::class);
+        self::assertSame('catalog_template_role_stats', $roleStat->getTableName());
+        self::assertSame(['role', 'stat'], $roleStat->identifier);
+        self::assertTrue($roleStat->hasAssociation('template'));
+        self::assertTrue($roleStat->hasField('percentage'));
 
         foreach ([CatalogTemplateWelcomeMessage::class => 'catalog_template_welcome_messages', CatalogTemplateByeMessage::class => 'catalog_template_bye_messages'] as $entityClass => $tableName) {
             $metadata = $this->metadata($entityClass);

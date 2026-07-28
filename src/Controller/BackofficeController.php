@@ -15,7 +15,7 @@ use App\Entity\DiscordEmoji;
 use App\Entity\DiscordServer;
 use App\Entity\Element;
 use App\Entity\Rank;
-use App\Entity\RankStat;
+use App\Entity\RoleStat;
 use App\Entity\Stat;
 use App\Entity\WelcomeMessage;
 use Doctrine\ORM\EntityManagerInterface;
@@ -70,10 +70,10 @@ final class BackofficeController extends AbstractController
             'catalog_key' => 'ranks',
             'icon' => 'R',
         ],
-        'rank-stats' => [
-            'label' => 'Stats de rang',
-            'description' => 'Les probabilités de caractéristiques associées à chaque rang.',
-            'catalog_key' => 'rank_stats',
+        'role-stats' => [
+            'label' => 'Stats de rôle',
+            'description' => 'Les probabilités de caractéristiques associées à chaque rôle.',
+            'catalog_key' => 'role_stats',
             'icon' => 'RS',
         ],
         'welcome-messages' => [
@@ -171,7 +171,7 @@ final class BackofficeController extends AbstractController
     #[Route(
         '/app/serveurs/{guildId}/configuration/{section}',
         name: 'app_server_configuration_section',
-        requirements: ['section' => 'settings|ranks|rank-stats|welcome-messages|bye-messages|roles|stats|elements'],
+        requirements: ['section' => 'settings|ranks|role-stats|welcome-messages|bye-messages|roles|stats|elements'],
         methods: ['GET'],
     )]
     public function configurationSection(
@@ -291,59 +291,59 @@ final class BackofficeController extends AbstractController
         return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
     }
 
-    #[Route('/app/serveurs/{guildId}/catalogue/ranks/{rankId}/stats', name: 'app_server_catalog_rank_stat_upsert', requirements: ['rankId' => '\d+'], methods: ['POST'])]
-    public function upsertRankStat(
+    #[Route('/app/serveurs/{guildId}/catalogue/roles/{roleId}/stats', name: 'app_server_catalog_role_stat_upsert', requirements: ['roleId' => '\d+'], methods: ['POST'])]
+    public function upsertRoleStat(
         string $guildId,
-        string $rankId,
+        string $roleId,
         Request $request,
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
     ): Response {
         $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
-        $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
+        $role = $this->roleForServerOr404($entityManager, $server, (int) $roleId);
         $statId = (int) $request->request->get('stat_id', 0);
 
         if ($statId > 0) {
             $stat = $this->statForServerOr404($entityManager, $server, $statId);
-            $rankStat = $entityManager->getRepository(RankStat::class)->findOneBy(['rank' => $rank, 'stat' => $stat]);
-            if (!$rankStat instanceof RankStat) {
-                $rankStat = new RankStat($rank, $stat, $this->requestPercentage($request));
-                $entityManager->persist($rankStat);
+            $roleStat = $entityManager->getRepository(RoleStat::class)->findOneBy(['role' => $role, 'stat' => $stat]);
+            if (!$roleStat instanceof RoleStat) {
+                $roleStat = new RoleStat($role, $stat, $this->requestPercentage($request));
+                $entityManager->persist($roleStat);
             } else {
-                $rankStat->updatePercentage($this->requestPercentage($request));
+                $roleStat->updatePercentage($this->requestPercentage($request));
             }
 
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'role-stats']);
     }
 
-    #[Route('/app/serveurs/{guildId}/catalogue/ranks/{rankId}/stats/{statId}/supprimer', name: 'app_server_catalog_rank_stat_delete', requirements: ['rankId' => '\d+', 'statId' => '\d+'], methods: ['POST'])]
-    public function deleteRankStat(
+    #[Route('/app/serveurs/{guildId}/catalogue/roles/{roleId}/stats/{statId}/supprimer', name: 'app_server_catalog_role_stat_delete', requirements: ['roleId' => '\d+', 'statId' => '\d+'], methods: ['POST'])]
+    public function deleteRoleStat(
         string $guildId,
-        string $rankId,
+        string $roleId,
         string $statId,
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
     ): Response {
         $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
-        $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
+        $role = $this->roleForServerOr404($entityManager, $server, (int) $roleId);
         $stat = $this->statForServerOr404($entityManager, $server, (int) $statId);
-        $rankStat = $entityManager->getRepository(RankStat::class)->findOneBy(['rank' => $rank, 'stat' => $stat]);
+        $roleStat = $entityManager->getRepository(RoleStat::class)->findOneBy(['role' => $role, 'stat' => $stat]);
 
-        if ($rankStat instanceof RankStat) {
-            $entityManager->remove($rankStat);
+        if ($roleStat instanceof RoleStat) {
+            $entityManager->remove($roleStat);
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'ranks']);
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'role-stats']);
     }
 
-    #[Route('/app/serveurs/{guildId}/catalogue/rank-stats', name: 'app_server_catalog_rank_stat_upsert_dedicated', methods: ['POST'])]
-    public function upsertRankStatFromCatalogue(
+    #[Route('/app/serveurs/{guildId}/catalogue/role-stats', name: 'app_server_catalog_role_stat_upsert_dedicated', methods: ['POST'])]
+    public function upsertRoleStatFromCatalogue(
         string $guildId,
         Request $request,
         BackofficeSession $backofficeSession,
@@ -351,46 +351,46 @@ final class BackofficeController extends AbstractController
         EntityManagerInterface $entityManager,
     ): Response {
         $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
-        $rankId = (int) $request->request->get('rank_id', 0);
+        $roleId = (int) $request->request->get('role_id', 0);
         $statId = (int) $request->request->get('stat_id', 0);
 
-        if ($rankId > 0 && $statId > 0) {
-            $rank = $this->rankForServerOr404($entityManager, $server, $rankId);
+        if ($roleId > 0 && $statId > 0) {
+            $role = $this->roleForServerOr404($entityManager, $server, $roleId);
             $stat = $this->statForServerOr404($entityManager, $server, $statId);
-            $rankStat = $entityManager->getRepository(RankStat::class)->findOneBy(['rank' => $rank, 'stat' => $stat]);
-            if (!$rankStat instanceof RankStat) {
-                $rankStat = new RankStat($rank, $stat, $this->requestPercentage($request));
-                $entityManager->persist($rankStat);
+            $roleStat = $entityManager->getRepository(RoleStat::class)->findOneBy(['role' => $role, 'stat' => $stat]);
+            if (!$roleStat instanceof RoleStat) {
+                $roleStat = new RoleStat($role, $stat, $this->requestPercentage($request));
+                $entityManager->persist($roleStat);
             } else {
-                $rankStat->updatePercentage($this->requestPercentage($request));
+                $roleStat->updatePercentage($this->requestPercentage($request));
             }
 
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'rank-stats']);
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'role-stats']);
     }
 
-    #[Route('/app/serveurs/{guildId}/catalogue/rank-stats/{rankId}/{statId}/supprimer', name: 'app_server_catalog_rank_stat_delete_dedicated', requirements: ['rankId' => '\d+', 'statId' => '\d+'], methods: ['POST'])]
-    public function deleteRankStatFromCatalogue(
+    #[Route('/app/serveurs/{guildId}/catalogue/role-stats/{roleId}/{statId}/supprimer', name: 'app_server_catalog_role_stat_delete_dedicated', requirements: ['roleId' => '\d+', 'statId' => '\d+'], methods: ['POST'])]
+    public function deleteRoleStatFromCatalogue(
         string $guildId,
-        string $rankId,
+        string $roleId,
         string $statId,
         BackofficeSession $backofficeSession,
         BackofficeAccess $backofficeAccess,
         EntityManagerInterface $entityManager,
     ): Response {
         $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
-        $rank = $this->rankForServerOr404($entityManager, $server, (int) $rankId);
+        $role = $this->roleForServerOr404($entityManager, $server, (int) $roleId);
         $stat = $this->statForServerOr404($entityManager, $server, (int) $statId);
-        $rankStat = $entityManager->getRepository(RankStat::class)->findOneBy(['rank' => $rank, 'stat' => $stat]);
+        $roleStat = $entityManager->getRepository(RoleStat::class)->findOneBy(['role' => $role, 'stat' => $stat]);
 
-        if ($rankStat instanceof RankStat) {
-            $entityManager->remove($rankStat);
+        if ($roleStat instanceof RoleStat) {
+            $entityManager->remove($roleStat);
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'rank-stats']);
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'role-stats']);
     }
 
     #[Route('/app/serveurs/{guildId}/catalogue/ranks/{rankId}/welcome-messages', name: 'app_server_catalog_rank_welcome_message_create', requirements: ['rankId' => '\d+'], methods: ['POST'])]
@@ -1009,13 +1009,12 @@ final class BackofficeController extends AbstractController
                     'percentage' => $rank->percentage(),
                     'bye_title' => $rank->byeTitle(),
                     'is_staff' => $rank->isStaff(),
-                    'rank_stats' => $this->rankStatsPayload($entityManager, $rank),
                     'welcome_messages' => $this->welcomeMessagesPayload($entityManager, $server, $rank),
                     'bye_messages' => $this->byeMessagesPayload($entityManager, $server, $rank),
                 ],
                 $ranks,
             ),
-            'rank_stats' => $this->rankStatsListPayload($entityManager, $server),
+            'role_stats' => $this->roleStatsListPayload($entityManager, $server),
             'welcome_messages' => $this->welcomeMessagesListPayload($entityManager, $server),
             'bye_messages' => $this->byeMessagesListPayload($entityManager, $server),
             'roles' => array_map(
@@ -1163,34 +1162,34 @@ final class BackofficeController extends AbstractController
     }
 
     /**
-     * @return list<array{rank_id: int, rank_name: string, stat_id: int, stat_name: string, percentage: int}>
+     * @return list<array{role_id: int, role_name: string, stat_id: int, stat_name: string, percentage: int}>
      */
-    private function rankStatsListPayload(EntityManagerInterface $entityManager, DiscordServer $server): array
+    private function roleStatsListPayload(EntityManagerInterface $entityManager, DiscordServer $server): array
     {
-        /** @var list<RankStat> $rankStats */
-        $rankStats = $entityManager->createQueryBuilder()
-            ->select('rankStat')
-            ->from(RankStat::class, 'rankStat')
-            ->innerJoin('rankStat.rank', 'rankEntity')
-            ->innerJoin('rankStat.stat', 'statEntity')
-            ->andWhere('rankEntity.server = :server')
+        /** @var list<RoleStat> $roleStats */
+        $roleStats = $entityManager->createQueryBuilder()
+            ->select('roleStat')
+            ->from(RoleStat::class, 'roleStat')
+            ->innerJoin('roleStat.role', 'roleEntity')
+            ->innerJoin('roleStat.stat', 'statEntity')
+            ->andWhere('roleEntity.server = :server')
             ->andWhere('statEntity.server = :server')
             ->setParameter('server', $server)
-            ->orderBy('rankEntity.percentage', 'ASC')
-            ->addOrderBy('rankEntity.name', 'ASC')
-            ->addOrderBy('rankStat.percentage', 'ASC')
+            ->orderBy('roleEntity.percentage', 'ASC')
+            ->addOrderBy('roleEntity.name', 'ASC')
+            ->addOrderBy('roleStat.percentage', 'ASC')
             ->getQuery()
             ->getResult();
 
         return array_map(
-            static fn (RankStat $rankStat): array => [
-                'rank_id' => (int) $rankStat->rank()->id(),
-                'rank_name' => $rankStat->rank()->name(),
-                'stat_id' => (int) $rankStat->stat()->id(),
-                'stat_name' => $rankStat->stat()->name(),
-                'percentage' => $rankStat->percentage(),
+            static fn (RoleStat $roleStat): array => [
+                'role_id' => (int) $roleStat->role()->id(),
+                'role_name' => $roleStat->role()->name(),
+                'stat_id' => (int) $roleStat->stat()->id(),
+                'stat_name' => $roleStat->stat()->name(),
+                'percentage' => $roleStat->percentage(),
             ],
-            $rankStats,
+            $roleStats,
         );
     }
 
@@ -1251,21 +1250,6 @@ final class BackofficeController extends AbstractController
                 'message' => $message->message(),
             ],
             $messages,
-        );
-    }
-
-    /**
-     * @return list<array{stat_id: int, stat_name: string, percentage: int}>
-     */
-    private function rankStatsPayload(EntityManagerInterface $entityManager, Rank $rank): array
-    {
-        return array_map(
-            static fn (RankStat $rankStat): array => [
-                'stat_id' => (int) $rankStat->stat()->id(),
-                'stat_name' => $rankStat->stat()->name(),
-                'percentage' => $rankStat->percentage(),
-            ],
-            $entityManager->getRepository(RankStat::class)->findBy(['rank' => $rank], ['percentage' => 'ASC']),
         );
     }
 

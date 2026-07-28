@@ -30,7 +30,7 @@ use Symfony\Component\Security\Http\Attribute\IsCsrfTokenValid;
 #[IsCsrfTokenValid('backoffice', tokenKey: '_token', methods: ['POST'])]
 final class CatalogCsvImportController extends AbstractController
 {
-    private const string SECTION_REQUIREMENT = 'ranks|rank-stats|welcome-messages|bye-messages|roles|stats|elements';
+    private const string SECTION_REQUIREMENT = 'ranks|role-stats|welcome-messages|bye-messages|roles|stats|elements';
 
     #[Route(
         '/app/serveurs/{guildId}/configuration/{section}/csv',
@@ -576,9 +576,10 @@ final class CatalogCsvImportController extends AbstractController
             'duplicate_natural_key' => 'Cette entrée apparaît plusieurs fois dans le fichier.',
             'invalid_rank_percentage_total' => 'Le total projeté des rangs doit être exactement de 100 %.',
             'invalid_role_percentage_total' => 'Le total projeté des rôles doit être exactement de 100 %.',
-            'invalid_rank_stat_percentage_total' => 'Le total projeté des stats de ce rang doit être exactement de 100 %.',
+            'invalid_role_stat_percentage_total' => 'Le total projeté des stats de ce rôle doit être exactement de 100 %.',
             'multiple_staff_ranks' => 'Un seul rang peut être marqué comme rang staff.',
             'rank_not_found' => 'Le rang référencé n’existe pas dans ce catalogue.',
+            'role_not_found' => 'Le rôle référencé n’existe pas dans ce catalogue.',
             'stat_not_found' => 'La stat référencée n’existe pas dans ce catalogue.',
         ];
         foreach ($errors as &$error) {

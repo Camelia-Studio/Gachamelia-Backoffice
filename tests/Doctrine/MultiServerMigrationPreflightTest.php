@@ -9,6 +9,7 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 use Doctrine\Migrations\Exception\AbortMigration;
 use DoctrineMigrations\Version20260721231728;
+use DoctrineMigrations\Version20260728120000;
 use Psr\Log\NullLogger;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -21,10 +22,13 @@ final class MultiServerMigrationPreflightTest extends KernelTestCase
         self::bootKernel();
         $this->resetDatabase();
         require_once \dirname(__DIR__, 2).'/migrations/Version20260721231728.php';
+        require_once \dirname(__DIR__, 2).'/migrations/Version20260728120000.php';
     }
 
     public function testInvalidHistoricalDataAbortsBeforeAnyDdlAndCanBeRetried(): void
     {
+        $schema = $this->connection()->createSchemaManager()->introspectSchema();
+        $this->executeMigration($this->roleStatMigration(), $schema, false);
         $schema = $this->connection()->createSchemaManager()->introspectSchema();
         $this->executeMigration($this->migration(), $schema, false);
 
@@ -86,12 +90,22 @@ final class MultiServerMigrationPreflightTest extends KernelTestCase
                 $this->connection()->createSchemaManager()->introspectSchema(),
                 true,
             );
+            $this->executeMigration(
+                $this->roleStatMigration(),
+                $this->connection()->createSchemaManager()->introspectSchema(),
+                true,
+            );
         }
     }
 
     private function migration(): Version20260721231728
     {
         return new Version20260721231728($this->connection(), new NullLogger());
+    }
+
+    private function roleStatMigration(): Version20260728120000
+    {
+        return new Version20260728120000($this->connection(), new NullLogger());
     }
 
     private function executeMigration(AbstractMigration $migration, Schema $schema, bool $up): void

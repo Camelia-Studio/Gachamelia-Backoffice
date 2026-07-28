@@ -18,8 +18,8 @@ final class CatalogScopeSchemaListener
 
         $this->addCompositeForeignKey($schema, 'users', ['rank_id', 'server_id'], 'ranks', ['id', 'server_id'], 'fk_users_rank_scope');
         $this->addCompositeForeignKey($schema, 'users', ['role_id', 'server_id'], 'roles', ['id', 'server_id'], 'fk_users_role_scope');
-        $this->addCompositeForeignKey($schema, 'rank_stats', ['rank_id', 'server_id'], 'ranks', ['id', 'server_id'], 'fk_rank_stats_rank_scope', true);
-        $this->addCompositeForeignKey($schema, 'rank_stats', ['stat_id', 'server_id'], 'stats', ['id', 'server_id'], 'fk_rank_stats_stat_scope', true);
+        $this->addCompositeForeignKey($schema, 'role_stats', ['role_id', 'server_id'], 'roles', ['id', 'server_id'], 'fk_role_stats_role_scope', true);
+        $this->addCompositeForeignKey($schema, 'role_stats', ['stat_id', 'server_id'], 'stats', ['id', 'server_id'], 'fk_role_stats_stat_scope', true);
         $this->addCompositeForeignKey($schema, 'user_stats', ['user_id', 'server_id'], 'users', ['id', 'server_id'], 'fk_user_stats_user_scope', true);
         $this->addCompositeForeignKey($schema, 'user_stats', ['stat_id', 'server_id'], 'stats', ['id', 'server_id'], 'fk_user_stats_stat_scope', true);
         $this->addCompositeForeignKey($schema, 'users_elements', ['user_id', 'server_id'], 'users', ['id', 'server_id'], 'fk_users_elements_user_scope', true);
@@ -27,8 +27,8 @@ final class CatalogScopeSchemaListener
         $this->addCompositeForeignKey($schema, 'welcome_messages', ['rank_id', 'server_id'], 'ranks', ['id', 'server_id'], 'fk_welcome_messages_rank_scope', true);
         $this->addCompositeForeignKey($schema, 'bye_messages', ['rank_id', 'server_id'], 'ranks', ['id', 'server_id'], 'fk_bye_messages_rank_scope', true);
 
-        $this->addCompositeForeignKey($schema, 'catalog_template_rank_stats', ['rank_id', 'template_id'], 'catalog_template_ranks', ['id', 'template_id'], 'fk_template_rank_stats_rank_scope', true);
-        $this->addCompositeForeignKey($schema, 'catalog_template_rank_stats', ['stat_id', 'template_id'], 'catalog_template_stats', ['id', 'template_id'], 'fk_template_rank_stats_stat_scope', true);
+        $this->addCompositeForeignKey($schema, 'catalog_template_role_stats', ['role_id', 'template_id'], 'catalog_template_roles', ['id', 'template_id'], 'fk_template_role_stats_role_scope', true);
+        $this->addCompositeForeignKey($schema, 'catalog_template_role_stats', ['stat_id', 'template_id'], 'catalog_template_stats', ['id', 'template_id'], 'fk_template_role_stats_stat_scope', true);
         $this->addCompositeForeignKey($schema, 'catalog_template_welcome_messages', ['rank_id', 'template_id'], 'catalog_template_ranks', ['id', 'template_id'], 'fk_template_welcome_rank_scope', true);
         $this->addCompositeForeignKey($schema, 'catalog_template_bye_messages', ['rank_id', 'template_id'], 'catalog_template_ranks', ['id', 'template_id'], 'fk_template_bye_rank_scope', true);
     }

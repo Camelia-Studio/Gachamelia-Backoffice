@@ -9,7 +9,7 @@ use Symfony\Component\String\UnicodeString;
 enum CatalogCsvSection: string
 {
     case Ranks = 'ranks';
-    case RankStats = 'rank-stats';
+    case RoleStats = 'role-stats';
     case WelcomeMessages = 'welcome-messages';
     case ByeMessages = 'bye-messages';
     case Roles = 'roles';
@@ -23,7 +23,7 @@ enum CatalogCsvSection: string
     {
         return match ($this) {
             self::Ranks => ['nom', 'pourcentage', 'titre_depart', 'est_staff'],
-            self::RankStats => ['rang', 'stat', 'pourcentage'],
+            self::RoleStats => ['role', 'stat', 'pourcentage'],
             self::WelcomeMessages, self::ByeMessages => ['rang', 'message'],
             self::Roles => ['nom', 'pourcentage', 'emoji'],
             self::Stats => ['nom'],
@@ -38,7 +38,7 @@ enum CatalogCsvSection: string
     {
         return match ($this) {
             self::Ranks, self::Roles => ['nom', 'pourcentage'],
-            self::RankStats => ['rang', 'stat', 'pourcentage'],
+            self::RoleStats => ['role', 'stat', 'pourcentage'],
             self::WelcomeMessages, self::ByeMessages => ['rang', 'message'],
             self::Stats, self::Elements => ['nom'],
         };
@@ -56,8 +56,8 @@ enum CatalogCsvSection: string
                 'titre_depart' => 'string',
                 'est_staff' => 'boolean',
             ],
-            self::RankStats => [
-                'rang' => 'string',
+            self::RoleStats => [
+                'role' => 'string',
                 'stat' => 'string',
                 'pourcentage' => 'percentage',
             ],
@@ -82,7 +82,7 @@ enum CatalogCsvSection: string
     {
         return match ($this) {
             self::Ranks, self::Roles, self::Stats, self::Elements => ['nom'],
-            self::RankStats => ['rang', 'stat'],
+            self::RoleStats => ['role', 'stat'],
             self::WelcomeMessages, self::ByeMessages => ['rang', 'message'],
         };
     }
@@ -113,10 +113,10 @@ enum CatalogCsvSection: string
                 ['nom' => 'Novice', 'pourcentage' => '65', 'titre_depart' => 'Novice sur le départ', 'est_staff' => 'non'],
                 ['nom' => 'Gardien', 'pourcentage' => '35', 'titre_depart' => 'Gardien sur le départ', 'est_staff' => 'oui'],
             ],
-            self::RankStats => [
-                ['rang' => 'Novice', 'stat' => 'Force', 'pourcentage' => '60'],
-                ['rang' => 'Novice', 'stat' => 'Agilité', 'pourcentage' => '40'],
-                ['rang' => 'Gardien', 'stat' => 'Force', 'pourcentage' => '100'],
+            self::RoleStats => [
+                ['role' => 'Guerrier', 'stat' => 'Force', 'pourcentage' => '60'],
+                ['role' => 'Guerrier', 'stat' => 'Agilité', 'pourcentage' => '40'],
+                ['role' => 'Oracle', 'stat' => 'Force', 'pourcentage' => '100'],
             ],
             self::WelcomeMessages => [
                 ['rang' => 'Novice', 'message' => 'Bienvenue parmi nous, {user}.'],
@@ -145,7 +145,7 @@ enum CatalogCsvSection: string
     {
         return match ($this) {
             self::Ranks => 'exemple-rangs.csv',
-            self::RankStats => 'exemple-probabilites-rang-stat.csv',
+            self::RoleStats => 'exemple-probabilites-role-stat.csv',
             self::WelcomeMessages => 'exemple-messages-arrivee.csv',
             self::ByeMessages => 'exemple-messages-depart.csv',
             self::Roles => 'exemple-roles.csv',
@@ -158,7 +158,7 @@ enum CatalogCsvSection: string
     {
         return match ($this) {
             self::Ranks => 'Rangs',
-            self::RankStats => 'Probabilités rang/stat',
+            self::RoleStats => 'Probabilités rôle/stat',
             self::WelcomeMessages => 'Messages d’arrivée',
             self::ByeMessages => 'Messages de départ',
             self::Roles => 'Rôles de personnage',
