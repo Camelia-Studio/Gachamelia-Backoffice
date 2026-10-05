@@ -1,17 +1,5 @@
-DirectoryIndex public/index.php
+RewriteEngine On
 
-<IfModule mod_rewrite.c>
-    RewriteEngine On
+RewriteRule ^public(?:/|$) - [L]
 
-    RewriteCond %{HTTP:Authorization} .+
-    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
-
-    RewriteRule ^public(?:/|$) - [L]
-    RewriteRule ^(.*)$ public/$1 [L]
-</IfModule>
-
-<IfModule !mod_rewrite.c>
-    <IfModule mod_alias.c>
-        RedirectMatch 307 ^/?$ public/index.php/
-    </IfModule>
-</IfModule>
+RewriteRule ^(.*)$ public/$1 [L]
