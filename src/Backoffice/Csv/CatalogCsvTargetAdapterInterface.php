@@ -11,6 +11,11 @@ interface CatalogCsvTargetAdapterInterface
 {
     public function supports(DiscordServer|CatalogTemplate $target): bool;
 
+    /**
+     * @return list<array<string, string|int|bool|null>>
+     */
+    public function rows(DiscordServer|CatalogTemplate $target, CatalogCsvSection $section): array;
+
     public function preview(
         DiscordServer|CatalogTemplate $target,
         CatalogCsvSection $section,

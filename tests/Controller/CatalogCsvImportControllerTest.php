@@ -59,6 +59,24 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         self::assertStringNotContainsString('discord', strtolower($client->getResponse()->getContent()));
     }
 
+    public function testEveryDownloadedExampleCanBePreviewedUnchangedOnAnEmptyCatalogue(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        [, , $template] = $this->seedAccess($client);
+        foreach (['/app/serveurs/guild', '/app/modeles-catalogue/'.$template->id()] as $base) {
+            foreach (['ranks', 'role-stats', 'welcome-messages', 'bye-messages', 'roles', 'stats', 'elements'] as $section) {
+                $client->request('GET', $base.'/configuration/'.$section.'/csv/exemple');
+                self::assertResponseIsSuccessful();
+                $csv = $client->getResponse()->getContent();
+                self::assertIsString($csv);
+                $this->upload($client, $base.'/configuration/'.$section.'/csv/apercu', $csv);
+                self::assertResponseIsSuccessful();
+                self::assertSelectorExists('[data-testid="catalog-csv-preview"]');
+            }
+        }
+    }
+
     public function testCsvUploadAndBackofficeControlsExposeClearInteractiveAffordances(): void
     {
         $client = self::createClient();

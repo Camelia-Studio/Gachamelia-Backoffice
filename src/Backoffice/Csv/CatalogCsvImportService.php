@@ -17,6 +17,14 @@ final readonly class CatalogCsvImportService
     ) {
     }
 
+    /**
+     * @return list<array<string, string|int|bool|null>>
+     */
+    public function rows(DiscordServer|CatalogTemplate $target, CatalogCsvSection $section): array
+    {
+        return $this->adapter($target)->rows($target, $section);
+    }
+
     public function preview(
         DiscordServer|CatalogTemplate $target,
         CatalogCsvSection $section,

@@ -28,6 +28,14 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
     {
     }
 
+    /**
+     * @return list<array<string, string|int|bool|null>>
+     */
+    public function rows(DiscordServer|CatalogTemplate $target, CatalogCsvSection $section): array
+    {
+        return array_map(fn (object $entity): array => $this->canonicalValues($section, $this->payload($section, $entity)), $this->entities($target, $section));
+    }
+
     public function preview(
         DiscordServer|CatalogTemplate $target,
         CatalogCsvSection $section,

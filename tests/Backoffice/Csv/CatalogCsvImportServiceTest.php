@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Backoffice\Csv;
 
 use App\Backoffice\Csv\CatalogCsvDocument;
+use App\Backoffice\Csv\CatalogCsvExampleFactory;
+use App\Backoffice\Csv\CatalogCsvSampleGenerator;
+use App\Backoffice\Csv\CatalogCsvParser;
 use App\Backoffice\Csv\CatalogCsvImportResult;
 use App\Backoffice\Csv\CatalogCsvImportService;
 use App\Backoffice\Csv\CatalogCsvSection;
@@ -46,6 +49,31 @@ final class CatalogCsvImportServiceTest extends KernelTestCase
             new ServerCatalogCsvTargetAdapter($this->entityManager),
             new TemplateCatalogCsvTargetAdapter($this->entityManager),
         );
+    }
+
+    public function testExamplesUseExistingReferencesAndValidTotals(): void
+    {
+        $server = new DiscordServer('sample-guild', 'Exemples');
+        $rank = new Rank($server, 'rank-id', 'Rang réel', 50);
+        $role = new CharacterRole($server, 'Rôle réel', 25);
+        $stat = new Stat($server, 'Stat réelle');
+        foreach ([$server, $rank, $role, $stat] as $entity) {
+            $this->entityManager->persist($entity);
+        }
+        $this->entityManager->flush();
+        $factory = new CatalogCsvExampleFactory($this->service, new CatalogCsvSampleGenerator());
+        foreach (CatalogCsvSection::cases() as $section) {
+            $path = tempnam(sys_get_temp_dir(), 'csv-example-');
+            self::assertIsString($path);
+            try {
+                file_put_contents($path, $factory->generate($server, $section));
+                $document = (new CatalogCsvParser())->parse($path, $section);
+                self::assertTrue($document->valid());
+                self::assertTrue($this->service->preview($server, $section, $document)->valid(), $section->value);
+            } finally {
+                unlink($path);
+            }
+        }
     }
 
     public function testMergesEveryServerSectionWithoutDeletingAbsentRows(): void

@@ -6,7 +6,10 @@ namespace App\Backoffice\Csv;
 
 final readonly class CatalogCsvSampleGenerator
 {
-    public function generate(CatalogCsvSection $section): string
+    /**
+     * @param list<array<string, string|int|bool|null>>|null $rows
+     */
+    public function generate(CatalogCsvSection $section, ?array $rows = null): string
     {
         $stream = fopen('php://temp', 'w+');
         if (false === $stream) {
@@ -15,10 +18,10 @@ final readonly class CatalogCsvSampleGenerator
 
         fwrite($stream, "\xEF\xBB\xBF");
         fputcsv($stream, $section->headers(), ';', '"', '', "\n");
-        foreach ($section->sampleRows() as $row) {
+        foreach (($rows ?? $section->sampleRows()) as $row) {
             fputcsv(
                 $stream,
-                array_map(static fn (string $header): string => $row[$header] ?? '', $section->headers()),
+                array_map(static fn (string $header): string => \is_bool($row[$header] ?? null) ? ($row[$header] ? 'oui' : 'non') : (string) ($row[$header] ?? ''), $section->headers()),
                 ';',
                 '"',
                 '',

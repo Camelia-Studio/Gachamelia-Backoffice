@@ -11,7 +11,7 @@ use App\Backoffice\Csv\CatalogCsvDraftStore;
 use App\Backoffice\Csv\CatalogCsvImportService;
 use App\Backoffice\Csv\CatalogCsvParser;
 use App\Backoffice\Csv\CatalogCsvPreview;
-use App\Backoffice\Csv\CatalogCsvSampleGenerator;
+use App\Backoffice\Csv\CatalogCsvExampleFactory;
 use App\Backoffice\Csv\CatalogCsvSection;
 use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Entity\CatalogTemplate;
@@ -65,14 +65,14 @@ final class CatalogCsvImportController extends AbstractController
         BackofficeSession $session,
         BackofficeAccess $access,
         EntityManagerInterface $entityManager,
-        CatalogCsvSampleGenerator $generator,
+        CatalogCsvExampleFactory $generator,
     ): Response {
         if (!$session->isAuthenticated()) {
             return $this->redirectToRoute('app_discord_login');
         }
-        $this->serverTarget($guildId, $session, $access, $entityManager, false);
+        $target = $this->serverTarget($guildId, $session, $access, $entityManager, false);
 
-        return $this->example($this->section($section), $generator);
+        return $this->example($target, $this->section($section), $generator);
     }
 
     #[Route(
@@ -171,11 +171,11 @@ final class CatalogCsvImportController extends AbstractController
         BackofficeSession $session,
         BackofficeAccess $access,
         EntityManagerInterface $entityManager,
-        CatalogCsvSampleGenerator $generator,
+        CatalogCsvExampleFactory $generator,
     ): Response {
-        $this->templateTarget($templateId, $session, $access, $entityManager);
+        $target = $this->templateTarget($templateId, $session, $access, $entityManager);
 
-        return $this->example($this->section($section), $generator);
+        return $this->example($target, $this->section($section), $generator);
     }
 
     #[Route(
@@ -244,9 +244,9 @@ final class CatalogCsvImportController extends AbstractController
         );
     }
 
-    private function example(CatalogCsvSection $section, CatalogCsvSampleGenerator $generator): Response
+    private function example(DiscordServer|CatalogTemplate $target, CatalogCsvSection $section, CatalogCsvExampleFactory $generator): Response
     {
-        $response = new Response($generator->generate($section));
+        $response = new Response($generator->generate($target, $section));
         $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
         $response->headers->set('Content-Disposition', 'attachment; filename='.$section->exampleFilename());
 
@@ -292,12 +292,12 @@ final class CatalogCsvImportController extends AbstractController
         DiscordGuildResourcesProviderInterface $resourcesProvider,
     ): Response {
         $file = $request->files->get('csv_file');
-        if (!$file instanceof UploadedFile || 'csv' !== strtolower($file->getClientOriginalExtension())) {
+        if (!$file instanceof UploadedFile || !$file->isValid() || 'csv' !== strtolower($file->getClientOriginalExtension())) {
             return $this->renderImport(
                 $targetType,
                 $target,
                 $section,
-                errors: [$this->error('Le fichier doit être un CSV valide.')],
+                errors: [$this->error('Choisis un fichier .csv de moins de 5 Mio. Si l’envoi échoue, vérifie aussi la limite d’upload du serveur.')],
                 status: Response::HTTP_UNPROCESSABLE_ENTITY,
             );
         }
@@ -561,26 +561,30 @@ final class CatalogCsvImportController extends AbstractController
     private function translatedErrors(array $errors): array
     {
         $labels = [
+            'unreadable_file' => 'Le fichier n’a pas pu être lu. Sélectionne-le à nouveau puis relance l’aperçu.',
+            'header_too_long' => 'L’en-tête dépasse 8 192 caractères. Repars des colonnes de l’exemple.',
+            'too_many_columns' => 'L’en-tête comporte trop de colonnes. Garde uniquement les colonnes de l’exemple.',
+            'invalid_column_count' => 'Le nombre de cellules diffère de l’en-tête. Vérifie les séparateurs et place entre guillemets les textes qui en contiennent.',
             'file_too_large' => 'Le fichier dépasse la limite de 5 Mio.',
             'too_many_rows' => 'Le fichier dépasse 1 000 lignes de données.',
-            'invalid_utf8' => 'Le fichier doit être encodé en UTF-8.',
+            'invalid_utf8' => 'Enregistre le fichier en CSV UTF-8 (ou UTF-16 avec BOM) depuis ton tableur.',
             'missing_header' => 'La ligne d’en-tête est absente.',
-            'missing_required_header' => 'Une colonne obligatoire est absente.',
-            'unknown_header' => 'Une colonne inconnue est présente.',
-            'duplicate_header' => 'Une colonne est déclarée plusieurs fois.',
-            'required_value' => 'Une valeur obligatoire est absente.',
-            'invalid_integer' => 'Le pourcentage doit être un nombre entier.',
-            'percentage_out_of_range' => 'Le pourcentage doit être compris entre 0 et 100.',
-            'invalid_boolean' => 'La valeur doit être oui/non, true/false ou 1/0.',
+            'missing_required_header' => 'Ajoute cette colonne dans l’en-tête en reprenant son nom dans l’exemple.',
+            'unknown_header' => 'Renomme ou retire cette colonne. Utilise les noms de colonnes de l’exemple.',
+            'duplicate_header' => 'Supprime la colonne en double dans l’en-tête.',
+            'required_value' => 'Renseigne cette cellule obligatoire.',
+            'invalid_integer' => 'Saisis un entier, par exemple 25, sans le signe %.',
+            'percentage_out_of_range' => 'Saisis un entier compris entre 0 et 100.',
+            'invalid_boolean' => 'Remplace la valeur par oui/non, true/false ou 1/0.',
             'value_too_long' => 'La valeur est trop longue.',
-            'duplicate_natural_key' => 'Cette entrée apparaît plusieurs fois dans le fichier.',
+            'duplicate_natural_key' => 'Regroupe cette entrée sur une seule ligne.',
             'invalid_rank_percentage_total' => 'Le total projeté des rangs doit être exactement de 100 %.',
             'invalid_role_percentage_total' => 'Le total projeté des rôles doit être exactement de 100 %.',
             'invalid_role_stat_percentage_total' => 'Le total projeté des stats de ce rôle doit être exactement de 100 %.',
             'multiple_staff_ranks' => 'Un seul rang peut être marqué comme rang staff.',
-            'rank_not_found' => 'Le rang référencé n’existe pas dans ce catalogue.',
-            'role_not_found' => 'Le rôle référencé n’existe pas dans ce catalogue.',
-            'stat_not_found' => 'La stat référencée n’existe pas dans ce catalogue.',
+            'rank_not_found' => 'Ce rang est absent du catalogue. Crée-le d’abord ou reprends son nom exact dans la section Rangs.',
+            'role_not_found' => 'Ce rôle est absent du catalogue. Crée-le d’abord ou reprends son nom dans la section Rôles.',
+            'stat_not_found' => 'Cette stat est absente du catalogue. Crée-la d’abord ou reprends son nom dans la section Stats.',
         ];
         foreach ($errors as &$error) {
             $error['message'] = $labels[$error['message']] ?? $error['message'];
