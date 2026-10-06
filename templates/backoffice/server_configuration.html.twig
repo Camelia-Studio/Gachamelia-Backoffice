@@ -478,7 +478,7 @@
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="bo-field">
                                             Rang
-                                            <select name="rank_id" required class="bo-input">
+                                            <select name="rank_id" required class="bo-input" data-rank-choice="server-{{ guild.id }}" aria-describedby="rank-choice-help">
                                                 {% for rank in catalog.ranks %}
                                                     <option value="{{ rank.id }}">{{ rank.name }}</option>
                                                 {% else %}
@@ -486,6 +486,7 @@
                                                 {% endfor %}
                                             </select>
                                         </label>
+                                        <p id="rank-choice-help" class="bo-muted">Le rang choisi sera repris pour les prochains messages de ce catalogue. Tu peux le changer à tout moment.</p>
                                         <label class="bo-field">
                                             Message
                                             <textarea name="message" required maxlength="255" rows="5" class="bo-input bo-textarea bo-textarea--tall"></textarea>
