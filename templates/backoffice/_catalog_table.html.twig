@@ -33,6 +33,17 @@
             <p id="rank-choice-help" class="bo-muted">Le choix est mémorisé. Chaque ligne peut utiliser un autre rang.</p>
         </div>
     {% endif %}
+    {% if active_section == 'role-stats' %}
+        <div class="bo-rank-default">
+            <label class="bo-field">Rôle pour les prochaines stats
+                <select class="bo-input" data-role-choice="{{ target_type }}-{{ target_id }}" data-batch-role-default aria-describedby="role-choice-help">
+                    <option value="">Choisis un rôle</option>
+                    {% for role in catalog.roles %}<option value="{{ role.id }}">{{ role.name }}</option>{% endfor %}
+                </select>
+            </label>
+            <p id="role-choice-help" class="bo-muted">Le choix est mémorisé. Chaque ligne peut utiliser un autre rôle.</p>
+        </div>
+    {% endif %}
     <form class="bo-catalog-filters" data-catalog-filters role="search" aria-label="Filtrer {{ page_title }}">
         {% for key, label in columns %}
             {% if key == 'percentage' %}

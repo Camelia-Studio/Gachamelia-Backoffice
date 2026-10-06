@@ -1,6 +1,6 @@
 import { initCatalogTables } from './catalog_table.js';
 import { initEmojiPickers } from './emoji_picker.js';
-import { initRankChoices } from './rank_choice.js';
+import { initRankChoices, initRoleChoices } from './rank_choice.js';
 
 let busy = false;
 export function acquireCatalogMutation() {
@@ -45,6 +45,7 @@ export function refreshCatalogue(fresh, editedRow = null) {
     });
     initEmojiPickers();
     initRankChoices();
+    initRoleChoices();
     initCatalogTables();
 }
 

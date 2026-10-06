@@ -1,5 +1,5 @@
 import { initEmojiPickers } from './emoji_picker.js';
-import { initRankChoices } from './rank_choice.js';
+import { initRankChoices, initRoleChoices } from './rank_choice.js';
 import { acquireCatalogMutation, releaseCatalogMutation, refreshCatalogue } from './catalog_mutations.js';
 
 const SOURCE_LABELS = { unicode: 'Standard', bot: 'Bot', server: 'Serveur' };
@@ -13,13 +13,17 @@ function initBatch(panel) {
     const add = form.querySelector('[data-batch-add]');
     const status = form.querySelector('[data-batch-status]');
     const defaultRank = panel.querySelector('[data-batch-rank-default]');
+    const defaultRole = panel.querySelector('[data-batch-role-default]');
+    const defaults = [defaultRank, defaultRole].filter(Boolean);
     const rows = () => Array.from(drafts.querySelectorAll('[data-catalog-new-row]'));
     let saving = false;
     let committed = false;
 
-    function rankDefault(row) {
+    function applyDefaults(row) {
         const rank = row.querySelector('[data-row-field="rang"]');
         if (rank && !rank.value && defaultRank?.value) rank.value = defaultRank.selectedOptions[0].textContent;
+        const role = row.querySelector('[data-row-field="role"]');
+        if (role && !role.value && defaultRole?.value) role.value = defaultRole.selectedOptions[0].textContent;
     }
 
     function prepare() {
@@ -32,7 +36,7 @@ function initBatch(panel) {
                 field.setAttribute('aria-label', `${field.getAttribute('aria-label')?.replace(/ de la (nouvelle ligne|ligne \d+)$/, '') || field.dataset.rowField} de la ligne ${index + 1}`);
             });
             row.querySelector('[data-batch-remove]').disabled = saving || committed || rows().length === 1;
-            rankDefault(row);
+            applyDefaults(row);
             const source = row.querySelector('[data-batch-emoji-source]');
             if (source) source.textContent = SOURCE_LABELS[row.querySelector('[data-emoji-field="source"]').value];
         });
@@ -79,6 +83,11 @@ function initBatch(panel) {
             rank.value = defaultRank.value ? defaultRank.selectedOptions[0].textContent : '';
         }
     }));
+    defaultRole?.addEventListener('change', () => rows().forEach((row) => {
+        if (!row.querySelector('[data-row-field="stat"]').value && !Number(row.querySelector('[data-row-field="pourcentage"]').value)) {
+            row.querySelector('[data-row-field="role"]').value = defaultRole.value ? defaultRole.selectedOptions[0].textContent : '';
+        }
+    }));
     drafts.addEventListener('click', (event) => {
         const option = event.target.closest('[data-emoji-option]');
         if (option) {
@@ -88,6 +97,7 @@ function initBatch(panel) {
         }
     });
     initRankChoices(panel);
+    initRoleChoices(panel);
     prepare();
 
     form.addEventListener('submit', async (event) => {
@@ -101,7 +111,7 @@ function initBatch(panel) {
         const controls = Array.from(form.elements).concat(Array.from(drafts.querySelectorAll('button, input, select, textarea')));
         const disabled = new Map(controls.map((control) => [control, control.disabled]));
         controls.forEach((control) => { control.disabled = true; });
-        if (defaultRank) defaultRank.disabled = true;
+        defaults.forEach((select) => { select.disabled = true; });
         form.setAttribute('aria-busy', 'true');
         status.hidden = false;
         status.textContent = 'Vérification et enregistrement du lot…';
@@ -144,7 +154,7 @@ function initBatch(panel) {
         } finally {
             saving = false;
             disabled.forEach((value, control) => { control.disabled = committed || value; });
-            if (defaultRank) defaultRank.disabled = false;
+            defaults.forEach((select) => { select.disabled = false; });
             form.removeAttribute('aria-busy');
             prepare();
             releaseCatalogMutation();

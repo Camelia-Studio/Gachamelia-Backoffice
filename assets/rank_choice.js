@@ -1,8 +1,9 @@
-export function initRankChoices(root = document) {
-    root.querySelectorAll('[data-rank-choice]').forEach((select) => {
-        if (select.dataset.rankChoiceReady) return;
-        select.dataset.rankChoiceReady = 'true';
-        const key = `gachamelia.rank.${select.dataset.rankChoice}`;
+function initChoices(root, kind) {
+    root.querySelectorAll(`[data-${kind}-choice]`).forEach((select) => {
+        const ready = `${kind}ChoiceReady`;
+        if (select.dataset[ready]) return;
+        select.dataset[ready] = 'true';
+        const key = `gachamelia.${kind}.${select.dataset[`${kind}Choice`]}`;
         try {
             const saved = localStorage.getItem(key);
             if (saved && Array.from(select.options).some((option) => option.value === saved)) {
@@ -14,6 +15,7 @@ export function initRankChoices(root = document) {
         const remember = () => {
             try {
                 if (select.value) localStorage.setItem(key, select.value);
+                else localStorage.removeItem(key);
             } catch { /* La saisie fonctionne aussi sans stockage local. */ }
         };
         select.addEventListener('change', remember);
@@ -21,4 +23,8 @@ export function initRankChoices(root = document) {
     });
 }
 
+export function initRankChoices(root = document) { initChoices(root, 'rank'); }
+export function initRoleChoices(root = document) { initChoices(root, 'role'); }
+
 initRankChoices();
+initRoleChoices();
