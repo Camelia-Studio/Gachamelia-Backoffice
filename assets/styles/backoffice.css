@@ -7,6 +7,12 @@ html[data-backoffice-theme] {
     color-scheme: light;
     scroll-behavior: auto;
     --surface: #fff;
+    --contrast-bg: #241813;
+    --contrast-fg: #fffaf4;
+    --input-border: color-mix(in srgb, var(--ink) 25%, transparent);
+    --radius-panel: 1rem;
+    --radius-soft: 0.75rem;
+    --radius-control: 0.6rem;
     --on-strong: #fff;
     --gold-ink: #7a5415;
     --line: color-mix(in srgb, var(--ink) 10%, transparent);
@@ -58,18 +64,17 @@ html[data-backoffice-theme] {
     position: sticky;
     top: 0;
     z-index: 40;
-    border-bottom: 1px solid var(--line);
-    background: color-mix(in srgb, var(--ivory) 92%, transparent);
-    backdrop-filter: blur(24px);
+    background: var(--contrast-bg);
+    color: var(--contrast-fg);
 }
 
 .bo-header-inner {
     display: flex;
     width: 100%;
     max-width: 90rem;
-    min-height: 4.5rem;
+    min-height: 4rem;
     margin: 0 auto;
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 1rem;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
@@ -100,18 +105,28 @@ html[data-backoffice-theme] {
 
 .bo-brand-text {
     min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
 }
 
 .bo-brand-name,
 .bo-brand-sub {
     display: block;
     line-height: 1.25;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    background: var(--rose);
+    color: var(--on-strong);
 }
 
 .bo-brand-name {
-    font-size: 0.875rem;
-    font-weight: 900;
-    letter-spacing: 0.025em;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: normal;
+    font-family: var(--font-display);
 }
 
 .bo-brand-sub {
@@ -131,11 +146,11 @@ html[data-backoffice-theme] {
 .bo-main {
     display: flex;
     width: 100%;
-    max-width: 90rem;
+    max-width: 80rem;
     flex: 1;
     flex-direction: column;
     margin: 0 auto;
-    padding: 2.5rem 1rem;
+    padding: 1.75rem 1rem 3rem;
 }
 
 .bo-main > .bo-flash {
@@ -144,11 +159,11 @@ html[data-backoffice-theme] {
 
 .bo-page {
     display: grid;
-    gap: 2rem;
+    gap: 1.5rem;
 }
 
 .bo-page--wide {
-    gap: 2.5rem;
+    gap: 1.75rem;
 }
 
 .bo-page--narrow {
@@ -160,21 +175,21 @@ html[data-backoffice-theme] {
 .bo-page-header {
     display: grid;
     gap: 0.75rem;
-    padding-bottom: 1.5rem;
+    padding-bottom: 1rem;
     border-bottom: 1px solid var(--line);
 }
 
 .bo-page-title {
     font-family: var(--font-display);
-    font-size: 2.25rem;
-    font-weight: 400;
+    font-size: 1.75rem;
+    font-weight: 800;
     line-height: 1.25;
 }
 
 .bo-page-lead {
-    max-width: 48rem;
+    max-width: 65ch;
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 500;
     line-height: 1.625;
     color: var(--muted);
 }
@@ -187,7 +202,7 @@ html[data-backoffice-theme] {
 
 .bo-eyebrow {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--rose);
@@ -207,8 +222,9 @@ html[data-backoffice-theme] {
 }
 
 .bo-section-title {
-    font-size: 1.125rem;
-    font-weight: 900;
+    font-size: 1.25rem;
+    font-weight: 800;
+    font-family: var(--font-display);
 }
 
 .bo-section-lead {
@@ -221,13 +237,13 @@ html[data-backoffice-theme] {
 .bo-panel-lead {
     margin-top: 0.5rem;
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 500;
     line-height: 1.625;
     color: var(--muted);
 }
 
 .bo-card-title {
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-card-text {
@@ -240,11 +256,11 @@ html[data-backoffice-theme] {
 
 .bo-card-heading {
     font-size: 1.25rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-strong {
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-muted {
@@ -258,13 +274,13 @@ html[data-backoffice-theme] {
 }
 
 .bo-accent {
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
 .bo-label {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--rose);
@@ -277,7 +293,7 @@ html[data-backoffice-theme] {
 
 .bo-caption {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--muted);
@@ -295,7 +311,7 @@ html[data-backoffice-theme] {
     color: var(--on-strong);
     font-family: var(--font-sans);
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-truncate {
@@ -320,7 +336,7 @@ html[data-backoffice-theme] {
     border: 0;
     background: none;
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
@@ -414,8 +430,8 @@ html[data-backoffice-theme] {
     padding: 0 1rem;
     border: 1px solid transparent;
     border-radius: 999px;
-    font-size: 0.875rem;
-    font-weight: 900;
+    font-size: 0.8rem;
+    font-weight: 800;
     text-align: center;
     transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
@@ -533,7 +549,7 @@ html[data-backoffice-theme] {
     padding: 0 0.75rem;
     border-radius: 999px;
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     white-space: nowrap;
 }
 
@@ -568,6 +584,7 @@ html[data-backoffice-theme] {
     font-size: 0.875rem;
     font-weight: 700;
     color: var(--ink);
+    border-radius: var(--radius-soft);
 }
 
 .bo-flash--error {
@@ -587,6 +604,7 @@ html[data-backoffice-theme] {
     font-weight: 700;
     line-height: 1.625;
     color: var(--muted);
+    border-radius: var(--radius-soft);
 }
 
 .bo-notice--rose {
@@ -612,6 +630,7 @@ html[data-backoffice-theme] {
     font-weight: 700;
     line-height: 1.625;
     color: var(--muted);
+    border-radius: var(--radius-soft);
 }
 
 .bo-empty--white {
@@ -641,10 +660,10 @@ html[data-backoffice-theme] {
 .bo-panel {
     display: grid;
     align-content: start;
-    gap: 1.5rem;
+    gap: 1.25rem;
     border: 1px solid var(--line);
-    background: var(--ivory);
-    box-shadow: var(--shadow-sm);
+    background: var(--surface);
+    border-radius: var(--radius-panel);
 }
 
 .bo-panel--rose {
@@ -671,8 +690,7 @@ html[data-backoffice-theme] {
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--line);
+    padding: 1.25rem;
 }
 
 .bo-panel-head--bare {
@@ -685,7 +703,7 @@ html[data-backoffice-theme] {
 }
 
 .bo-panel-body {
-    padding: 1.5rem;
+    padding: 1.25rem;
 }
 
 .bo-card {
@@ -694,6 +712,7 @@ html[data-backoffice-theme] {
     padding: 1.25rem;
     border: 1px solid var(--line);
     background: var(--surface);
+    border-radius: var(--radius-panel);
 }
 
 .bo-card--roomy {
@@ -738,7 +757,7 @@ html[data-backoffice-theme] {
     background: var(--blush);
     font-family: var(--font-display);
     font-size: 1.125rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
@@ -764,7 +783,7 @@ html[data-backoffice-theme] {
 .bo-details-summary {
     cursor: pointer;
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
     transition: color 0.15s;
 }
@@ -802,7 +821,7 @@ html[data-backoffice-theme] {
 
 .bo-row-label {
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-toolbar {
@@ -832,7 +851,7 @@ html[data-backoffice-theme] {
     padding: 1.75rem;
     border: 1px solid color-mix(in srgb, var(--rose) 20%, transparent);
     background: color-mix(in srgb, var(--blush) 40%, transparent);
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-panel);
 }
 
 .bo-callout .bo-page-lead {
@@ -872,7 +891,7 @@ html[data-backoffice-theme] {
     background: var(--blush);
     font-family: var(--font-display);
     font-size: 1.25rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
@@ -894,7 +913,7 @@ html[data-backoffice-theme] {
     padding: 1.25rem;
     border: 1px solid var(--line);
     background: var(--surface);
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-panel);
 }
 
 .bo-guild.is-inactive {
@@ -929,13 +948,13 @@ html[data-backoffice-theme] {
 .bo-guild-icon--fallback {
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
 .bo-guild-name {
     font-size: 1.125rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.25;
 }
 
@@ -977,7 +996,7 @@ html[data-backoffice-theme] {
     background: var(--blush);
     font-family: var(--font-display);
     font-size: 1.125rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
@@ -999,18 +1018,18 @@ html[data-backoffice-theme] {
 
 .bo-config {
     display: grid;
-    gap: 2rem;
+    gap: 1.5rem;
 }
 
 .bo-config-side {
     display: grid;
-    gap: 1.75rem;
+    gap: 1.25rem;
 }
 
 .bo-config-main {
     display: grid;
     min-width: 0;
-    gap: 2rem;
+    gap: 1.25rem;
 }
 
 .bo-fieldset {
@@ -1025,7 +1044,7 @@ html[data-backoffice-theme] {
     padding: 1rem;
     border: 1px solid var(--line);
     background: var(--ivory);
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-soft);
 }
 
 .bo-identity--guild {
@@ -1037,7 +1056,7 @@ html[data-backoffice-theme] {
 .bo-identity-name {
     overflow: hidden;
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1053,19 +1072,19 @@ html[data-backoffice-theme] {
 
 .bo-sidenav {
     display: grid;
-    gap: 1.75rem;
+    gap: 1.25rem;
 }
 
 .bo-sidenav-group {
     display: grid;
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
 .bo-sidenav-title {
     padding: 0 0.75rem;
     font-size: 0.68rem;
-    font-weight: 900;
-    letter-spacing: 0.16em;
+    font-weight: 800;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--muted);
 }
@@ -1073,15 +1092,16 @@ html[data-backoffice-theme] {
 .bo-sidenav-link {
     position: relative;
     display: grid;
-    min-height: 3rem;
+    min-height: 2.75rem;
     grid-template-columns: 1.8rem minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.75rem;
     padding: 0 0.75rem;
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 600;
     color: var(--muted);
     transition: color 0.15s;
+    border-radius: var(--radius-control);
 }
 
 .bo-sidenav-link:hover {
@@ -1089,21 +1109,10 @@ html[data-backoffice-theme] {
 }
 
 .bo-sidenav-link.is-active {
-    background: var(--blush);
-    color: var(--ink);
+    background: var(--contrast-bg);
+    color: var(--contrast-fg);
 }
 
-.bo-sidenav-link.is-active::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 0.25rem;
-    height: 1.75rem;
-    border-radius: 999px;
-    background: var(--rose);
-    transform: translateY(-50%);
-}
 
 .bo-sidenav-icon {
     display: flex;
@@ -1114,28 +1123,29 @@ html[data-backoffice-theme] {
     border: 1px solid var(--line);
     background: var(--surface);
     font-size: 0.68rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
+    border-radius: var(--radius-control);
 }
 
 .bo-sidenav-count {
     font-size: 0.75rem;
-    font-weight: 900;
-    color: var(--rose);
+    font-weight: 800;
+    color: inherit;
 }
 
 .bo-config-header {
     display: flex;
     align-items: flex-start;
-    gap: 1.25rem;
-    padding-bottom: 2rem;
+    gap: 1rem;
+    padding-bottom: 1.25rem;
     border-bottom: 1px solid var(--line);
 }
 
 .bo-config-icon {
     display: flex;
-    width: 4rem;
-    height: 4rem;
+    width: 3rem;
+    height: 3rem;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
@@ -1143,8 +1153,9 @@ html[data-backoffice-theme] {
     background: var(--blush);
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
+    border-radius: var(--radius-control);
 }
 
 .bo-config-heading {
@@ -1160,7 +1171,7 @@ html[data-backoffice-theme] {
     gap: 1rem;
     padding: 1.25rem;
     border: 1px solid transparent;
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-soft);
 }
 
 .bo-validation.is-ready {
@@ -1176,7 +1187,7 @@ html[data-backoffice-theme] {
 .bo-validation-eyebrow {
     margin-bottom: 0.5rem;
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.16em;
     text-transform: uppercase;
 }
@@ -1193,21 +1204,21 @@ html[data-backoffice-theme] {
     display: grid;
     gap: 0.5rem;
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 500;
     color: var(--muted);
 }
 
 .bo-issues li {
-    padding-left: 0.75rem;
-    border-left: 2px solid;
+    padding-left: 1rem;
+    position: relative;
 }
 
 .bo-issues--error li {
-    border-left-color: var(--rose);
+    --issue-color: var(--rose);
 }
 
 .bo-issues--warning li {
-    border-left-color: var(--gold);
+    --issue-color: var(--gold-ink);
 }
 
 /* ---------- Statistiques d'import ---------- */
@@ -1236,7 +1247,7 @@ html[data-backoffice-theme] {
 
 .bo-stat-label {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--muted);
@@ -1254,7 +1265,7 @@ html[data-backoffice-theme] {
     margin-top: 0.5rem;
     font-family: var(--font-display);
     font-size: 1.875rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-stat .bo-caption {
@@ -1302,22 +1313,23 @@ html[data-backoffice-theme] {
 
 .bo-field--sm {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-field--strong {
     gap: 0.5rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-input {
     width: 100%;
     min-height: 2.75rem;
     padding: 0 0.75rem;
-    border: 1px solid var(--line);
+    border: 1px solid var(--input-border);
     background: var(--surface);
-    font-weight: 600;
+    font-weight: 500;
     color: var(--ink);
+    border-radius: var(--radius-control);
 }
 
 .bo-input:disabled {
@@ -1346,7 +1358,7 @@ html[data-backoffice-theme] {
     border: 0;
     border-radius: 999px;
     background: var(--blush);
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
     cursor: pointer;
     transition: background-color 0.15s, color 0.15s;
@@ -1378,7 +1390,7 @@ html[data-backoffice-theme] {
     align-items: center;
     gap: 0.75rem;
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--muted);
 }
 
@@ -1440,6 +1452,9 @@ html[data-backoffice-theme] {
 .bo-table-wrap {
     overflow-x: auto;
     border: 1px solid var(--line);
+    border-radius: var(--radius-soft);
+    background: var(--surface);
+    min-width: 0;
 }
 
 .bo-table {
@@ -1451,7 +1466,7 @@ html[data-backoffice-theme] {
 }
 
 .bo-table thead {
-    background: color-mix(in srgb, var(--blush) 60%, transparent);
+    background: var(--ivory);
     font-size: 0.75rem;
     letter-spacing: 0.025em;
     text-transform: uppercase;
@@ -1459,7 +1474,7 @@ html[data-backoffice-theme] {
 }
 
 .bo-table th {
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-table th,
@@ -1476,7 +1491,7 @@ html[data-backoffice-theme] {
 }
 
 .bo-table td.bo-table-strong {
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-columns.bo-catalog-layout {
@@ -1492,11 +1507,11 @@ html[data-backoffice-theme] {
     grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
     gap: 1rem;
     align-items: end;
-    padding: 1.5rem;
+    padding: 0 1.25rem;
 }
 
 .bo-catalog-result {
-    padding: 0 1.5rem 1rem;
+    padding: 0 1.25rem;
 }
 
 .bo-table-sort {
@@ -1514,7 +1529,7 @@ html[data-backoffice-theme] {
 .bo-table th[aria-sort="ascending"] .bo-table-sort,
 .bo-table th[aria-sort="descending"] .bo-table-sort {
     color: var(--ink);
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-catalog-table td {
@@ -1566,7 +1581,7 @@ html[data-backoffice-theme] {
     overflow: hidden;
     border: 1px solid var(--line);
     background: var(--surface);
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-panel);
 }
 
 .bo-sheet-hero {
@@ -1613,7 +1628,7 @@ html[data-backoffice-theme] {
 
 .bo-sheet-eyebrow {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--on-strong);
@@ -1626,7 +1641,7 @@ html[data-backoffice-theme] {
 .bo-sheet-name {
     font-family: var(--font-display);
     font-size: 1.875rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.25;
     overflow-wrap: anywhere;
 }
@@ -1660,7 +1675,7 @@ html[data-backoffice-theme] {
 
 .bo-sheet-rank-label {
     font-size: 0.65rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--rose);
@@ -1671,7 +1686,7 @@ html[data-backoffice-theme] {
     margin-top: 0.5rem;
     font-family: var(--font-display);
     font-size: 1.125rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.25;
     overflow-wrap: anywhere;
 }
@@ -1682,7 +1697,7 @@ html[data-backoffice-theme] {
     border-radius: 999px;
     background: var(--leaf);
     font-size: 0.65rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.025em;
     text-transform: uppercase;
     color: var(--on-strong);
@@ -1711,8 +1726,9 @@ html[data-backoffice-theme] {
     align-items: center;
     gap: 1rem;
     padding: 1rem;
-    border-left: 4px solid var(--gold);
     background: var(--ivory);
+    border-radius: var(--radius-soft);
+    border: 1px solid var(--line);
 }
 
 .bo-sheet-role-glyph {
@@ -1722,7 +1738,7 @@ html[data-backoffice-theme] {
 .bo-sheet-role-name {
     min-width: 0;
     font-size: 1.125rem;
-    font-weight: 900;
+    font-weight: 800;
     overflow-wrap: anywhere;
 }
 
@@ -1740,7 +1756,7 @@ html[data-backoffice-theme] {
     border-radius: 999px;
     background: var(--blush);
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-pill-glyph {
@@ -1751,7 +1767,7 @@ html[data-backoffice-theme] {
     margin-top: 0.25rem;
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-sheet-stats {
@@ -1761,6 +1777,7 @@ html[data-backoffice-theme] {
     overflow: hidden;
     border: 1px solid var(--line);
     background: var(--line);
+    border-radius: var(--radius-soft);
 }
 
 .bo-sheet-stat {
@@ -1773,7 +1790,7 @@ html[data-backoffice-theme] {
 
 .bo-sheet-stat dt {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.025em;
     text-transform: uppercase;
     color: var(--muted);
@@ -1784,7 +1801,7 @@ html[data-backoffice-theme] {
     margin: 0;
     font-family: var(--font-display);
     font-size: 1.875rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-sheet-empty {
@@ -1794,7 +1811,7 @@ html[data-backoffice-theme] {
     padding: 1.5rem;
     border: 1px solid var(--line);
     background: var(--surface);
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-panel);
 }
 
 .bo-sheet-empty-body {
@@ -1806,7 +1823,7 @@ html[data-backoffice-theme] {
 .bo-sheet-empty-title {
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.25;
 }
 
@@ -1868,6 +1885,7 @@ html[data-backoffice-theme] {
     background: var(--ivory);
     text-align: center;
     transition: border-color 0.15s, background-color 0.15s;
+    border-radius: var(--radius-control);
 }
 
 .bo-emoji-option:hover {
@@ -1890,7 +1908,7 @@ html[data-backoffice-theme] {
     margin-top: 0.25rem;
     overflow: hidden;
     font-size: 0.62rem;
-    font-weight: 900;
+    font-weight: 800;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--muted);
@@ -1917,6 +1935,7 @@ html[data-backoffice-theme] {
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    border-radius: var(--radius-control);
 }
 
 .bo-emoji-preview-tile--gold {
@@ -1941,7 +1960,7 @@ html[data-backoffice-theme] {
     justify-content: center;
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
@@ -1997,7 +2016,7 @@ html[data-backoffice-theme] {
 
 .bo-error-card-eyebrow {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--blush);
@@ -2028,7 +2047,7 @@ html[data-backoffice-theme] {
 
 .bo-error-cell small {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--muted);
@@ -2103,7 +2122,7 @@ html[data-backoffice-theme] {
 
 @media (min-width: 48rem) {
     .bo-page-title {
-        font-size: 3rem;
+        font-size: 2rem;
     }
 
     .bo-page-header--split {
@@ -2160,12 +2179,12 @@ html[data-backoffice-theme] {
     }
 
     .bo-config {
-        grid-template-columns: 16.5rem minmax(0, 1fr);
+        grid-template-columns: 14rem minmax(0, 1fr);
     }
 
     .bo-config-side {
         position: sticky;
-        top: 7rem;
+        top: 5.5rem;
         align-self: start;
     }
 
@@ -2195,7 +2214,7 @@ html[data-backoffice-theme] {
 
 @media (min-width: 80rem) {
     .bo-config {
-        gap: 3rem;
+        gap: 2rem;
     }
 
     .bo-columns--side {
@@ -2215,7 +2234,7 @@ html[data-backoffice-theme] {
 .bo-rank-default {
     display: grid;
     gap: 0.75rem;
-    padding: 1.5rem;
+    padding: 0 1.25rem;
     max-width: 32rem;
 }
 
@@ -2235,7 +2254,7 @@ html[data-backoffice-theme] {
 .bo-new-emoji { min-width: 12rem; }
 .bo-new-emoji[open] { min-width: 22rem; }
 .bo-new-emoji .bo-emoji-picker { margin-top: 1rem; }
-.bo-batch-toolbar { display: grid; gap: 1rem; padding: 1.5rem; }
+.bo-batch-toolbar { display: grid; gap: 1rem; padding: 0 1.25rem 1.25rem; }
 .bo-batch-error { color: var(--rose); font-size: 0.875rem; max-width: 65ch; }
 [data-row-field][aria-invalid="true"] { border-color: var(--rose); }
 .bo-btn:disabled { opacity: 0.55; }
@@ -2243,35 +2262,39 @@ html[data-backoffice-theme] {
 /* Thèmes réservés aux documents du backoffice ; la vitrine garde ses jetons. */
 html[data-backoffice-theme="dark"] {
     color-scheme: dark;
-    --cream: #1d171b;
-    --ivory: #272126;
-    --surface: #30292e;
-    --ink: #f9eee8;
-    --muted: #c4b5af;
+    --contrast-bg: #0b0b0a;
+    --contrast-fg: #ece9e5;
+    --cream: #161513;
+    --ivory: #201f1c;
+    --surface: #24231f;
+    --ink: #ece9e5;
+    --muted: #b8b4ae;
     --rose: #ff86ab;
     --pink: #ef9bad;
-    --blush: #422c34;
+    --blush: #35272b;
     --gold: #dfb65e;
     --gold-ink: #f0c878;
     --leaf: #94c7b5;
-    --on-strong: #1d171b;
+    --on-strong: #161513;
 }
 
 @media (prefers-color-scheme: dark) {
     html[data-backoffice-theme="system"] {
         color-scheme: dark;
-        --cream: #1d171b;
-        --ivory: #272126;
-        --surface: #30292e;
-        --ink: #f9eee8;
-        --muted: #c4b5af;
+        --contrast-bg: #0b0b0a;
+    --contrast-fg: #ece9e5;
+    --cream: #161513;
+        --ivory: #201f1c;
+        --surface: #24231f;
+        --ink: #ece9e5;
+        --muted: #b8b4ae;
         --rose: #ff86ab;
         --pink: #ef9bad;
-        --blush: #422c34;
+        --blush: #35272b;
         --gold: #dfb65e;
         --gold-ink: #f0c878;
         --leaf: #94c7b5;
-        --on-strong: #1d171b;
+        --on-strong: #161513;
     }
 }
 
@@ -2297,4 +2320,34 @@ html[data-backoffice-theme="dark"] {
 }
 @media (prefers-reduced-motion: reduce) {
     .bo a[href], .bo button { transition: none; }
+}
+
+/* Grammaire visuelle commune au backoffice Kiss-Shot. */
+.bo-header .bo-btn {
+    border-color: color-mix(in srgb, var(--contrast-fg) 25%, transparent);
+    background: transparent;
+    color: var(--contrast-fg);
+    box-shadow: none;
+}
+.bo-header .bo-btn:hover {
+    background: color-mix(in srgb, var(--contrast-fg) 10%, transparent);
+    color: var(--contrast-fg);
+    filter: none;
+}
+.bo-sidenav-link:hover { background: var(--blush); color: var(--ink); }
+.bo-sidenav-link.is-active .bo-sidenav-icon {
+    border-color: transparent;
+    background: transparent;
+    color: inherit;
+}
+.bo-panel > .bo-table-wrap { margin-inline: 1.25rem; }
+.bo-issues li::before {
+    content: "";
+    position: absolute;
+    top: 0.55em;
+    left: 0;
+    width: 0.3rem;
+    height: 0.3rem;
+    border-radius: 50%;
+    background: var(--issue-color);
 }

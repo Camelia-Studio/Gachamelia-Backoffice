@@ -47,6 +47,12 @@ le contexte. Les ajouts multiples doivent être atomiques : une erreur bloque to
 le lot et conserve la saisie. Les CSV doivent pouvoir être exportés, modifiés puis
 réimportés. Le choix Clair / Sombre / Système mémorisé concerne le backoffice.
 
+Compléments confirmés par le propriétaire : le rôle de personnage est aussi
+présélectionné et mémorisé pour les stats de rôle. Le backoffice Kiss-Shot du
+dépôt voisin sert de référence visuelle globale : en-tête sombre, navigation
+compacte, panneaux et champs arrondis, titres Fraunces et bascule soleil/lune.
+Le mode Système reste accessible sans menu déroulant.
+
 Le front repose sur AssetMapper (sans build Node) avec du CSS natif : `assets/styles/base.css` (jetons et reset), `app.css` (vitrine, préfixe `lp-`) et `backoffice.css` (backoffice, préfixe `bo-`). En développement, `symfony serve` suffit ; en production, `php bin/console asset-map:compile` est nécessaire.
 
 ## Brand Commitments
