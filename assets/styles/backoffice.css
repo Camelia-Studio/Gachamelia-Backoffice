@@ -1483,6 +1483,36 @@
     min-width: 36rem;
 }
 
+.bo-catalog-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 1rem;
+    align-items: end;
+    padding: 1.5rem;
+}
+
+.bo-catalog-result {
+    padding: 0 1.5rem 1rem;
+}
+
+.bo-table-sort {
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    cursor: pointer;
+}
+
+.bo-table th[aria-sort="ascending"] .bo-table-sort,
+.bo-table th[aria-sort="descending"] .bo-table-sort {
+    color: var(--ink);
+    font-weight: 900;
+}
+
 .bo-catalog-table td {
     vertical-align: top;
     overflow-wrap: anywhere;
@@ -1490,6 +1520,9 @@
 
 .bo-catalog-table td[data-column="message"] {
     min-width: 18rem;
+}
+
+.bo-table-message {
     white-space: pre-wrap;
 }
 

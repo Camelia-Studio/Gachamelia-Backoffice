@@ -20,10 +20,33 @@
         <h2 class="bo-section-title">{{ active_section == 'settings' ? 'Réglages actuels' : 'Entrées du catalogue' }}</h2>
         <span class="bo-badge bo-badge--gold" data-catalog-count>{{ entries|length }} entrées</span>
     </div>
+    <form class="bo-catalog-filters" data-catalog-filters role="search" aria-label="Filtrer {{ page_title }}">
+        {% for key, label in columns %}
+            {% if key == 'percentage' %}
+                <label class="bo-field">% minimum<input type="number" min="0" max="100" class="bo-input" data-filter-column="percentage" data-filter-kind="min"></label>
+                <label class="bo-field">% maximum<input type="number" min="0" max="100" class="bo-input" data-filter-column="percentage" data-filter-kind="max"></label>
+            {% else %}
+                <label class="bo-field">{{ label }}
+                    {% set options = key == 'rank_name' ? catalog.ranks : (key == 'role_name' ? catalog.roles : (key == 'stat_name' ? catalog.stats : [])) %}
+                    {% if options is not empty or key == 'is_staff' %}
+                        <select class="bo-input" data-filter-column="{{ key }}" data-filter-kind="exact">
+                            <option value="">Tous</option>
+                            {% if key == 'is_staff' %}<option>Oui</option><option>Non</option>{% endif %}
+                            {% for option in options %}<option value="{{ option.name }}">{{ option.name }}</option>{% endfor %}
+                        </select>
+                    {% else %}
+                        <input type="search" maxlength="255" class="bo-input" data-filter-column="{{ key }}" data-filter-kind="contains" placeholder="Contient…">
+                    {% endif %}
+                </label>
+            {% endif %}
+        {% endfor %}
+        <button type="button" class="bo-btn bo-btn--outline" data-filter-reset>Effacer les filtres</button>
+    </form>
+    <p class="bo-catalog-result bo-muted" data-filter-result role="status" aria-live="polite">{{ entries|length }} entrées affichées</p>
     <div class="bo-table-wrap" tabindex="0" role="region" aria-label="Tableau {{ page_title }}">
         <table class="bo-table bo-catalog-table" data-catalog-table data-section="{{ active_section }}">
             <thead><tr>
-                {% for key, label in columns %}<th scope="col" data-column="{{ key }}">{{ label }}</th>{% endfor %}
+                {% for key, label in columns %}<th scope="col" data-column="{{ key }}" aria-sort="{{ active_section == 'ranks' and key == 'name' ? 'ascending' : 'none' }}"><button type="button" class="bo-table-sort" data-sort-column="{{ key }}" aria-label="Trier par {{ label }}">{{ label }}</button></th>{% endfor %}
                 <th scope="col">Actions</th>
             </tr></thead>
             <tbody>
@@ -31,13 +54,16 @@
                     {% set row_key = active_section == 'role-stats' ? row.role_id ~ '-' ~ row.stat_id : row.id %}
                     <tr data-catalog-row="{{ row_key }}" data-testid="{{ is_server ? row_testids[active_section] : 'template-' ~ row_testids[active_section] }}">
                         {% for key, label in columns %}
-                            <td data-column="{{ key }}">
+                            {% set cell_value = key == 'identity' ? (is_server ? discord_resource_labels.roles[row.discord_id]|default(row.discord_id) : row.role_key) : (key == 'is_staff' ? (row.is_staff ? 'Oui' : 'Non') : attribute(row, key)|default('')) %}
+                            <td data-column="{{ key }}" data-filter-value="{{ cell_value }}">
                                 {% if key == 'identity' %}
                                     {{ is_server ? discord_resource_labels.roles[row.discord_id]|default(row.discord_id) : row.role_key }}
                                 {% elseif key == 'is_staff' %}
                                     {{ row.is_staff ? 'Oui' : 'Non' }}
                                 {% elseif key == 'percentage' %}
                                     <span class="bo-table-number">{{ row.percentage }} %</span>
+                                {% elseif key == 'message' %}
+                                    <span class="bo-table-message">{{ row.message }}</span>
                                 {% elseif key == 'emoji_markup' and row.emoji_cdn_url %}
                                     <img src="{{ row.emoji_cdn_url }}" alt="Emoji {{ active_section == 'roles' ? 'du rôle' : 'de l’élément' }} {{ row.name }}" class="bo-emoji" loading="lazy">
                                 {% else %}
@@ -63,6 +89,7 @@
                 {% else %}
                     <tr data-catalog-empty><td colspan="{{ columns|length + 1 }}" class="bo-empty">Aucune entrée pour l’instant. Ajoute la première ou importe un CSV.</td></tr>
                 {% endfor %}
+                <tr data-catalog-no-match hidden><td colspan="{{ columns|length + 1 }}">Aucune entrée ne correspond. Modifie ou efface les filtres.</td></tr>
             </tbody>
         </table>
     </div>

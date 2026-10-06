@@ -8,3 +8,4 @@ import './styles/backoffice.css';
 import './emoji_picker.js';
 
 import './rank_choice.js';
+import './catalog_table.js';
