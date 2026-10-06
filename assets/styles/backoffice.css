@@ -3,9 +3,13 @@
  * Les composants sont préfixés `bo-`. Les jetons de couleur viennent de base.css.
  */
 
-:root {
+html[data-backoffice-theme] {
+    color-scheme: light;
+    scroll-behavior: auto;
+    --surface: #fff;
+    --on-strong: #fff;
     --gold-ink: #7a5415;
-    --line: rgb(36 24 19 / 0.1);
+    --line: color-mix(in srgb, var(--ink) 10%, transparent);
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
 }
 
@@ -55,7 +59,7 @@
     top: 0;
     z-index: 40;
     border-bottom: 1px solid var(--line);
-    background: rgb(255 250 244 / 0.92);
+    background: color-mix(in srgb, var(--ivory) 92%, transparent);
     backdrop-filter: blur(24px);
 }
 
@@ -288,7 +292,7 @@
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
     background: var(--ink);
-    color: #fff;
+    color: var(--on-strong);
     font-family: var(--font-sans);
     font-size: 0.75rem;
     font-weight: 900;
@@ -440,7 +444,7 @@
 
 .bo-btn--ink {
     background: var(--ink);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-btn--ink:hover {
@@ -449,7 +453,7 @@
 
 .bo-btn--leaf {
     background: var(--leaf);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-btn--leaf:hover {
@@ -458,7 +462,7 @@
 
 .bo-btn--rose {
     background: var(--rose);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-btn--rose:hover {
@@ -467,13 +471,13 @@
 
 .bo-btn--outline {
     border-color: var(--line);
-    background: #fff;
+    background: var(--surface);
     color: var(--ink);
     box-shadow: var(--shadow-sm);
 }
 
 .bo-btn--outline:hover {
-    border-color: rgb(196 22 73 / 0.3);
+    border-color: color-mix(in srgb, var(--rose) 30%, transparent);
     color: var(--rose);
 }
 
@@ -488,24 +492,24 @@
 }
 
 .bo-btn--blush:hover {
-    border-color: rgb(196 22 73 / 0.4);
+    border-color: color-mix(in srgb, var(--rose) 40%, transparent);
     color: var(--rose);
 }
 
 .bo-btn--rose-soft {
-    border-color: rgb(196 22 73 / 0.2);
+    border-color: color-mix(in srgb, var(--rose) 20%, transparent);
     background: var(--blush);
     color: var(--rose);
 }
 
 .bo-btn--rose-soft:hover {
-    border-color: rgb(196 22 73 / 0.5);
-    background: #fff;
+    border-color: color-mix(in srgb, var(--rose) 50%, transparent);
+    background: var(--surface);
 }
 
 .bo-btn--danger {
-    border-color: rgb(196 22 73 / 0.3);
-    background: #fff;
+    border-color: color-mix(in srgb, var(--rose) 30%, transparent);
+    background: var(--surface);
     color: var(--rose);
     padding: 0 1.25rem;
 }
@@ -544,12 +548,12 @@
 }
 
 .bo-badge--gold {
-    background: rgb(212 161 63 / 0.2);
+    background: color-mix(in srgb, var(--gold) 20%, transparent);
     color: var(--gold-ink);
 }
 
 .bo-badge--leaf {
-    background: rgb(47 89 78 / 0.15);
+    background: color-mix(in srgb, var(--leaf) 15%, transparent);
     color: var(--leaf);
 }
 
@@ -567,13 +571,13 @@
 }
 
 .bo-flash--error {
-    border-color: rgb(196 22 73 / 0.3);
+    border-color: color-mix(in srgb, var(--rose) 30%, transparent);
     background: var(--blush);
 }
 
 .bo-flash--success {
-    border-color: rgb(47 89 78 / 0.3);
-    background: rgb(47 89 78 / 0.1);
+    border-color: color-mix(in srgb, var(--leaf) 30%, transparent);
+    background: color-mix(in srgb, var(--leaf) 10%, transparent);
 }
 
 .bo-notice {
@@ -586,14 +590,14 @@
 }
 
 .bo-notice--rose {
-    border-color: rgb(196 22 73 / 0.2);
-    background: rgb(245 222 214 / 0.7);
+    border-color: color-mix(in srgb, var(--rose) 20%, transparent);
+    background: color-mix(in srgb, var(--blush) 70%, transparent);
 }
 
 .bo-notice--gold {
     padding: 1.25rem;
-    border-color: rgb(212 161 63 / 0.4);
-    background: rgb(212 161 63 / 0.1);
+    border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
 .bo-notice--gold .bo-card-title {
@@ -602,7 +606,7 @@
 
 .bo-empty {
     padding: 1.25rem;
-    border: 1px dashed rgb(36 24 19 / 0.15);
+    border: 1px dashed color-mix(in srgb, var(--ink) 15%, transparent);
     background: var(--ivory);
     font-size: 0.875rem;
     font-weight: 700;
@@ -612,23 +616,23 @@
 
 .bo-empty--white {
     padding: 1.5rem;
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-empty--blush {
-    border-color: rgb(36 24 19 / 0.2);
-    background: rgb(245 222 214 / 0.5);
+    border-color: color-mix(in srgb, var(--ink) 20%, transparent);
+    background: color-mix(in srgb, var(--blush) 50%, transparent);
 }
 
 .bo-empty--leaf {
-    border-color: rgb(36 24 19 / 0.2);
-    background: rgb(47 89 78 / 0.1);
+    border-color: color-mix(in srgb, var(--ink) 20%, transparent);
+    background: color-mix(in srgb, var(--leaf) 10%, transparent);
 }
 
 .bo-empty--inline {
     grid-column: 1 / -1;
     padding: 0.5rem 0.75rem;
-    background: rgb(245 222 214 / 0.3);
+    background: color-mix(in srgb, var(--blush) 30%, transparent);
     font-size: 0.75rem;
 }
 
@@ -644,12 +648,12 @@
 }
 
 .bo-panel--rose {
-    border-color: rgb(196 22 73 / 0.2);
-    background: rgb(245 222 214 / 0.5);
+    border-color: color-mix(in srgb, var(--rose) 20%, transparent);
+    background: color-mix(in srgb, var(--blush) 50%, transparent);
 }
 
 .bo-panel--rose .bo-panel-head {
-    border-bottom-color: rgb(196 22 73 / 0.2);
+    border-bottom-color: color-mix(in srgb, var(--rose) 20%, transparent);
 }
 
 .bo-panel--padded {
@@ -658,7 +662,7 @@
 }
 
 .bo-panel--white {
-    background: #fff;
+    background: var(--surface);
     gap: 1.5rem;
 }
 
@@ -689,7 +693,7 @@
     gap: 1rem;
     padding: 1.25rem;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-card--roomy {
@@ -744,7 +748,7 @@
 }
 
 .bo-entry-icon--gold {
-    background: rgb(212 161 63 / 0.2);
+    background: color-mix(in srgb, var(--gold) 20%, transparent);
     color: var(--gold-ink);
 }
 
@@ -793,7 +797,7 @@
     gap: 1rem;
     padding: 1rem;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-row-label {
@@ -826,8 +830,8 @@
     display: grid;
     gap: 1.25rem;
     padding: 1.75rem;
-    border: 1px solid rgb(196 22 73 / 0.2);
-    background: rgb(245 222 214 / 0.4);
+    border: 1px solid color-mix(in srgb, var(--rose) 20%, transparent);
+    background: color-mix(in srgb, var(--blush) 40%, transparent);
     box-shadow: var(--shadow-sm);
 }
 
@@ -873,12 +877,12 @@
 }
 
 .bo-template-mark--gold {
-    background: rgb(212 161 63 / 0.2);
+    background: color-mix(in srgb, var(--gold) 20%, transparent);
     color: var(--gold-ink);
 }
 
 .bo-template-mark--leaf {
-    background: rgb(47 89 78 / 0.15);
+    background: color-mix(in srgb, var(--leaf) 15%, transparent);
     color: var(--leaf);
 }
 
@@ -889,7 +893,7 @@
     gap: 1rem;
     padding: 1.25rem;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
     box-shadow: var(--shadow-sm);
 }
 
@@ -946,7 +950,7 @@
     flex-shrink: 0;
     border: 1px solid var(--line);
     border-radius: 50%;
-    background: #fff;
+    background: var(--surface);
     object-fit: cover;
 }
 
@@ -983,12 +987,12 @@
 }
 
 .bo-avatar--on-dark {
-    border: 1px solid rgb(255 255 255 / 0.2);
-    background: rgb(255 255 255 / 0.1);
+    border: 1px solid color-mix(in srgb, var(--on-strong) 20%, transparent);
+    background: color-mix(in srgb, var(--on-strong) 10%, transparent);
 }
 
 .bo-avatar--on-dark.bo-avatar--fallback {
-    color: var(--pink);
+    color: var(--on-strong);
 }
 
 /* ---------- Configuration (barre latérale + contenu) ---------- */
@@ -1108,7 +1112,7 @@
     align-items: center;
     justify-content: center;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
     font-size: 0.68rem;
     font-weight: 900;
     color: var(--rose);
@@ -1160,13 +1164,13 @@
 }
 
 .bo-validation.is-ready {
-    border-color: rgb(47 89 78 / 0.25);
-    background: rgb(47 89 78 / 0.05);
+    border-color: color-mix(in srgb, var(--leaf) 25%, transparent);
+    background: color-mix(in srgb, var(--leaf) 5%, transparent);
 }
 
 .bo-validation.is-incomplete {
-    border-color: rgb(196 22 73 / 0.25);
-    background: rgb(245 222 214 / 0.45);
+    border-color: color-mix(in srgb, var(--rose) 25%, transparent);
+    background: color-mix(in srgb, var(--blush) 45%, transparent);
 }
 
 .bo-validation-eyebrow {
@@ -1221,13 +1225,13 @@
 }
 
 .bo-stat--leaf {
-    border-color: rgb(47 89 78 / 0.2);
-    background: rgb(47 89 78 / 0.05);
+    border-color: color-mix(in srgb, var(--leaf) 20%, transparent);
+    background: color-mix(in srgb, var(--leaf) 5%, transparent);
 }
 
 .bo-stat--rose {
-    border-color: rgb(196 22 73 / 0.2);
-    background: rgb(245 222 214 / 0.5);
+    border-color: color-mix(in srgb, var(--rose) 20%, transparent);
+    background: color-mix(in srgb, var(--blush) 50%, transparent);
 }
 
 .bo-stat-label {
@@ -1311,7 +1315,7 @@
     min-height: 2.75rem;
     padding: 0 0.75rem;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
     font-weight: 600;
     color: var(--ink);
 }
@@ -1350,7 +1354,7 @@
 
 .bo-input--file::file-selector-button:hover {
     background: var(--rose);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-textarea {
@@ -1389,7 +1393,7 @@
     justify-content: space-between;
     padding: 0.75rem;
     border: 1px solid var(--line);
-    background: rgb(245 222 214 / 0.6);
+    background: color-mix(in srgb, var(--blush) 60%, transparent);
     color: var(--ink);
 }
 
@@ -1397,13 +1401,13 @@
     display: inline-flex;
     min-height: 2.5rem;
     padding: 0 0.75rem;
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-check--rose {
     align-items: flex-start;
     padding: 1rem;
-    border: 1px solid rgb(196 22 73 / 0.25);
+    border: 1px solid color-mix(in srgb, var(--rose) 25%, transparent);
     background: var(--ivory);
     font-weight: 700;
     line-height: 1.625;
@@ -1424,12 +1428,12 @@
 }
 
 .bo-total.is-valid {
-    border-color: rgb(47 89 78 / 0.3);
-    background: rgb(47 89 78 / 0.1);
+    border-color: color-mix(in srgb, var(--leaf) 30%, transparent);
+    background: color-mix(in srgb, var(--leaf) 10%, transparent);
 }
 
 .bo-total.is-invalid {
-    border-color: rgb(196 22 73 / 0.3);
+    border-color: color-mix(in srgb, var(--rose) 30%, transparent);
     background: var(--blush);
 }
 
@@ -1447,7 +1451,7 @@
 }
 
 .bo-table thead {
-    background: rgb(245 222 214 / 0.6);
+    background: color-mix(in srgb, var(--blush) 60%, transparent);
     font-size: 0.75rem;
     letter-spacing: 0.025em;
     text-transform: uppercase;
@@ -1561,7 +1565,7 @@
 .bo-sheet {
     overflow: hidden;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
     box-shadow: var(--shadow-sm);
 }
 
@@ -1573,7 +1577,7 @@
     overflow: hidden;
     padding: 1.5rem;
     background: var(--ink);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-sheet-ring {
@@ -1589,7 +1593,7 @@
     width: 18rem;
     height: 18rem;
     border-width: 3rem;
-    border-color: rgb(196 22 73 / 0.2);
+    border-color: color-mix(in srgb, var(--rose) 20%, transparent);
 }
 
 .bo-sheet-ring--blush {
@@ -1598,7 +1602,7 @@
     width: 12rem;
     height: 12rem;
     border-width: 2rem;
-    border-color: rgb(245 222 214 / 0.6);
+    border-color: color-mix(in srgb, var(--blush) 60%, transparent);
 }
 
 .bo-sheet-identity {
@@ -1612,7 +1616,7 @@
     font-weight: 900;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--pink);
+    color: var(--on-strong);
 }
 
 .bo-sheet-name-block {
@@ -1631,7 +1635,7 @@
     margin-top: 0.25rem;
     font-size: 0.875rem;
     font-weight: 700;
-    color: rgb(255 255 255 / 0.65);
+    color: color-mix(in srgb, var(--on-strong) 65%, transparent);
     word-break: break-all;
 }
 
@@ -1649,7 +1653,7 @@
     border: 0.6rem solid var(--gold);
     border-radius: 50%;
     background: var(--ivory);
-    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.35), 0 18px 50px rgb(0 0 0 / 0.3);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-strong) 35%, transparent), 0 18px 50px rgb(0 0 0 / 0.3);
     color: var(--ink);
     text-align: center;
 }
@@ -1681,7 +1685,7 @@
     font-weight: 900;
     letter-spacing: 0.025em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-sheet-body {
@@ -1764,7 +1768,7 @@
     min-width: 0;
     gap: 0.25rem;
     padding: 1rem;
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-sheet-stat dt {
@@ -1789,7 +1793,7 @@
     overflow: hidden;
     padding: 1.5rem;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
     box-shadow: var(--shadow-sm);
 }
 
@@ -1846,7 +1850,7 @@
     overflow-y: auto;
     padding: 0.75rem;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-emoji-grid {
@@ -1867,8 +1871,8 @@
 }
 
 .bo-emoji-option:hover {
-    border-color: rgb(196 22 73 / 0.4);
-    background: rgb(245 222 214 / 0.5);
+    border-color: color-mix(in srgb, var(--rose) 40%, transparent);
+    background: color-mix(in srgb, var(--blush) 50%, transparent);
 }
 
 .bo-emoji-option[data-selected="true"] {
@@ -1897,7 +1901,7 @@
     gap: 1rem;
     padding: 1rem;
     border: 1px solid var(--line);
-    background: rgb(245 222 214 / 0.5);
+    background: color-mix(in srgb, var(--blush) 50%, transparent);
 }
 
 .bo-emoji-preview strong {
@@ -1916,7 +1920,7 @@
 }
 
 .bo-emoji-preview-tile--gold {
-    background: rgb(212 161 63 / 0.2);
+    background: color-mix(in srgb, var(--gold) 20%, transparent);
 }
 
 .bo-emoji-preview-tile--blush {
@@ -1982,13 +1986,13 @@
     overflow: hidden;
     border-radius: 2rem;
     background: var(--ivory);
-    box-shadow: 0 20px 25px -5px rgb(36 24 19 / 0.05), 0 0 0 1px rgb(36 24 19 / 0.08);
+    box-shadow: 0 20px 25px -5px color-mix(in srgb, var(--ink) 5%, transparent), 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 .bo-error-card-head {
     padding: 1.5rem;
     background: var(--ink);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-error-card-eyebrow {
@@ -2015,7 +2019,7 @@
 .bo-error-cell {
     padding: 1rem;
     border-radius: 1.25rem;
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-error-cell--blush {
@@ -2235,3 +2239,62 @@
 .bo-batch-error { color: var(--rose); font-size: 0.875rem; max-width: 65ch; }
 [data-row-field][aria-invalid="true"] { border-color: var(--rose); }
 .bo-btn:disabled { opacity: 0.55; }
+
+/* Thèmes réservés aux documents du backoffice ; la vitrine garde ses jetons. */
+html[data-backoffice-theme="dark"] {
+    color-scheme: dark;
+    --cream: #1d171b;
+    --ivory: #272126;
+    --surface: #30292e;
+    --ink: #f9eee8;
+    --muted: #c4b5af;
+    --rose: #ff86ab;
+    --pink: #ef9bad;
+    --blush: #422c34;
+    --gold: #dfb65e;
+    --gold-ink: #f0c878;
+    --leaf: #94c7b5;
+    --on-strong: #1d171b;
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-backoffice-theme="system"] {
+        color-scheme: dark;
+        --cream: #1d171b;
+        --ivory: #272126;
+        --surface: #30292e;
+        --ink: #f9eee8;
+        --muted: #c4b5af;
+        --rose: #ff86ab;
+        --pink: #ef9bad;
+        --blush: #422c34;
+        --gold: #dfb65e;
+        --gold-ink: #f0c878;
+        --leaf: #94c7b5;
+        --on-strong: #1d171b;
+    }
+}
+
+.bo-theme-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+.bo-theme-picker .bo-input { min-width: 7rem; width: auto; min-height: 2.5rem; }
+.bo input, .bo textarea { caret-color: var(--rose); }
+.bo input::placeholder, .bo textarea::placeholder { color: var(--muted); opacity: 1; }
+.bo input[type="checkbox"] { accent-color: var(--rose); }
+.bo ::selection { background: var(--blush); color: var(--ink); }
+.bo .bo-table-wrap, .bo .bo-emoji-scroll { scrollbar-color: color-mix(in srgb, var(--ink) 30%, var(--cream)) var(--cream); }
+.bo-table { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 40rem) {
+    .bo-header-inner { flex-wrap: wrap; }
+    .bo-header-actions { width: 100%; justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .bo a[href], .bo button { transition: none; }
+}

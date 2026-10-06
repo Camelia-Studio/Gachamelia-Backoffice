@@ -11,3 +11,4 @@ import './rank_choice.js';
 import './catalog_table.js';
 import './catalog_mutations.js';
 import './catalog_batch.js';
+import './backoffice_theme.js';

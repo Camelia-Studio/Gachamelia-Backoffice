@@ -6,8 +6,16 @@
     </div>
 {% else %}
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-backoffice-theme="system">
     <head>
+        <script>
+            (() => {
+                try {
+                    const theme = localStorage.getItem('gachamelia.theme');
+                    if (['light', 'dark', 'system'].includes(theme)) document.documentElement.dataset.backofficeTheme = theme;
+                } catch { /* Le thème système reste disponible sans stockage local. */ }
+            })();
+        </script>
         {% include 'partials/head_common.html.twig' %}
         <title>{% block title %}Gachamélia Backoffice{% endblock %}</title>
         <meta name="description" content="{% block meta_description %}Backoffice Gachamélia pour piloter le bot gacha communautaire Discord.{% endblock %}">
@@ -38,6 +46,13 @@
                     </a>
 
                     <div class="bo-header-actions">
+                        <label class="bo-theme-picker">Thème
+                            <select class="bo-input" data-backoffice-theme-choice aria-label="Thème du backoffice">
+                                <option value="light">Clair</option>
+                                <option value="dark">Sombre</option>
+                                <option value="system" selected>Système</option>
+                            </select>
+                        </label>
                         <a href="{{ path('app_home') }}" class="bo-btn bo-btn--outline" data-testid="backoffice-public-home-action">
                             Accueil public
                         </a>
