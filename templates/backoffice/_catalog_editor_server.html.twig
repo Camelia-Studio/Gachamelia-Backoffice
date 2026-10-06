@@ -1,6 +1,6 @@
 {% import 'backoffice/_emoji_picker.html.twig' as ui %}
 {% if active_section == 'ranks' %}
-    <form method="post" action="{{ path('app_server_catalog_rank_update', { guildId: guild.id, rankId: rank.id }) }}" class="bo-form bo-form--tight bo-subform">
+    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_rank_update', { guildId: guild.id, rankId: rank.id }) }}" class="bo-form bo-form--tight bo-subform">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <div class="bo-form-row bo-form-row--half">
             <label class="bo-field">
@@ -41,12 +41,12 @@
             <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Enregistrer</button>
         </div>
     </form>
-    <form method="post" action="{{ path('app_server_catalog_rank_delete', { guildId: guild.id, rankId: rank.id }) }}" class="bo-start">
+    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_rank_delete', { guildId: guild.id, rankId: rank.id }) }}" class="bo-start">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <button type="submit" class="bo-btn bo-btn--danger">Supprimer le rang</button>
     </form>
 {% elseif active_section == 'role-stats' %}
-    <form method="post" action="{{ path('app_server_catalog_role_stat_upsert_dedicated', { guildId: guild.id }) }}" class="bo-form-row bo-form-row--inline-edit">
+    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_role_stat_upsert_dedicated', { guildId: guild.id }) }}" class="bo-form-row bo-form-row--inline-edit">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <input type="hidden" name="role_id" value="{{ role_stat.role_id }}">
         <input type="hidden" name="stat_id" value="{{ role_stat.stat_id }}">
@@ -60,12 +60,12 @@
         </label>
         <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Enregistrer</button>
     </form>
-    <form method="post" action="{{ path('app_server_catalog_role_stat_delete_dedicated', { guildId: guild.id, roleId: role_stat.role_id, statId: role_stat.stat_id }) }}">
+    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_role_stat_delete_dedicated', { guildId: guild.id, roleId: role_stat.role_id, statId: role_stat.stat_id }) }}">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <button type="submit" class="bo-btn bo-btn--danger">Supprimer</button>
     </form>
 {% elseif active_section in ['welcome-messages', 'bye-messages'] %}
-    <form method="post" action="{{ path(update_route, { guildId: guild.id, messageId: message.id }) }}" class="bo-form bo-form--tight">
+    <form data-catalog-mutation method="post" action="{{ path(update_route, { guildId: guild.id, messageId: message.id }) }}" class="bo-form bo-form--tight">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <label class="bo-field">
             Message
@@ -75,12 +75,12 @@
             <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Enregistrer</button>
         </div>
     </form>
-    <form method="post" action="{{ path(delete_route, { guildId: guild.id, messageId: message.id }) }}">
+    <form data-catalog-mutation method="post" action="{{ path(delete_route, { guildId: guild.id, messageId: message.id }) }}">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <button type="submit" class="bo-btn bo-btn--danger">Supprimer</button>
     </form>
 {% elseif active_section == 'roles' %}
-    <form method="post" action="{{ path('app_server_catalog_role_update', { guildId: guild.id, roleId: role.id }) }}" class="bo-form bo-form--tight" data-emoji-picker data-emoji-picker-default="{{ role.emoji_markup }}">
+    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_role_update', { guildId: guild.id, roleId: role.id }) }}" class="bo-form bo-form--tight" data-emoji-picker data-emoji-picker-default="{{ role.emoji_markup }}">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <div class="bo-form-row bo-form-row--pct">
             <label class="bo-field">
@@ -95,12 +95,12 @@
         {{ ui.emoji_picker(role.emoji_source, role.emoji_markup, emoji_picker, 'gold') }}
         <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg bo-btn--start">Enregistrer</button>
     </form>
-    <form method="post" action="{{ path('app_server_catalog_role_delete', { guildId: guild.id, roleId: role.id }) }}">
+    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_role_delete', { guildId: guild.id, roleId: role.id }) }}">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <button type="submit" class="bo-btn bo-btn--danger">Supprimer</button>
     </form>
 {% elseif active_section == 'stats' %}
-    <form method="post" action="{{ path('app_server_catalog_stat_update', { guildId: guild.id, statId: stat.id }) }}" class="bo-form bo-form--tight">
+    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_stat_update', { guildId: guild.id, statId: stat.id }) }}" class="bo-form bo-form--tight">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <label class="bo-field">
             Nom
@@ -108,12 +108,12 @@
         </label>
         <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Enregistrer</button>
     </form>
-    <form method="post" action="{{ path('app_server_catalog_stat_delete', { guildId: guild.id, statId: stat.id }) }}">
+    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_stat_delete', { guildId: guild.id, statId: stat.id }) }}">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <button type="submit" class="bo-btn bo-btn--danger">Supprimer</button>
     </form>
 {% elseif active_section == 'elements' %}
-    <form method="post" action="{{ path('app_server_catalog_element_update', { guildId: guild.id, elementId: element.id }) }}" class="bo-form bo-form--tight" data-emoji-picker data-emoji-picker-default="{{ element.emoji_markup }}">
+    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_element_update', { guildId: guild.id, elementId: element.id }) }}" class="bo-form bo-form--tight" data-emoji-picker data-emoji-picker-default="{{ element.emoji_markup }}">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <label class="bo-field">
             Nom
@@ -122,7 +122,7 @@
         {{ ui.emoji_picker(element.emoji_source, element.emoji_markup, emoji_picker, 'blush') }}
         <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Enregistrer</button>
     </form>
-    <form method="post" action="{{ path('app_server_catalog_element_delete', { guildId: guild.id, elementId: element.id }) }}">
+    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_element_delete', { guildId: guild.id, elementId: element.id }) }}">
         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
         <button type="submit" class="bo-btn bo-btn--danger">Supprimer</button>
     </form>

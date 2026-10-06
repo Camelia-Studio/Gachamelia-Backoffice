@@ -147,7 +147,7 @@
                                             <p class="bo-panel-lead">Ces valeurs Discord sont utilisées par le bot pour poster les messages et reconnaître le staff.</p>
                                         </div>
                                     </div>
-                                    <form method="post" id="catalog-settings" action="{{ path('app_server_settings_update', { guildId: guild.id }) }}" class="bo-panel-body bo-form">
+                                    <form data-catalog-mutation method="post" id="catalog-settings" action="{{ path('app_server_settings_update', { guildId: guild.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         {% if discord_resources.channels is empty and discord_resources.roles is empty %}
                                             <p class="bo-notice bo-notice--rose">Ressources Discord temporairement indisponibles. Les IDs restent éditables manuellement.</p>
@@ -215,7 +215,7 @@
                                             <p class="bo-panel-lead">Renseigne les infos minimales pour alimenter le bot.</p>
                                         </div>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_rank_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form">
+                                    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_rank_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         {% if discord_resources.roles is empty %}
                                             <p class="bo-notice bo-notice--rose">Rôles Discord temporairement indisponibles. L’ID reste éditable manuellement.</p>
@@ -266,7 +266,7 @@
                                             <p class="bo-panel-lead">Cette probabilité définit la distribution des caractéristiques de ce rôle.</p>
                                         </div>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_role_stat_upsert_dedicated', { guildId: guild.id }) }}" class="bo-panel-body bo-form">
+                                    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_role_stat_upsert_dedicated', { guildId: guild.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="bo-field">
                                             Rôle
@@ -317,7 +317,7 @@
                                             <p class="bo-panel-lead">Le message reste rattaché au rang sélectionné et uniquement à ce serveur.</p>
                                         </div>
                                     </div>
-                                    <form method="post" action="{{ path(create_route, { guildId: guild.id }) }}" class="bo-panel-body bo-form">
+                                    <form data-catalog-mutation method="post" action="{{ path(create_route, { guildId: guild.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="bo-field">
                                             Rang
@@ -349,7 +349,7 @@
                                             <p class="bo-panel-lead">L’emoji sera affiché sur les fiches Discord et les tirages.</p>
                                         </div>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form" data-emoji-picker data-emoji-picker-default="🎭">
+                                    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form" data-emoji-picker data-emoji-picker-default="🎭">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <div class="bo-form-row bo-form-row--pct">
                                             <label class="bo-field">
@@ -377,7 +377,7 @@
                                             <p class="bo-panel-lead">Une stat est simplement un nom pour l’instant.</p>
                                         </div>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_stat_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form">
+                                    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_stat_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="bo-field">
                                             Nom
@@ -398,7 +398,7 @@
                                             <p class="bo-panel-lead">L’emoji sera affiché dans les fiches Discord.</p>
                                         </div>
                                     </div>
-                                    <form method="post" action="{{ path('app_server_catalog_element_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form" data-emoji-picker data-emoji-picker-default="✨">
+                                    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_element_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form" data-emoji-picker data-emoji-picker-default="✨">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="bo-field">
                                             Nom

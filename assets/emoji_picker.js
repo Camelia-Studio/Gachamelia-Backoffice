@@ -13,6 +13,8 @@ const SOURCE_LABELS = {
 };
 
 function initEmojiPicker(root) {
+    if (root.dataset.emojiReady) return;
+    root.dataset.emojiReady = 'true';
     const defaultValue = root.dataset.emojiPickerDefault || '';
     const sourceField = root.querySelector('[data-emoji-field="source"]');
     const valueField = root.querySelector('[data-emoji-field="value"]');
@@ -121,8 +123,18 @@ function initEmojiPicker(root) {
         status.textContent = 'Emoji indisponible, aperçu texte conservé.';
     });
 
+    root.addEventListener('reset', () => queueMicrotask(() => {
+        if (search) search.value = '';
+        options.forEach((option) => option.classList.remove('hidden'));
+        selectCurrentOption();
+        updatePreview();
+    }));
     selectCurrentOption();
     updatePreview();
 }
 
-document.querySelectorAll('[data-emoji-picker]').forEach(initEmojiPicker);
+export function initEmojiPickers(root = document) {
+    root.querySelectorAll('[data-emoji-picker]').forEach(initEmojiPicker);
+}
+
+initEmojiPickers();

@@ -1,3 +1,10 @@
+{% if app.request.headers.get('X-Gachamelia-Catalog') == '1' %}
+    <div data-catalog-response>
+        {% for message in app.flashes('error') %}<div data-testid="flash-error">{{ message }}</div>{% endfor %}
+        {% for message in app.flashes('success') %}<div data-testid="flash-success">{{ message }}</div>{% endfor %}
+        {{ block('body') }}
+    </div>
+{% else %}
 <!doctype html>
 <html lang="fr">
     <head>
@@ -51,3 +58,5 @@
         </div>
     </body>
 </html>
+
+{% endif %}

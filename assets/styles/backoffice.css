@@ -2203,3 +2203,7 @@
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
+
+.bo-config-main {
+    overflow-anchor: none;
+}

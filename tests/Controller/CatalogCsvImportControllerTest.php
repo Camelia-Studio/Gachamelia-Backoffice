@@ -65,6 +65,25 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         self::assertStringNotContainsString('discord', strtolower($client->getResponse()->getContent()));
     }
 
+    public function testPartialResponsesKeepAuthenticationAndCsrfGuards(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        [, , $template] = $this->seedAccess($client);
+        foreach (['/app/serveurs/guild', '/app/modeles-catalogue/'.$template->id()] as $base) {
+            $client->request('POST', $base.'/catalogue/stats', ['name' => 'Partielle'], server: ['HTTP_X_GACHAMELIA_CATALOG' => '1']);
+            self::assertResponseStatusCodeSame(403);
+            $client->request('POST', $base.'/catalogue/stats', ['name' => 'Partielle', '_token' => $this->csrfToken($client)], server: ['HTTP_X_GACHAMELIA_CATALOG' => '1']);
+            self::assertResponseRedirects($base.'/configuration/stats');
+            $client->request('GET', $base.'/configuration/stats', server: ['HTTP_X_GACHAMELIA_CATALOG' => '1']);
+            self::assertResponseIsSuccessful();
+            self::assertSelectorExists('[data-catalog-response] [data-catalog-row]');
+            self::assertSelectorTextContains('[data-catalog-response]', 'Partielle');
+            self::assertStringNotContainsString('<!doctype', strtolower($client->getResponse()->getContent()));
+            self::assertSelectorNotExists('script');
+        }
+    }
+
     public function testRankSelectorsUseNaturalNamesWithoutChangingPercentages(): void
     {
         $client = self::createClient();

@@ -97,7 +97,7 @@
                             {% endfor %}
                         </div>
 
-                        <form method="post" action="{{ path('app_catalog_template_publish', { templateId: template.id }) }}" class="bo-toolbar bo-toolbar--between">
+                        <form data-catalog-mutation method="post" action="{{ path('app_catalog_template_publish', { templateId: template.id }) }}" class="bo-toolbar bo-toolbar--between">
                             <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                             <div>
                                 <h2 class="bo-section-title">Publication</h2>
@@ -120,7 +120,7 @@
                                             <p class="bo-panel-lead">La clé de rôle servira de repère au mapping Discord pendant l’import.</p>
                                         </div>
                                     </div>
-                                    <form method="post" action="{{ path('app_catalog_template_rank_create', { templateId: template.id }) }}" class="bo-panel-body bo-form">
+                                    <form data-catalog-mutation method="post" action="{{ path('app_catalog_template_rank_create', { templateId: template.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="bo-field">
                                             Clé de rôle
@@ -156,7 +156,7 @@
                                     <div class="bo-panel-head">
                                         <h2 class="bo-section-title">Associer une stat</h2>
                                     </div>
-                                    <form method="post" action="{{ path('app_catalog_template_role_stat_upsert', { templateId: template.id }) }}" class="bo-panel-body bo-form">
+                                    <form data-catalog-mutation method="post" action="{{ path('app_catalog_template_role_stat_upsert', { templateId: template.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="bo-field">
                                             Rôle
@@ -197,7 +197,7 @@
                                     <div class="bo-panel-head">
                                         <h2 class="bo-section-title">{{ is_welcome ? 'Ajouter un message d’arrivée' : 'Ajouter un message de départ' }}</h2>
                                     </div>
-                                    <form method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="bo-panel-body bo-form">
+                                    <form data-catalog-mutation method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="bo-field">
                                             Rang
@@ -232,7 +232,7 @@
                                     <div class="bo-panel-head">
                                         <h2 class="bo-section-title">{{ is_roles ? 'Ajouter un rôle' : 'Ajouter un élément' }}</h2>
                                     </div>
-                                    <form method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="bo-panel-body bo-form" data-emoji-picker data-emoji-picker-default="{{ default_emoji }}">
+                                    <form data-catalog-mutation method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="bo-panel-body bo-form" data-emoji-picker data-emoji-picker-default="{{ default_emoji }}">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="bo-field">
                                             Nom
@@ -259,7 +259,7 @@
                                     <div class="bo-panel-head">
                                         <h2 class="bo-section-title">Ajouter une stat</h2>
                                     </div>
-                                    <form method="post" action="{{ path('app_catalog_template_stat_create', { templateId: template.id }) }}" class="bo-panel-body bo-form">
+                                    <form data-catalog-mutation method="post" action="{{ path('app_catalog_template_stat_create', { templateId: template.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                         <label class="bo-field">
                                             Nom

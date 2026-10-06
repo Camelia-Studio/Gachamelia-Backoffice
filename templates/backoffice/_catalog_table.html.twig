@@ -20,6 +20,7 @@
         <h2 class="bo-section-title">{{ active_section == 'settings' ? 'Réglages actuels' : 'Entrées du catalogue' }}</h2>
         <span class="bo-badge bo-badge--gold" data-catalog-count>{{ entries|length }} entrées</span>
     </div>
+    <p class="bo-catalog-result" data-catalog-operation-status role="status" aria-live="polite" hidden></p>
     <form class="bo-catalog-filters" data-catalog-filters role="search" aria-label="Filtrer {{ page_title }}">
         {% for key, label in columns %}
             {% if key == 'percentage' %}
