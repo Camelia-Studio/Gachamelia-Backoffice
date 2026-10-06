@@ -28,6 +28,14 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
     {
     }
 
+    /**
+     * @return list<array<string, string|int|bool|null>>
+     */
+    public function rows(DiscordServer|CatalogTemplate $target, CatalogCsvSection $section): array
+    {
+        return array_map(fn (object $entity): array => $this->canonicalValues($section, $this->payload($section, $entity)), $this->entities($target, $section));
+    }
+
     public function preview(
         DiscordServer|CatalogTemplate $target,
         CatalogCsvSection $section,
@@ -542,20 +550,21 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
             $values = $operation['incoming'];
             if ('create' === $operation['action']) {
                 $entity = $target instanceof DiscordServer
-                    ? new CharacterRole($target, (string) $values['nom'], (int) $values['pourcentage'], emojiUnicode: (string) $values['emoji'])
-                    : new CatalogTemplateRole($target, (string) $values['nom'], (int) $values['pourcentage'], emojiUnicode: (string) $values['emoji']);
+                    ? new CharacterRole($target, (string) $values['nom'], (int) $values['pourcentage'], ...$this->emojiConfiguration((string) $values['emoji'], source: isset($values['emoji_source']) ? (string) $values['emoji_source'] : null))
+                    : new CatalogTemplateRole($target, (string) $values['nom'], (int) $values['pourcentage'], ...$this->emojiConfiguration((string) $values['emoji'], source: isset($values['emoji_source']) ? (string) $values['emoji_source'] : null));
                 $this->entityManager->persist($entity);
             } elseif ('update' === $operation['action']) {
                 $entity = $byKey[$operation['key']];
                 if ($entity instanceof CharacterRole || $entity instanceof CatalogTemplateRole) {
+                    $emoji = $this->emojiConfiguration((string) $values['emoji'], $entity, isset($values['emoji_source']) ? (string) $values['emoji_source'] : null);
                     $entity->updateConfiguration(
                         (string) $values['nom'],
                         (int) $values['pourcentage'],
-                        'unicode',
-                        (string) $values['emoji'],
-                        null,
-                        null,
-                        false,
+                        $emoji['emojiSource'],
+                        $emoji['emojiUnicode'],
+                        $emoji['emojiId'],
+                        $emoji['emojiName'],
+                        $emoji['emojiAnimated'],
                     );
                 }
             }
@@ -569,13 +578,14 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
             $values = $operation['incoming'];
             if ('create' === $operation['action']) {
                 $entity = $target instanceof DiscordServer
-                    ? new Element($target, (string) $values['nom'], emojiUnicode: (string) $values['emoji'])
-                    : new CatalogTemplateElement($target, (string) $values['nom'], emojiUnicode: (string) $values['emoji']);
+                    ? new Element($target, (string) $values['nom'], ...$this->emojiConfiguration((string) $values['emoji'], source: isset($values['emoji_source']) ? (string) $values['emoji_source'] : null))
+                    : new CatalogTemplateElement($target, (string) $values['nom'], ...$this->emojiConfiguration((string) $values['emoji'], source: isset($values['emoji_source']) ? (string) $values['emoji_source'] : null));
                 $this->entityManager->persist($entity);
             } elseif ('update' === $operation['action']) {
                 $entity = $byKey[$operation['key']];
                 if ($entity instanceof Element || $entity instanceof CatalogTemplateElement) {
-                    $entity->updateConfiguration((string) $values['nom'], 'unicode', (string) $values['emoji'], null, null, false);
+                    $emoji = $this->emojiConfiguration((string) $values['emoji'], $entity, isset($values['emoji_source']) ? (string) $values['emoji_source'] : null);
+                    $entity->updateConfiguration((string) $values['nom'], $emoji['emojiSource'], $emoji['emojiUnicode'], $emoji['emojiId'], $emoji['emojiName'], $emoji['emojiAnimated']);
                 }
             }
         }
@@ -712,6 +722,24 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
         };
     }
 
+    /**
+     * @return array{emojiSource: string, emojiUnicode: ?string, emojiId: ?string, emojiName: ?string, emojiAnimated: bool}
+     */
+    private function emojiConfiguration(string $value, CharacterRole|CatalogTemplateRole|Element|CatalogTemplateElement|null $existing = null, ?string $source = null): array
+    {
+        if (1 === preg_match('/^<(a?):(\\w{2,32}):(\\d{17,22})>$/', $value, $matches)) {
+            return [
+                'emojiSource' => null !== $existing && $this->emoji($existing, '') === $value ? $existing->emojiSource() : (\in_array($source, ['server', 'bot'], true) ? $source : 'server'),
+                'emojiUnicode' => null,
+                'emojiId' => $matches[3],
+                'emojiName' => $matches[2],
+                'emojiAnimated' => 'a' === $matches[1],
+            ];
+        }
+
+        return ['emojiSource' => 'unicode', 'emojiUnicode' => $value, 'emojiId' => null, 'emojiName' => null, 'emojiAnimated' => false];
+    }
+
     private function emoji(object $entity, string $default): string
     {
         return match (true) {
@@ -720,7 +748,9 @@ abstract class AbstractCatalogCsvTargetAdapter implements CatalogCsvTargetAdapte
             $entity instanceof Element,
             $entity instanceof CatalogTemplateElement => 'unicode' === $entity->emojiSource()
                 ? ($entity->emojiUnicode() ?? $default)
-                : $entity->emojiMarkup(),
+                : (null !== $entity->emojiId() && null !== $entity->emojiName()
+                    ? \sprintf('<%s:%s:%s>', $entity->emojiAnimated() ? 'a' : '', $entity->emojiName(), $entity->emojiId())
+                    : $default),
             default => throw new \LogicException('Entity has no catalogue emoji.'),
         };
     }

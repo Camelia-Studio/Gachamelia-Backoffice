@@ -1,0 +1,89 @@
+{% import 'backoffice/_emoji_picker.html.twig' as ui %}
+{% if active_section == 'ranks' %}
+    <form data-catalog-mutation method="post" action="{{ path('app_catalog_template_rank_update', { templateId: template.id, rankId: rank.id }) }}" class="bo-form bo-form--tight">
+        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+        <div class="bo-form-row bo-form-row--rank">
+            <label class="bo-field bo-field--sm">
+                Clé
+                <input name="role_key" value="{{ rank.role_key }}" required class="bo-input">
+            </label>
+            <label class="bo-field bo-field--sm">
+                Nom
+                <input aria-label="Nom" name="name" value="{{ rank.name }}" required class="bo-input">
+            </label>
+            <label class="bo-field bo-field--sm">
+                %
+                <input name="percentage" type="number" min="0" max="100" value="{{ rank.percentage }}" required class="bo-input">
+            </label>
+        </div>
+        <label class="bo-field bo-field--sm">
+            Titre du message de départ
+            <input name="bye_title" value="{{ rank.bye_title }}" class="bo-input">
+        </label>
+        <label class="bo-check">
+            <input name="is_staff" type="checkbox" value="1" {% if rank.is_staff %}checked{% endif %}>
+            Rang staff prioritaire
+        </label>
+        <button type="submit" class="bo-btn bo-btn--ink bo-btn--start">Enregistrer</button>
+    </form>
+    <form data-catalog-mutation method="post" action="{{ path('app_catalog_template_rank_delete', { templateId: template.id, rankId: rank.id }) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+        <button type="submit" class="bo-link-danger">Supprimer</button>
+    </form>
+{% elseif active_section == 'role-stats' %}
+    <form data-catalog-mutation method="post" action="{{ path('app_catalog_template_role_stat_upsert', { templateId: template.id }) }}" class="bo-form-row bo-form-row--role-stat">
+        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+        <input type="hidden" name="role_id" value="{{ role_stat.role_id }}">
+        <input type="hidden" name="stat_id" value="{{ role_stat.stat_id }}">
+        <p class="bo-strong">{{ role_stat.role_name }}</p>
+        <p class="bo-muted-strong">{{ role_stat.stat_name }}</p>
+        <input name="percentage" type="number" min="0" max="100" value="{{ role_stat.percentage }}" required class="bo-input">
+        <button type="submit" class="bo-btn bo-btn--ink">OK</button>
+    </form>
+    <form data-catalog-mutation method="post" action="{{ path('app_catalog_template_role_stat_delete', { templateId: template.id, roleId: role_stat.role_id, statId: role_stat.stat_id }) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+        <button type="submit" class="bo-link-danger">Supprimer</button>
+    </form>
+{% elseif active_section in ['welcome-messages', 'bye-messages'] %}
+    <form data-catalog-mutation method="post" action="{{ path(update_route, { templateId: template.id, messageId: message.id }) }}" class="bo-form bo-form--tight">
+        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+        <textarea name="message" rows="3" required class="bo-input bo-textarea bo-textarea--ivory">{{ message.message }}</textarea>
+        <button type="submit" class="bo-btn bo-btn--ink bo-btn--start">Enregistrer</button>
+    </form>
+    <form data-catalog-mutation method="post" action="{{ path(delete_route, { templateId: template.id, messageId: message.id }) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+        <button type="submit" class="bo-link-danger">Supprimer</button>
+    </form>
+{% elseif active_section in ['roles', 'elements'] %}
+    <form data-catalog-mutation method="post" action="{{ path(update_route, route_params) }}" class="bo-form bo-form--tight" data-emoji-picker data-emoji-picker-default="{{ entry.emoji_markup }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+        <div class="bo-form-row bo-form-row--pct">
+            <label class="bo-field bo-field--sm">
+                Nom
+                <input aria-label="Nom" name="name" value="{{ entry.name }}" required class="bo-input">
+            </label>
+            {% if is_roles %}
+                <label class="bo-field bo-field--sm">
+                    %
+                    <input name="percentage" type="number" min="0" max="100" value="{{ entry.percentage }}" required class="bo-input">
+                </label>
+            {% endif %}
+        </div>
+        {{ ui.emoji_picker(entry.emoji_source, entry.emoji_markup, emoji_picker, is_roles ? 'gold' : 'blush') }}
+        <button type="submit" class="bo-btn bo-btn--ink bo-btn--start">Enregistrer</button>
+    </form>
+    <form data-catalog-mutation method="post" action="{{ path(delete_route, route_params) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+        <button type="submit" class="bo-link-danger">Supprimer</button>
+    </form>
+{% elseif active_section == 'stats' %}
+    <form data-catalog-mutation method="post" action="{{ path('app_catalog_template_stat_update', { templateId: template.id, statId: stat.id }) }}" class="bo-form-row bo-form-row--name-action">
+        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+        <input aria-label="Nom" name="name" value="{{ stat.name }}" required class="bo-input">
+        <button type="submit" class="bo-btn bo-btn--ink">Enregistrer</button>
+    </form>
+    <form data-catalog-mutation method="post" action="{{ path('app_catalog_template_stat_delete', { templateId: template.id, statId: stat.id }) }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+        <button type="submit" class="bo-link-danger">Supprimer</button>
+    </form>
+{% endif %}

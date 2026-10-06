@@ -6,6 +6,10 @@ namespace App\Tests\Controller;
 
 use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Entity\CatalogTemplate;
+use App\Entity\Stat;
+use App\Entity\Rank;
+use App\Entity\CatalogTemplateRank;
+use App\Entity\CatalogTemplateStat;
 use App\Entity\DiscordServer;
 use App\Entity\DiscordServerMember;
 use App\Entity\DiscordUser;
@@ -31,6 +35,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         foreach (['ranks', 'role-stats', 'welcome-messages', 'bye-messages', 'roles', 'stats', 'elements'] as $section) {
             $client->request('GET', '/app/serveurs/guild/configuration/'.$section);
             self::assertResponseIsSuccessful();
+            self::assertSelectorExists('table[data-catalog-table] th[scope="col"]');
             self::assertSelectorExists('[data-testid="catalog-csv-actions"] a[href="/app/serveurs/guild/configuration/'.$section.'/csv"]');
             self::assertSelectorExists('[data-testid="catalog-csv-actions"] a[href="/app/serveurs/guild/configuration/'.$section.'/csv/exemple"]');
 
@@ -43,6 +48,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         $client->request('GET', '/app/serveurs/guild/configuration/settings');
         self::assertResponseIsSuccessful();
         self::assertSelectorNotExists('[data-testid="catalog-csv-actions"]');
+        self::assertSelectorExists('table[data-catalog-table][data-section="settings"]');
     }
 
     public function testExampleDownloadUsesBomExpectedHeaderAndNoDiscordId(): void
@@ -57,6 +63,115 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         self::assertSame('attachment; filename=exemple-rangs.csv', $client->getResponse()->headers->get('Content-Disposition'));
         self::assertStringStartsWith("\xEF\xBB\xBFnom;pourcentage;titre_depart;est_staff\n", $client->getResponse()->getContent());
         self::assertStringNotContainsString('discord', strtolower($client->getResponse()->getContent()));
+    }
+
+    public function testBatchEndpointsValidateEveryRowBeforeWritingAndRequireCsrf(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        [, , $template] = $this->seedAccess($client);
+        foreach (['/app/serveurs/guild', '/app/modeles-catalogue/'.$template->id()] as $base) {
+            $url = $base.'/configuration/stats/nouvelles-entrees';
+            $client->request('POST', $url, ['rows' => [['nom' => 'Force'], ['nom' => '']]]);
+            self::assertResponseStatusCodeSame(403);
+            $token = $this->csrfToken($client);
+            $client->request('POST', $url, ['_token' => $token, 'rows' => [['nom' => 'Force'], ['nom' => '']]]);
+            self::assertResponseStatusCodeSame(422);
+            $result = json_decode($client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+            self::assertSame(2, $result['errors'][0]['line']);
+            self::assertSame('nom', $result['errors'][0]['column']);
+            $table = str_contains($base, 'modeles') ? 'catalog_template_stats' : 'stats';
+            self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM '.$table));
+            $client->request('POST', $url, ['_token' => $token, 'rows' => [['nom' => 'Force'], ['nom' => 'Agilité']]]);
+            self::assertResponseIsSuccessful();
+            self::assertSame(['created' => 2, 'url' => $base.'/configuration/stats'], json_decode($client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR));
+            self::assertSame(2, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM '.$table));
+        }
+        $this->connection()->executeStatement("UPDATE discord_servers SET active = 0 WHERE discord_id = 'guild'");
+        $client->request('POST', '/app/serveurs/guild/configuration/stats/nouvelles-entrees', ['_token' => $this->csrfToken($client), 'rows' => [['nom' => 'Interdit']]]);
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame(0, (int) $this->connection()->fetchOne("SELECT COUNT(*) FROM stats WHERE name = 'Interdit'"));
+    }
+
+    public function testPartialResponsesKeepAuthenticationAndCsrfGuards(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        [, , $template] = $this->seedAccess($client);
+        foreach (['/app/serveurs/guild', '/app/modeles-catalogue/'.$template->id()] as $base) {
+            $client->request('POST', $base.'/catalogue/stats', ['name' => 'Partielle'], server: ['HTTP_X_GACHAMELIA_CATALOG' => '1']);
+            self::assertResponseStatusCodeSame(403);
+            $client->request('POST', $base.'/catalogue/stats', ['name' => 'Partielle', '_token' => $this->csrfToken($client)], server: ['HTTP_X_GACHAMELIA_CATALOG' => '1']);
+            self::assertResponseRedirects($base.'/configuration/stats');
+            $client->request('GET', $base.'/configuration/stats', server: ['HTTP_X_GACHAMELIA_CATALOG' => '1']);
+            self::assertResponseIsSuccessful();
+            self::assertSelectorExists('[data-catalog-response] [data-catalog-row]');
+            self::assertSelectorTextContains('[data-catalog-response]', 'Partielle');
+            self::assertStringNotContainsString('<!doctype', strtolower($client->getResponse()->getContent()));
+            self::assertSelectorNotExists('script');
+        }
+    }
+
+    public function testRankSelectorsUseNaturalNamesWithoutChangingPercentages(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        [, $server, $template] = $this->seedAccess($client);
+        foreach (['Rang 10' => 10, 'rang 2' => 20, 'RANG 1' => 70] as $name => $percentage) {
+            $this->entityManager->persist(new Rank($server, 'discord-'.$percentage, $name, $percentage));
+            $this->entityManager->persist(new CatalogTemplateRank($template, 'key-'.$percentage, $name, $percentage));
+        }
+        $this->entityManager->flush();
+        foreach (['/app/serveurs/guild', '/app/modeles-catalogue/'.$template->id()] as $base) {
+            $crawler = $client->request('GET', $base.'/configuration/welcome-messages');
+            self::assertResponseIsSuccessful();
+            self::assertSame(['RANG 1', 'rang 2', 'Rang 10'], $crawler->filter('select[data-rank-choice] option:not([value=""])')->each(static fn ($node): string => $node->text()));
+        }
+        self::assertSame([10, 20, 70], array_map(intval(...), $this->connection()->fetchFirstColumn('SELECT percentage FROM ranks ORDER BY percentage')));
+    }
+
+    public function testExportsOnlyCurrentTargetAndCanBeReimportedUnchanged(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        [, $server, $template] = $this->seedAccess($client);
+        $this->entityManager->persist(new Stat($server, 'Force; physique'));
+        $this->entityManager->persist(new CatalogTemplateStat($template, 'Agilité'));
+        $this->entityManager->flush();
+        foreach (['/app/serveurs/guild' => 'Force; physique', '/app/modeles-catalogue/'.$template->id() => 'Agilité'] as $base => $name) {
+            $client->request('GET', $base.'/configuration/stats/csv/exporter');
+            self::assertResponseIsSuccessful();
+            self::assertSame('attachment; filename=catalogue-stats.csv', $client->getResponse()->headers->get('Content-Disposition'));
+            $csv = $client->getResponse()->getContent();
+            self::assertIsString($csv);
+            self::assertStringContainsString($name, $csv);
+            self::assertStringNotContainsString('Force; physique' === $name ? 'Agilité' : 'Force; physique', $csv);
+            $this->upload($client, $base.'/configuration/stats/csv/apercu', $csv);
+            self::assertResponseIsSuccessful();
+            self::assertSelectorExists('[data-testid="catalog-csv-operation"][data-action="unchanged"]');
+        }
+        $server->deactivate();
+        $this->entityManager->flush();
+        $client->request('GET', '/app/serveurs/guild/configuration/stats/csv/exporter');
+        self::assertResponseIsSuccessful();
+    }
+
+    public function testEveryDownloadedExampleCanBePreviewedUnchangedOnAnEmptyCatalogue(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        [, , $template] = $this->seedAccess($client);
+        foreach (['/app/serveurs/guild', '/app/modeles-catalogue/'.$template->id()] as $base) {
+            foreach (['ranks', 'role-stats', 'welcome-messages', 'bye-messages', 'roles', 'stats', 'elements'] as $section) {
+                $client->request('GET', $base.'/configuration/'.$section.'/csv/exemple');
+                self::assertResponseIsSuccessful();
+                $csv = $client->getResponse()->getContent();
+                self::assertIsString($csv);
+                $this->upload($client, $base.'/configuration/'.$section.'/csv/apercu', $csv);
+                self::assertResponseIsSuccessful();
+                self::assertSelectorExists('[data-testid="catalog-csv-preview"]');
+            }
+        }
     }
 
     public function testCsvUploadAndBackofficeControlsExposeClearInteractiveAffordances(): void

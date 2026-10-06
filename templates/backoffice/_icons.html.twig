@@ -1,0 +1,16 @@
+{% macro icon(name) %}
+    {% set paths = {
+        settings: 'M4 7h16M4 17h16M8 4v6M16 14v6',
+        ranks: 'M8 3h8v5a4 4 0 0 1-8 0V3ZM8 5H4v2a4 4 0 0 0 4 4M16 5h4v2a4 4 0 0 1-4 4M12 12v6M8 21h8M10 18h4',
+        'role-stats': 'M4 20V10M10 20V4M16 20v-7M21 20H2',
+        'welcome-messages': 'M14 4h6v16h-6M3 12h12M10 7l5 5-5 5',
+        'bye-messages': 'M10 4H4v16h6M9 12h12M16 7l5 5-5 5',
+        roles: 'M14 4h6v6L8 22l-6-6L14 4ZM14 4l6 6M6 12l6 6M3 21l3-3',
+        stats: 'M4 6h16M4 12h16M4 18h16M8 4v4M16 10v4M11 16v4',
+        elements: 'M12 3c0 6-7 7-7 12a7 7 0 0 0 14 0c0-5-7-6-7-12ZM9 16c0 2 1 3 3 3',
+        configuration: 'M3 3h7v7H3V3ZM14 3h7v7h-7V3ZM3 14h7v7H3v-7ZM14 14h7v7h-7v-7',
+        catalogue: 'M4 4h16v16H4V4ZM8 4v16M12 8h4M12 12h4M12 16h4',
+        character: 'M3 4h18v16H3V4ZM14 8h4M14 12h4M14 16h4M7 8a2 2 0 1 0 4 0 2 2 0 0 0-4 0ZM6 17v-1a3 3 0 0 1 6 0v1'
+    } %}
+    <svg class="bo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="{{ paths[name]|default(paths.configuration) }}"/></svg>
+{% endmacro %}

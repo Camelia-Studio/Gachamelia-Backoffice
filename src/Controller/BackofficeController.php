@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Backoffice\BackofficeAccess;
+use App\Backoffice\CatalogDisplayOrder;
 use App\Backoffice\BackofficeSession;
 use App\Backoffice\CatalogValidator;
 use App\Backoffice\CharacterSheetProvider;
@@ -62,49 +63,49 @@ final class BackofficeController extends AbstractController
             'label' => 'Réglages',
             'description' => 'Les canaux Discord et le rôle staff utilisés par le bot.',
             'catalog_key' => 'settings',
-            'icon' => 'RG',
+            'icon' => 'settings',
         ],
         'ranks' => [
             'label' => 'Rangs',
             'description' => 'Les rangs Discord qui portent les probabilités principales.',
             'catalog_key' => 'ranks',
-            'icon' => 'R',
+            'icon' => 'ranks',
         ],
         'role-stats' => [
             'label' => 'Stats de rôle',
             'description' => 'Les probabilités de caractéristiques associées à chaque rôle.',
             'catalog_key' => 'role_stats',
-            'icon' => 'RS',
+            'icon' => 'role-stats',
         ],
         'welcome-messages' => [
             'label' => 'Arrivées',
             'description' => 'Les messages d’accueil disponibles selon le rang obtenu.',
             'catalog_key' => 'welcome_messages',
-            'icon' => 'IN',
+            'icon' => 'welcome-messages',
         ],
         'bye-messages' => [
             'label' => 'Départs',
             'description' => 'Les messages de départ disponibles selon le rang quitté.',
             'catalog_key' => 'bye_messages',
-            'icon' => 'BY',
+            'icon' => 'bye-messages',
         ],
         'roles' => [
             'label' => 'Rôles',
             'description' => 'Les rôles de personnage utilisés dans les tirages.',
             'catalog_key' => 'roles',
-            'icon' => 'RO',
+            'icon' => 'roles',
         ],
         'stats' => [
             'label' => 'Stats',
             'description' => 'Les caractéristiques disponibles sur les fiches personnage.',
             'catalog_key' => 'stats',
-            'icon' => 'S',
+            'icon' => 'stats',
         ],
         'elements' => [
             'label' => 'Éléments',
             'description' => 'Les affinités élémentaires que le bot peut attribuer.',
             'catalog_key' => 'elements',
-            'icon' => 'E',
+            'icon' => 'elements',
         ],
     ];
 
@@ -997,7 +998,7 @@ final class BackofficeController extends AbstractController
      */
     private function catalogPayload(EntityManagerInterface $entityManager, DiscordServer $server): array
     {
-        $ranks = $entityManager->getRepository(Rank::class)->findBy(['server' => $server], ['percentage' => 'ASC', 'name' => 'ASC']);
+        $ranks = CatalogDisplayOrder::ranks($entityManager->getRepository(Rank::class)->findBy(['server' => $server]));
 
         return [
             'settings' => $this->serverSettingsPayload($server),

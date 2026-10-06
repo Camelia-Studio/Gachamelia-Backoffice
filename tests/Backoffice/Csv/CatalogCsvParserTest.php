@@ -135,6 +135,36 @@ final class CatalogCsvParserTest extends TestCase
         self::assertSame($document->toArray(), $document::fromArray($document->toArray())->toArray());
     }
 
+    public function testAcceptsBlankLinesBeforeCommaHeaderAndPreservesLineNumbers(): void
+    {
+        $document = (new CatalogCsvParser())->parse($this->csv("\n\nNom,Pourcentage,Emoji\nOracle,100,🔮\n"), CatalogCsvSection::Roles);
+        self::assertTrue($document->valid());
+        self::assertSame(4, $document->rows()[0]['line']);
+        self::assertSame('Oracle', $document->rows()[0]['values']['nom']);
+    }
+
+    public function testAcceptsUtf16ExcelCsvAndCrLf(): void
+    {
+        $contents = "\xFF\xFE".mb_convert_encoding("nom;pourcentage;emoji\r\nÉclaireur;100;🔮\r\n", 'UTF-16LE', 'UTF-8');
+        $document = (new CatalogCsvParser())->parse($this->csv($contents), CatalogCsvSection::Roles);
+        self::assertTrue($document->valid());
+        self::assertSame('Éclaireur', $document->rows()[0]['values']['nom']);
+    }
+
+    public function testReportsPhysicalLineAfterMultilineQuotedMessage(): void
+    {
+        $document = (new CatalogCsvParser())->parse($this->csv("rang;message\nNovice;\"Bienvenue\nparmi nous\"\nNovice;\n"), CatalogCsvSection::WelcomeMessages);
+        self::assertSame(4, $document->errors()[0]['line']);
+        self::assertSame('message', $document->errors()[0]['column']);
+    }
+
+    public function testRejectsExtraCellsInsteadOfSilentlyDiscardingContent(): void
+    {
+        $document = (new CatalogCsvParser())->parse($this->csv("nom\nForce;extra\n"), CatalogCsvSection::Stats);
+        self::assertSame('invalid_column_count', $document->errors()[0]['message']);
+        self::assertSame(2, $document->errors()[0]['line']);
+    }
+
     private function csv(string $contents): string
     {
         $path = tempnam(sys_get_temp_dir(), 'catalog-csv-');

@@ -28,10 +28,17 @@
             <div class="bo-panel-head bo-panel-head--bare">
                 <div>
                     <h2 class="bo-card-heading">Choisir le fichier</h2>
-                    <p class="bo-panel-lead">CSV UTF-8, séparateur « ; » ou « , », 5 Mio et 1 000 lignes maximum.</p>
+                    <p class="bo-panel-lead">CSV UTF-8 ou UTF-16 avec BOM, séparateur « ; » ou « , », 5 Mio et 1 000 lignes maximum.</p>
                 </div>
                 <a href="{{ routes.example }}" class="bo-btn bo-btn--outline">Télécharger l’exemple</a>
             </div>
+            <p class="bo-panel-lead">Colonnes : {{ section.headers|join(' ; ') }}. Obligatoires : {{ section.requiredHeaders|join(', ') }}. Garde la première ligne d’en-tête ; les pourcentages sont des entiers sans « % ».</p>
+            <p class="bo-panel-lead">L’exemple reprend les noms déjà présents et propose des totaux de 100 %. Les emojis acceptent les caractères Unicode et le format Discord « &lt;:nom:id&gt; » (ou « &lt;a:nom:id&gt; » pour un emoji animé). Les textes contenant un séparateur doivent être entourés de guillemets.</p>
+            {% if section.value in ['welcome-messages', 'bye-messages'] %}
+                <p class="bo-panel-lead">Crée les rangs avant les messages. Sans rang, l’exemple contient uniquement l’en-tête. Pour de nouveaux rangs de serveur, l’import demande ensuite de choisir les rôles Discord.</p>
+            {% elseif section.value == 'role-stats' %}
+                <p class="bo-panel-lead">Crée les rôles et les stats avant leurs probabilités. Sans ces données, l’exemple contient uniquement l’en-tête. Le total de chaque rôle modifié doit atteindre 100 %.</p>
+            {% endif %}
             <form method="post" action="{{ routes.preview }}" enctype="multipart/form-data" class="bo-upload">
                 <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                 <label class="bo-field bo-field--strong">

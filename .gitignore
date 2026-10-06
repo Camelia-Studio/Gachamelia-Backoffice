@@ -18,6 +18,7 @@
 .vscode/
 *.iml
 .playwright-mcp/
+.impeccable/review/
 /node_modules/
 /public/build/
 .superpowers/

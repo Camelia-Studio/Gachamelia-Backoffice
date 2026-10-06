@@ -1,0 +1,138 @@
+{% set is_server = target_type == 'server' %}
+{% set batch_form_id = 'catalog-batch-form' %}
+{% set columns = {
+    'ranks': {name: 'Nom', identity: is_server ? 'Rôle Discord' : 'Clé de rôle', percentage: '%', bye_title: 'Titre du message de départ', is_staff: 'Staff'},
+    'role-stats': {role_name: 'Rôle', stat_name: 'Stat', percentage: '%'},
+    'welcome-messages': {rank_name: 'Rang', message: 'Message'},
+    'bye-messages': {rank_name: 'Rang', message: 'Message'},
+    'roles': {name: 'Nom', emoji_markup: 'Emoji', emoji_source_label: 'Source', percentage: '%'},
+    'stats': {name: 'Nom'},
+    'elements': {name: 'Nom', emoji_markup: 'Emoji', emoji_source_label: 'Source'},
+    'settings': {label: 'Réglage', value: 'Valeur'}
+}[active_section] %}
+{% set entries = active_section == 'settings' ? [
+    {id: 'welcome', label: 'Salon d’arrivée', value: catalog.settings.welcome_channel_id ? discord_resource_labels.channels[catalog.settings.welcome_channel_id]|default(catalog.settings.welcome_channel_id) : 'Non configuré'},
+    {id: 'bye', label: 'Salon de départ', value: catalog.settings.bye_channel_id ? discord_resource_labels.channels[catalog.settings.bye_channel_id]|default(catalog.settings.bye_channel_id) : 'Non configuré'},
+    {id: 'staff', label: 'Rôle staff', value: catalog.settings.staff_role_id ? discord_resource_labels.roles[catalog.settings.staff_role_id]|default(catalog.settings.staff_role_id) : 'Non configuré'}
+] : attribute(catalog, active_section|replace({'-': '_'})) %}
+{% set row_testids = {ranks: 'rank-card', 'role-stats': 'role-stat-card', 'welcome-messages': 'message-card', 'bye-messages': 'message-card', roles: 'role-card', stats: 'stat-card', elements: 'element-card', settings: 'setting-row'} %}
+<section class="bo-panel" data-testid="catalog-list-panel" data-catalog-scope="{{ target_type }}-{{ target_id }}-{{ active_section }}">
+    <div class="bo-panel-head">
+        <h2 class="bo-section-title">{{ active_section == 'settings' ? 'Réglages actuels' : 'Entrées du catalogue' }}</h2>
+        <span class="bo-badge bo-badge--gold" data-catalog-count>{{ entries|length }} entrées</span>
+    </div>
+    <p class="bo-catalog-result" data-catalog-operation-status role="status" aria-live="polite" hidden></p>
+    {% if active_section in ['welcome-messages', 'bye-messages'] %}
+        <div class="bo-rank-default">
+            <label class="bo-field">Rang pour les prochains messages
+                <select class="bo-input" data-rank-choice="{{ target_type }}-{{ target_id }}" data-batch-rank-default aria-describedby="rank-choice-help">
+                    <option value="">Choisis un rang</option>
+                    {% for rank in catalog.ranks %}<option value="{{ rank.id }}">{{ rank.name }}</option>{% endfor %}
+                </select>
+            </label>
+            <p id="rank-choice-help" class="bo-muted">Le choix est mémorisé. Chaque ligne peut utiliser un autre rang.</p>
+        </div>
+    {% endif %}
+    {% if active_section == 'role-stats' %}
+        <div class="bo-rank-default">
+            <label class="bo-field">Rôle pour les prochaines stats
+                <select class="bo-input" data-role-choice="{{ target_type }}-{{ target_id }}" data-batch-role-default aria-describedby="role-choice-help">
+                    <option value="">Choisis un rôle</option>
+                    {% for role in catalog.roles %}<option value="{{ role.id }}">{{ role.name }}</option>{% endfor %}
+                </select>
+            </label>
+            <p id="role-choice-help" class="bo-muted">Le choix est mémorisé. Chaque ligne peut utiliser un autre rôle.</p>
+        </div>
+    {% endif %}
+    <form class="bo-catalog-filters" data-catalog-filters role="search" aria-label="Filtrer {{ page_title }}">
+        {% for key, label in columns %}
+            {% if key == 'percentage' %}
+                <label class="bo-field">% minimum<input type="number" min="0" max="100" class="bo-input" data-filter-column="percentage" data-filter-kind="min"></label>
+                <label class="bo-field">% maximum<input type="number" min="0" max="100" class="bo-input" data-filter-column="percentage" data-filter-kind="max"></label>
+            {% else %}
+                <label class="bo-field">{{ label }}
+                    {% set options = key == 'rank_name' ? catalog.ranks : (key == 'role_name' ? catalog.roles : (key == 'stat_name' ? catalog.stats : [])) %}
+                    {% if options is not empty or key == 'is_staff' %}
+                        <select class="bo-input" data-filter-column="{{ key }}" data-filter-kind="exact">
+                            <option value="">Tous</option>
+                            {% if key == 'is_staff' %}<option>Oui</option><option>Non</option>{% endif %}
+                            {% for option in options %}<option value="{{ option.name }}">{{ option.name }}</option>{% endfor %}
+                        </select>
+                    {% else %}
+                        <input type="search" maxlength="255" class="bo-input" data-filter-column="{{ key }}" data-filter-kind="contains" placeholder="Contient…">
+                    {% endif %}
+                </label>
+            {% endif %}
+        {% endfor %}
+        <button type="button" class="bo-btn bo-btn--outline" data-filter-reset>Effacer les filtres</button>
+    </form>
+    <p class="bo-catalog-result bo-muted" data-filter-result role="status" aria-live="polite">{{ entries|length }} entrées affichées</p>
+    <div class="bo-table-wrap" tabindex="0" role="region" aria-label="Tableau {{ page_title }}">
+        <table class="bo-table bo-catalog-table" data-catalog-table data-section="{{ active_section }}">
+            <thead><tr>
+                {% for key, label in columns %}<th scope="col" data-column="{{ key }}" aria-sort="{{ active_section == 'ranks' and key == 'name' ? 'ascending' : 'none' }}"><button type="button" class="bo-table-sort" data-sort-column="{{ key }}" aria-label="Trier par {{ label }}">{{ label }}</button></th>{% endfor %}
+                <th scope="col">Actions</th>
+            </tr></thead>
+            <tbody>
+                {% for row in entries %}
+                    {% set row_key = active_section == 'role-stats' ? row.role_id ~ '-' ~ row.stat_id : row.id %}
+                    <tr data-catalog-row="{{ row_key }}" data-testid="{{ is_server ? row_testids[active_section] : 'template-' ~ row_testids[active_section] }}">
+                        {% for key, label in columns %}
+                            {% set cell_value = key == 'identity' ? (is_server ? discord_resource_labels.roles[row.discord_id]|default(row.discord_id) : row.role_key) : (key == 'is_staff' ? (row.is_staff ? 'Oui' : 'Non') : attribute(row, key)|default('')) %}
+                            <td data-column="{{ key }}" data-filter-value="{{ cell_value }}">
+                                {% if key == 'identity' %}
+                                    {{ is_server ? discord_resource_labels.roles[row.discord_id]|default(row.discord_id) : row.role_key }}
+                                {% elseif key == 'is_staff' %}
+                                    {{ row.is_staff ? 'Oui' : 'Non' }}
+                                {% elseif key == 'percentage' %}
+                                    <span class="bo-table-number">{{ row.percentage }} %</span>
+                                {% elseif key == 'message' %}
+                                    <span class="bo-table-message">{{ row.message }}</span>
+                                {% elseif key == 'emoji_markup' and row.emoji_cdn_url %}
+                                    <img src="{{ row.emoji_cdn_url }}" alt="Emoji {{ active_section == 'roles' ? 'du rôle' : 'de l’élément' }} {{ row.name }}" class="bo-emoji" loading="lazy">
+                                {% else %}
+                                    {{ attribute(row, key)|default('—') }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        <td class="bo-catalog-actions">
+                            {% if active_section == 'settings' %}
+                                <a href="#catalog-settings" class="bo-btn bo-btn--outline">Modifier</a>
+                            {% else %}
+                                <details class="bo-row-editor">
+                                    <summary class="bo-btn bo-btn--outline">Modifier</summary>
+                                    <div class="bo-row-editor-body">
+                                        {% set rank = row %}{% set role_stat = row %}{% set message = row %}{% set stat = row %}{% set role = row %}{% set element = row %}{% set entry = row %}
+                                        {% set route_params = (is_server ? {guildId: target_id} : {templateId: target_id})|merge({(id_key|default('id')): row.id|default(null)}) %}
+                                        {% include 'backoffice/_catalog_editor_' ~ target_type ~ '.html.twig' %}
+                                    </div>
+                                </details>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr data-catalog-empty><td colspan="{{ columns|length + 1 }}" class="bo-empty">Aucune entrée pour l’instant. Ajoute la première ou importe un CSV.</td></tr>
+                {% endfor %}
+                <tr data-catalog-no-match hidden><td colspan="{{ columns|length + 1 }}">Aucune entrée ne correspond. Modifie ou efface les filtres.</td></tr>
+            </tbody>
+            {% if active_section != 'settings' %}
+                <tbody data-catalog-new-rows>
+                    <tr class="bo-new-rows-heading"><td colspan="{{ columns|length + 1 }}"><h3 class="bo-section-title">Nouvelles entrées</h3><p class="bo-muted">Prépare tes lignes, puis enregistre tout le lot. Une erreur bloque tous les ajouts.</p></td></tr>
+                    {% include 'backoffice/_catalog_new_row.html.twig' with { row_index: 0 } %}
+                </tbody>
+            {% endif %}
+        </table>
+    </div>
+    {% if active_section != 'settings' %}
+        <template data-catalog-new-row-template>{% include 'backoffice/_catalog_new_row.html.twig' with { row_index: '__index__' } %}</template>
+        <form id="{{ batch_form_id }}" method="post" action="{{ path(is_server ? 'app_server_catalog_batch' : 'app_catalog_template_batch', (is_server ? {guildId: target_id} : {templateId: target_id})|merge({section: active_section})) }}" class="bo-batch-toolbar" data-catalog-batch data-testid="catalog-create-panel" novalidate>
+            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+            <p data-batch-status role="status" aria-live="polite" hidden></p>
+            <div class="bo-inline">
+                <button type="button" class="bo-btn bo-btn--outline" data-batch-add>Ajouter une ligne</button>
+                <button type="submit" class="bo-btn bo-btn--ink">Enregistrer les nouvelles entrées</button>
+                <span class="bo-muted" data-batch-count>1 ligne à enregistrer · 100 maximum</span>
+            </div>
+        </form>
+    {% endif %}
+</section>

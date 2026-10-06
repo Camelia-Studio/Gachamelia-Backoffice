@@ -3,13 +3,36 @@
  * Les composants sont préfixés `bo-`. Les jetons de couleur viennent de base.css.
  */
 
-:root {
+html[data-backoffice-theme] {
+    color-scheme: light;
+    scroll-behavior: auto;
+    --surface: #fff;
+    --contrast-bg: #241813;
+    --contrast-fg: #fffaf4;
+    --input-border: color-mix(in srgb, var(--ink) 25%, transparent);
+    --radius-panel: 1rem;
+    --radius-soft: 0.75rem;
+    --radius-control: 0.6rem;
+    --on-strong: #fff;
     --gold-ink: #7a5415;
-    --line: rgb(36 24 19 / 0.1);
+    --line: color-mix(in srgb, var(--ink) 10%, transparent);
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
 }
 
 /* ---------- Affordances interactives ---------- */
+
+.bo-icon {
+    display: block;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+}
+
+.bo-config-icon .bo-icon,
+.bo-template-mark .bo-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+}
 
 .bo a[href],
 .bo button {
@@ -41,18 +64,17 @@
     position: sticky;
     top: 0;
     z-index: 40;
-    border-bottom: 1px solid var(--line);
-    background: rgb(255 250 244 / 0.92);
-    backdrop-filter: blur(24px);
+    background: var(--contrast-bg);
+    color: var(--contrast-fg);
 }
 
 .bo-header-inner {
     display: flex;
     width: 100%;
     max-width: 90rem;
-    min-height: 4.5rem;
+    min-height: 4rem;
     margin: 0 auto;
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 1rem;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
@@ -83,6 +105,10 @@
 
 .bo-brand-text {
     min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
 }
 
 .bo-brand-name,
@@ -92,15 +118,19 @@
 }
 
 .bo-brand-name {
-    font-size: 0.875rem;
-    font-weight: 900;
-    letter-spacing: 0.025em;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: normal;
+    font-family: var(--font-display);
 }
 
 .bo-brand-sub {
-    font-size: 0.75rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: var(--rose);
+    color: var(--on-strong);
+    font-size: 0.65rem;
     font-weight: 700;
-    color: var(--muted);
 }
 
 .bo-header-actions {
@@ -114,11 +144,11 @@
 .bo-main {
     display: flex;
     width: 100%;
-    max-width: 90rem;
+    max-width: 80rem;
     flex: 1;
     flex-direction: column;
     margin: 0 auto;
-    padding: 2.5rem 1rem;
+    padding: 1.75rem 1rem 3rem;
 }
 
 .bo-main > .bo-flash {
@@ -127,11 +157,11 @@
 
 .bo-page {
     display: grid;
-    gap: 2rem;
+    gap: 1.5rem;
 }
 
 .bo-page--wide {
-    gap: 2.5rem;
+    gap: 1.75rem;
 }
 
 .bo-page--narrow {
@@ -143,21 +173,21 @@
 .bo-page-header {
     display: grid;
     gap: 0.75rem;
-    padding-bottom: 1.5rem;
+    padding-bottom: 1rem;
     border-bottom: 1px solid var(--line);
 }
 
 .bo-page-title {
     font-family: var(--font-display);
-    font-size: 2.25rem;
-    font-weight: 400;
+    font-size: 1.75rem;
+    font-weight: 800;
     line-height: 1.25;
 }
 
 .bo-page-lead {
-    max-width: 48rem;
+    max-width: 65ch;
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 500;
     line-height: 1.625;
     color: var(--muted);
 }
@@ -170,7 +200,7 @@
 
 .bo-eyebrow {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--rose);
@@ -190,8 +220,9 @@
 }
 
 .bo-section-title {
-    font-size: 1.125rem;
-    font-weight: 900;
+    font-size: 1.25rem;
+    font-weight: 800;
+    font-family: var(--font-display);
 }
 
 .bo-section-lead {
@@ -204,13 +235,13 @@
 .bo-panel-lead {
     margin-top: 0.5rem;
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 500;
     line-height: 1.625;
     color: var(--muted);
 }
 
 .bo-card-title {
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-card-text {
@@ -223,11 +254,11 @@
 
 .bo-card-heading {
     font-size: 1.25rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-strong {
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-muted {
@@ -241,13 +272,13 @@
 }
 
 .bo-accent {
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
 .bo-label {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--rose);
@@ -260,7 +291,7 @@
 
 .bo-caption {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--muted);
@@ -275,10 +306,10 @@
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
     background: var(--ink);
-    color: #fff;
+    color: var(--on-strong);
     font-family: var(--font-sans);
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-truncate {
@@ -303,7 +334,7 @@
     border: 0;
     background: none;
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
@@ -397,8 +428,8 @@
     padding: 0 1rem;
     border: 1px solid transparent;
     border-radius: 999px;
-    font-size: 0.875rem;
-    font-weight: 900;
+    font-size: 0.8rem;
+    font-weight: 800;
     text-align: center;
     transition: background-color 0.15s, color 0.15s, border-color 0.15s;
 }
@@ -427,7 +458,7 @@
 
 .bo-btn--ink {
     background: var(--ink);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-btn--ink:hover {
@@ -436,7 +467,7 @@
 
 .bo-btn--leaf {
     background: var(--leaf);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-btn--leaf:hover {
@@ -445,7 +476,7 @@
 
 .bo-btn--rose {
     background: var(--rose);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-btn--rose:hover {
@@ -454,13 +485,13 @@
 
 .bo-btn--outline {
     border-color: var(--line);
-    background: #fff;
+    background: var(--surface);
     color: var(--ink);
     box-shadow: var(--shadow-sm);
 }
 
 .bo-btn--outline:hover {
-    border-color: rgb(196 22 73 / 0.3);
+    border-color: color-mix(in srgb, var(--rose) 30%, transparent);
     color: var(--rose);
 }
 
@@ -475,24 +506,24 @@
 }
 
 .bo-btn--blush:hover {
-    border-color: rgb(196 22 73 / 0.4);
+    border-color: color-mix(in srgb, var(--rose) 40%, transparent);
     color: var(--rose);
 }
 
 .bo-btn--rose-soft {
-    border-color: rgb(196 22 73 / 0.2);
+    border-color: color-mix(in srgb, var(--rose) 20%, transparent);
     background: var(--blush);
     color: var(--rose);
 }
 
 .bo-btn--rose-soft:hover {
-    border-color: rgb(196 22 73 / 0.5);
-    background: #fff;
+    border-color: color-mix(in srgb, var(--rose) 50%, transparent);
+    background: var(--surface);
 }
 
 .bo-btn--danger {
-    border-color: rgb(196 22 73 / 0.3);
-    background: #fff;
+    border-color: color-mix(in srgb, var(--rose) 30%, transparent);
+    background: var(--surface);
     color: var(--rose);
     padding: 0 1.25rem;
 }
@@ -516,7 +547,7 @@
     padding: 0 0.75rem;
     border-radius: 999px;
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     white-space: nowrap;
 }
 
@@ -531,12 +562,12 @@
 }
 
 .bo-badge--gold {
-    background: rgb(212 161 63 / 0.2);
+    background: color-mix(in srgb, var(--gold) 20%, transparent);
     color: var(--gold-ink);
 }
 
 .bo-badge--leaf {
-    background: rgb(47 89 78 / 0.15);
+    background: color-mix(in srgb, var(--leaf) 15%, transparent);
     color: var(--leaf);
 }
 
@@ -551,16 +582,17 @@
     font-size: 0.875rem;
     font-weight: 700;
     color: var(--ink);
+    border-radius: var(--radius-soft);
 }
 
 .bo-flash--error {
-    border-color: rgb(196 22 73 / 0.3);
+    border-color: color-mix(in srgb, var(--rose) 30%, transparent);
     background: var(--blush);
 }
 
 .bo-flash--success {
-    border-color: rgb(47 89 78 / 0.3);
-    background: rgb(47 89 78 / 0.1);
+    border-color: color-mix(in srgb, var(--leaf) 30%, transparent);
+    background: color-mix(in srgb, var(--leaf) 10%, transparent);
 }
 
 .bo-notice {
@@ -570,17 +602,18 @@
     font-weight: 700;
     line-height: 1.625;
     color: var(--muted);
+    border-radius: var(--radius-soft);
 }
 
 .bo-notice--rose {
-    border-color: rgb(196 22 73 / 0.2);
-    background: rgb(245 222 214 / 0.7);
+    border-color: color-mix(in srgb, var(--rose) 20%, transparent);
+    background: color-mix(in srgb, var(--blush) 70%, transparent);
 }
 
 .bo-notice--gold {
     padding: 1.25rem;
-    border-color: rgb(212 161 63 / 0.4);
-    background: rgb(212 161 63 / 0.1);
+    border-color: color-mix(in srgb, var(--gold) 40%, transparent);
+    background: color-mix(in srgb, var(--gold) 10%, transparent);
 }
 
 .bo-notice--gold .bo-card-title {
@@ -589,33 +622,34 @@
 
 .bo-empty {
     padding: 1.25rem;
-    border: 1px dashed rgb(36 24 19 / 0.15);
+    border: 1px dashed color-mix(in srgb, var(--ink) 15%, transparent);
     background: var(--ivory);
     font-size: 0.875rem;
     font-weight: 700;
     line-height: 1.625;
     color: var(--muted);
+    border-radius: var(--radius-soft);
 }
 
 .bo-empty--white {
     padding: 1.5rem;
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-empty--blush {
-    border-color: rgb(36 24 19 / 0.2);
-    background: rgb(245 222 214 / 0.5);
+    border-color: color-mix(in srgb, var(--ink) 20%, transparent);
+    background: color-mix(in srgb, var(--blush) 50%, transparent);
 }
 
 .bo-empty--leaf {
-    border-color: rgb(36 24 19 / 0.2);
-    background: rgb(47 89 78 / 0.1);
+    border-color: color-mix(in srgb, var(--ink) 20%, transparent);
+    background: color-mix(in srgb, var(--leaf) 10%, transparent);
 }
 
 .bo-empty--inline {
     grid-column: 1 / -1;
     padding: 0.5rem 0.75rem;
-    background: rgb(245 222 214 / 0.3);
+    background: color-mix(in srgb, var(--blush) 30%, transparent);
     font-size: 0.75rem;
 }
 
@@ -624,19 +658,19 @@
 .bo-panel {
     display: grid;
     align-content: start;
-    gap: 1.5rem;
+    gap: 1.25rem;
     border: 1px solid var(--line);
-    background: var(--ivory);
-    box-shadow: var(--shadow-sm);
+    background: var(--surface);
+    border-radius: var(--radius-panel);
 }
 
 .bo-panel--rose {
-    border-color: rgb(196 22 73 / 0.2);
-    background: rgb(245 222 214 / 0.5);
+    border-color: color-mix(in srgb, var(--rose) 20%, transparent);
+    background: color-mix(in srgb, var(--blush) 50%, transparent);
 }
 
 .bo-panel--rose .bo-panel-head {
-    border-bottom-color: rgb(196 22 73 / 0.2);
+    border-bottom-color: color-mix(in srgb, var(--rose) 20%, transparent);
 }
 
 .bo-panel--padded {
@@ -645,7 +679,7 @@
 }
 
 .bo-panel--white {
-    background: #fff;
+    background: var(--surface);
     gap: 1.5rem;
 }
 
@@ -654,8 +688,7 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--line);
+    padding: 1.25rem;
 }
 
 .bo-panel-head--bare {
@@ -668,7 +701,7 @@
 }
 
 .bo-panel-body {
-    padding: 1.5rem;
+    padding: 1.25rem;
 }
 
 .bo-card {
@@ -676,7 +709,8 @@
     gap: 1rem;
     padding: 1.25rem;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
+    border-radius: var(--radius-panel);
 }
 
 .bo-card--roomy {
@@ -721,7 +755,7 @@
     background: var(--blush);
     font-family: var(--font-display);
     font-size: 1.125rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
@@ -731,7 +765,7 @@
 }
 
 .bo-entry-icon--gold {
-    background: rgb(212 161 63 / 0.2);
+    background: color-mix(in srgb, var(--gold) 20%, transparent);
     color: var(--gold-ink);
 }
 
@@ -747,7 +781,7 @@
 .bo-details-summary {
     cursor: pointer;
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
     transition: color 0.15s;
 }
@@ -780,15 +814,16 @@
     gap: 1rem;
     padding: 1rem;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-row-label {
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-toolbar {
+    border-radius: var(--radius-panel);
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -813,9 +848,9 @@
     display: grid;
     gap: 1.25rem;
     padding: 1.75rem;
-    border: 1px solid rgb(196 22 73 / 0.2);
-    background: rgb(245 222 214 / 0.4);
-    box-shadow: var(--shadow-sm);
+    border: 1px solid color-mix(in srgb, var(--rose) 20%, transparent);
+    background: color-mix(in srgb, var(--blush) 40%, transparent);
+    border-radius: var(--radius-panel);
 }
 
 .bo-callout .bo-page-lead {
@@ -831,6 +866,7 @@
     gap: 1.25rem;
     padding: 1.5rem;
     border: 1px solid var(--line);
+    border-radius: var(--radius-panel);
     background: var(--ivory);
     box-shadow: var(--shadow-sm);
 }
@@ -847,6 +883,7 @@
 }
 
 .bo-template-mark {
+    border-radius: var(--radius-soft);
     display: flex;
     width: 3.5rem;
     height: 3.5rem;
@@ -855,17 +892,17 @@
     background: var(--blush);
     font-family: var(--font-display);
     font-size: 1.25rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
 .bo-template-mark--gold {
-    background: rgb(212 161 63 / 0.2);
+    background: color-mix(in srgb, var(--gold) 20%, transparent);
     color: var(--gold-ink);
 }
 
 .bo-template-mark--leaf {
-    background: rgb(47 89 78 / 0.15);
+    background: color-mix(in srgb, var(--leaf) 15%, transparent);
     color: var(--leaf);
 }
 
@@ -876,8 +913,8 @@
     gap: 1rem;
     padding: 1.25rem;
     border: 1px solid var(--line);
-    background: #fff;
-    box-shadow: var(--shadow-sm);
+    background: var(--surface);
+    border-radius: var(--radius-panel);
 }
 
 .bo-guild.is-inactive {
@@ -912,13 +949,13 @@
 .bo-guild-icon--fallback {
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
 .bo-guild-name {
     font-size: 1.125rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.25;
 }
 
@@ -933,7 +970,7 @@
     flex-shrink: 0;
     border: 1px solid var(--line);
     border-radius: 50%;
-    background: #fff;
+    background: var(--surface);
     object-fit: cover;
 }
 
@@ -960,7 +997,7 @@
     background: var(--blush);
     font-family: var(--font-display);
     font-size: 1.125rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
@@ -970,30 +1007,30 @@
 }
 
 .bo-avatar--on-dark {
-    border: 1px solid rgb(255 255 255 / 0.2);
-    background: rgb(255 255 255 / 0.1);
+    border: 1px solid color-mix(in srgb, var(--on-strong) 20%, transparent);
+    background: color-mix(in srgb, var(--on-strong) 10%, transparent);
 }
 
 .bo-avatar--on-dark.bo-avatar--fallback {
-    color: var(--pink);
+    color: var(--on-strong);
 }
 
 /* ---------- Configuration (barre latérale + contenu) ---------- */
 
 .bo-config {
     display: grid;
-    gap: 2rem;
+    gap: 1.5rem;
 }
 
 .bo-config-side {
     display: grid;
-    gap: 1.75rem;
+    gap: 1.25rem;
 }
 
 .bo-config-main {
     display: grid;
     min-width: 0;
-    gap: 2rem;
+    gap: 1.25rem;
 }
 
 .bo-fieldset {
@@ -1008,7 +1045,7 @@
     padding: 1rem;
     border: 1px solid var(--line);
     background: var(--ivory);
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-soft);
 }
 
 .bo-identity--guild {
@@ -1020,7 +1057,7 @@
 .bo-identity-name {
     overflow: hidden;
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.25;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1036,19 +1073,19 @@
 
 .bo-sidenav {
     display: grid;
-    gap: 1.75rem;
+    gap: 1.25rem;
 }
 
 .bo-sidenav-group {
     display: grid;
-    gap: 0.5rem;
+    gap: 0.25rem;
 }
 
 .bo-sidenav-title {
     padding: 0 0.75rem;
     font-size: 0.68rem;
-    font-weight: 900;
-    letter-spacing: 0.16em;
+    font-weight: 800;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--muted);
 }
@@ -1056,15 +1093,16 @@
 .bo-sidenav-link {
     position: relative;
     display: grid;
-    min-height: 3rem;
+    min-height: 2.75rem;
     grid-template-columns: 1.8rem minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.75rem;
     padding: 0 0.75rem;
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 600;
     color: var(--muted);
     transition: color 0.15s;
+    border-radius: var(--radius-control);
 }
 
 .bo-sidenav-link:hover {
@@ -1072,21 +1110,10 @@
 }
 
 .bo-sidenav-link.is-active {
-    background: var(--blush);
-    color: var(--ink);
+    background: var(--contrast-bg);
+    color: var(--contrast-fg);
 }
 
-.bo-sidenav-link.is-active::before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 0;
-    width: 0.25rem;
-    height: 1.75rem;
-    border-radius: 999px;
-    background: var(--rose);
-    transform: translateY(-50%);
-}
 
 .bo-sidenav-icon {
     display: flex;
@@ -1095,30 +1122,31 @@
     align-items: center;
     justify-content: center;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
     font-size: 0.68rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
+    border-radius: var(--radius-control);
 }
 
 .bo-sidenav-count {
     font-size: 0.75rem;
-    font-weight: 900;
-    color: var(--rose);
+    font-weight: 800;
+    color: inherit;
 }
 
 .bo-config-header {
     display: flex;
     align-items: flex-start;
-    gap: 1.25rem;
-    padding-bottom: 2rem;
+    gap: 1rem;
+    padding-bottom: 1.25rem;
     border-bottom: 1px solid var(--line);
 }
 
 .bo-config-icon {
     display: flex;
-    width: 4rem;
-    height: 4rem;
+    width: 3rem;
+    height: 3rem;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
@@ -1126,8 +1154,9 @@
     background: var(--blush);
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
+    border-radius: var(--radius-control);
 }
 
 .bo-config-heading {
@@ -1143,23 +1172,23 @@
     gap: 1rem;
     padding: 1.25rem;
     border: 1px solid transparent;
-    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-soft);
 }
 
 .bo-validation.is-ready {
-    border-color: rgb(47 89 78 / 0.25);
-    background: rgb(47 89 78 / 0.05);
+    border-color: color-mix(in srgb, var(--leaf) 25%, transparent);
+    background: color-mix(in srgb, var(--leaf) 5%, transparent);
 }
 
 .bo-validation.is-incomplete {
-    border-color: rgb(196 22 73 / 0.25);
-    background: rgb(245 222 214 / 0.45);
+    border-color: color-mix(in srgb, var(--rose) 25%, transparent);
+    background: color-mix(in srgb, var(--blush) 45%, transparent);
 }
 
 .bo-validation-eyebrow {
     margin-bottom: 0.5rem;
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.16em;
     text-transform: uppercase;
 }
@@ -1176,21 +1205,21 @@
     display: grid;
     gap: 0.5rem;
     font-size: 0.875rem;
-    font-weight: 700;
+    font-weight: 500;
     color: var(--muted);
 }
 
 .bo-issues li {
-    padding-left: 0.75rem;
-    border-left: 2px solid;
+    padding-left: 1rem;
+    position: relative;
 }
 
 .bo-issues--error li {
-    border-left-color: var(--rose);
+    --issue-color: var(--rose);
 }
 
 .bo-issues--warning li {
-    border-left-color: var(--gold);
+    --issue-color: var(--gold-ink);
 }
 
 /* ---------- Statistiques d'import ---------- */
@@ -1208,18 +1237,18 @@
 }
 
 .bo-stat--leaf {
-    border-color: rgb(47 89 78 / 0.2);
-    background: rgb(47 89 78 / 0.05);
+    border-color: color-mix(in srgb, var(--leaf) 20%, transparent);
+    background: color-mix(in srgb, var(--leaf) 5%, transparent);
 }
 
 .bo-stat--rose {
-    border-color: rgb(196 22 73 / 0.2);
-    background: rgb(245 222 214 / 0.5);
+    border-color: color-mix(in srgb, var(--rose) 20%, transparent);
+    background: color-mix(in srgb, var(--blush) 50%, transparent);
 }
 
 .bo-stat-label {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--muted);
@@ -1237,7 +1266,7 @@
     margin-top: 0.5rem;
     font-family: var(--font-display);
     font-size: 1.875rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-stat .bo-caption {
@@ -1285,22 +1314,23 @@
 
 .bo-field--sm {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-field--strong {
     gap: 0.5rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-input {
     width: 100%;
     min-height: 2.75rem;
     padding: 0 0.75rem;
-    border: 1px solid var(--line);
-    background: #fff;
-    font-weight: 600;
+    border: 1px solid var(--input-border);
+    background: var(--surface);
+    font-weight: 500;
     color: var(--ink);
+    border-radius: var(--radius-control);
 }
 
 .bo-input:disabled {
@@ -1329,7 +1359,7 @@
     border: 0;
     border-radius: 999px;
     background: var(--blush);
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
     cursor: pointer;
     transition: background-color 0.15s, color 0.15s;
@@ -1337,7 +1367,7 @@
 
 .bo-input--file::file-selector-button:hover {
     background: var(--rose);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-textarea {
@@ -1361,7 +1391,7 @@
     align-items: center;
     gap: 0.75rem;
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--muted);
 }
 
@@ -1376,7 +1406,7 @@
     justify-content: space-between;
     padding: 0.75rem;
     border: 1px solid var(--line);
-    background: rgb(245 222 214 / 0.6);
+    background: color-mix(in srgb, var(--blush) 60%, transparent);
     color: var(--ink);
 }
 
@@ -1384,13 +1414,13 @@
     display: inline-flex;
     min-height: 2.5rem;
     padding: 0 0.75rem;
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-check--rose {
     align-items: flex-start;
     padding: 1rem;
-    border: 1px solid rgb(196 22 73 / 0.25);
+    border: 1px solid color-mix(in srgb, var(--rose) 25%, transparent);
     background: var(--ivory);
     font-weight: 700;
     line-height: 1.625;
@@ -1411,18 +1441,21 @@
 }
 
 .bo-total.is-valid {
-    border-color: rgb(47 89 78 / 0.3);
-    background: rgb(47 89 78 / 0.1);
+    border-color: color-mix(in srgb, var(--leaf) 30%, transparent);
+    background: color-mix(in srgb, var(--leaf) 10%, transparent);
 }
 
 .bo-total.is-invalid {
-    border-color: rgb(196 22 73 / 0.3);
+    border-color: color-mix(in srgb, var(--rose) 30%, transparent);
     background: var(--blush);
 }
 
 .bo-table-wrap {
     overflow-x: auto;
     border: 1px solid var(--line);
+    border-radius: var(--radius-soft);
+    background: var(--surface);
+    min-width: 0;
 }
 
 .bo-table {
@@ -1434,7 +1467,7 @@
 }
 
 .bo-table thead {
-    background: rgb(245 222 214 / 0.6);
+    background: var(--ivory);
     font-size: 0.75rem;
     letter-spacing: 0.025em;
     text-transform: uppercase;
@@ -1442,7 +1475,7 @@
 }
 
 .bo-table th {
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-table th,
@@ -1459,7 +1492,88 @@
 }
 
 .bo-table td.bo-table-strong {
-    font-weight: 900;
+    font-weight: 800;
+}
+
+.bo-columns.bo-catalog-layout {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.bo-catalog-table {
+    min-width: 36rem;
+}
+
+.bo-catalog-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 1rem;
+    align-items: end;
+    padding: 0 1.25rem;
+}
+
+.bo-catalog-result {
+    padding: 0 1.25rem;
+}
+
+.bo-table-sort {
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+    cursor: pointer;
+}
+
+.bo-table th[aria-sort="ascending"] .bo-table-sort,
+.bo-table th[aria-sort="descending"] .bo-table-sort {
+    color: var(--ink);
+    font-weight: 800;
+}
+
+.bo-catalog-table td {
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.bo-catalog-table td[data-column="message"] {
+    min-width: 18rem;
+}
+
+.bo-table-message {
+    white-space: pre-wrap;
+}
+
+.bo-table-number {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.bo-catalog-actions {
+    width: 9rem;
+}
+
+.bo-row-editor > summary {
+    cursor: pointer;
+    width: max-content;
+}
+
+.bo-row-editor-body {
+    min-width: 24rem;
+    padding-top: 1rem;
+    display: grid;
+    gap: 1rem;
+}
+
+.bo-row-editor-body .bo-form {
+    margin: 0;
+}
+
+.bo-table-wrap:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 3px;
 }
 
 /* ---------- Fiche personnage ---------- */
@@ -1467,8 +1581,8 @@
 .bo-sheet {
     overflow: hidden;
     border: 1px solid var(--line);
-    background: #fff;
-    box-shadow: var(--shadow-sm);
+    background: var(--surface);
+    border-radius: var(--radius-panel);
 }
 
 .bo-sheet-hero {
@@ -1479,7 +1593,7 @@
     overflow: hidden;
     padding: 1.5rem;
     background: var(--ink);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-sheet-ring {
@@ -1495,7 +1609,7 @@
     width: 18rem;
     height: 18rem;
     border-width: 3rem;
-    border-color: rgb(196 22 73 / 0.2);
+    border-color: color-mix(in srgb, var(--rose) 20%, transparent);
 }
 
 .bo-sheet-ring--blush {
@@ -1504,7 +1618,7 @@
     width: 12rem;
     height: 12rem;
     border-width: 2rem;
-    border-color: rgb(245 222 214 / 0.6);
+    border-color: color-mix(in srgb, var(--blush) 60%, transparent);
 }
 
 .bo-sheet-identity {
@@ -1515,10 +1629,10 @@
 
 .bo-sheet-eyebrow {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: var(--pink);
+    color: var(--on-strong);
 }
 
 .bo-sheet-name-block {
@@ -1528,7 +1642,7 @@
 .bo-sheet-name {
     font-family: var(--font-display);
     font-size: 1.875rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.25;
     overflow-wrap: anywhere;
 }
@@ -1537,7 +1651,7 @@
     margin-top: 0.25rem;
     font-size: 0.875rem;
     font-weight: 700;
-    color: rgb(255 255 255 / 0.65);
+    color: color-mix(in srgb, var(--on-strong) 65%, transparent);
     word-break: break-all;
 }
 
@@ -1555,14 +1669,14 @@
     border: 0.6rem solid var(--gold);
     border-radius: 50%;
     background: var(--ivory);
-    box-shadow: 0 0 0 1px rgb(255 255 255 / 0.35), 0 18px 50px rgb(0 0 0 / 0.3);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--on-strong) 35%, transparent), 0 18px 50px rgb(0 0 0 / 0.3);
     color: var(--ink);
     text-align: center;
 }
 
 .bo-sheet-rank-label {
     font-size: 0.65rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--rose);
@@ -1573,7 +1687,7 @@
     margin-top: 0.5rem;
     font-family: var(--font-display);
     font-size: 1.125rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.25;
     overflow-wrap: anywhere;
 }
@@ -1584,10 +1698,10 @@
     border-radius: 999px;
     background: var(--leaf);
     font-size: 0.65rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.025em;
     text-transform: uppercase;
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-sheet-body {
@@ -1613,8 +1727,9 @@
     align-items: center;
     gap: 1rem;
     padding: 1rem;
-    border-left: 4px solid var(--gold);
     background: var(--ivory);
+    border-radius: var(--radius-soft);
+    border: 1px solid var(--line);
 }
 
 .bo-sheet-role-glyph {
@@ -1624,7 +1739,7 @@
 .bo-sheet-role-name {
     min-width: 0;
     font-size: 1.125rem;
-    font-weight: 900;
+    font-weight: 800;
     overflow-wrap: anywhere;
 }
 
@@ -1642,7 +1757,7 @@
     border-radius: 999px;
     background: var(--blush);
     font-size: 0.875rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-pill-glyph {
@@ -1653,7 +1768,7 @@
     margin-top: 0.25rem;
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-sheet-stats {
@@ -1663,6 +1778,7 @@
     overflow: hidden;
     border: 1px solid var(--line);
     background: var(--line);
+    border-radius: var(--radius-soft);
 }
 
 .bo-sheet-stat {
@@ -1670,12 +1786,12 @@
     min-width: 0;
     gap: 0.25rem;
     padding: 1rem;
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-sheet-stat dt {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.025em;
     text-transform: uppercase;
     color: var(--muted);
@@ -1686,7 +1802,7 @@
     margin: 0;
     font-family: var(--font-display);
     font-size: 1.875rem;
-    font-weight: 900;
+    font-weight: 800;
 }
 
 .bo-sheet-empty {
@@ -1695,8 +1811,8 @@
     overflow: hidden;
     padding: 1.5rem;
     border: 1px solid var(--line);
-    background: #fff;
-    box-shadow: var(--shadow-sm);
+    background: var(--surface);
+    border-radius: var(--radius-panel);
 }
 
 .bo-sheet-empty-body {
@@ -1708,7 +1824,7 @@
 .bo-sheet-empty-title {
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
     line-height: 1.25;
 }
 
@@ -1752,7 +1868,7 @@
     overflow-y: auto;
     padding: 0.75rem;
     border: 1px solid var(--line);
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-emoji-grid {
@@ -1770,11 +1886,12 @@
     background: var(--ivory);
     text-align: center;
     transition: border-color 0.15s, background-color 0.15s;
+    border-radius: var(--radius-control);
 }
 
 .bo-emoji-option:hover {
-    border-color: rgb(196 22 73 / 0.4);
-    background: rgb(245 222 214 / 0.5);
+    border-color: color-mix(in srgb, var(--rose) 40%, transparent);
+    background: color-mix(in srgb, var(--blush) 50%, transparent);
 }
 
 .bo-emoji-option[data-selected="true"] {
@@ -1792,7 +1909,7 @@
     margin-top: 0.25rem;
     overflow: hidden;
     font-size: 0.62rem;
-    font-weight: 900;
+    font-weight: 800;
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--muted);
@@ -1803,7 +1920,7 @@
     gap: 1rem;
     padding: 1rem;
     border: 1px solid var(--line);
-    background: rgb(245 222 214 / 0.5);
+    background: color-mix(in srgb, var(--blush) 50%, transparent);
 }
 
 .bo-emoji-preview strong {
@@ -1819,10 +1936,11 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    border-radius: var(--radius-control);
 }
 
 .bo-emoji-preview-tile--gold {
-    background: rgb(212 161 63 / 0.2);
+    background: color-mix(in srgb, var(--gold) 20%, transparent);
 }
 
 .bo-emoji-preview-tile--blush {
@@ -1843,7 +1961,7 @@
     justify-content: center;
     font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 900;
+    font-weight: 800;
     color: var(--rose);
 }
 
@@ -1888,18 +2006,18 @@
     overflow: hidden;
     border-radius: 2rem;
     background: var(--ivory);
-    box-shadow: 0 20px 25px -5px rgb(36 24 19 / 0.05), 0 0 0 1px rgb(36 24 19 / 0.08);
+    box-shadow: 0 20px 25px -5px color-mix(in srgb, var(--ink) 5%, transparent), 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 .bo-error-card-head {
     padding: 1.5rem;
     background: var(--ink);
-    color: #fff;
+    color: var(--on-strong);
 }
 
 .bo-error-card-eyebrow {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--blush);
@@ -1921,7 +2039,7 @@
 .bo-error-cell {
     padding: 1rem;
     border-radius: 1.25rem;
-    background: #fff;
+    background: var(--surface);
 }
 
 .bo-error-cell--blush {
@@ -1930,7 +2048,7 @@
 
 .bo-error-cell small {
     font-size: 0.75rem;
-    font-weight: 900;
+    font-weight: 800;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--muted);
@@ -2005,7 +2123,7 @@
 
 @media (min-width: 48rem) {
     .bo-page-title {
-        font-size: 3rem;
+        font-size: 2rem;
     }
 
     .bo-page-header--split {
@@ -2062,12 +2180,12 @@
     }
 
     .bo-config {
-        grid-template-columns: 16.5rem minmax(0, 1fr);
+        grid-template-columns: 14rem minmax(0, 1fr);
     }
 
     .bo-config-side {
         position: sticky;
-        top: 7rem;
+        top: 5.5rem;
         align-self: start;
     }
 
@@ -2097,7 +2215,7 @@
 
 @media (min-width: 80rem) {
     .bo-config {
-        gap: 3rem;
+        gap: 2rem;
     }
 
     .bo-columns--side {
@@ -2108,4 +2226,146 @@
     .bo-card-grid:not(.bo-card-grid--2) {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
+}
+
+.bo-config-main {
+    overflow-anchor: none;
+}
+
+.bo-rank-default {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0 1.25rem;
+    max-width: 32rem;
+}
+
+.bo-new-rows-heading td {
+    padding-top: 2rem;
+    border-top: 2px solid var(--ink);
+}
+
+.bo-new-rows-heading h3 { margin-bottom: 0.5rem; }
+[data-catalog-new-row] { background: var(--cream); }
+[data-catalog-new-row] td { vertical-align: top; }
+[data-catalog-new-row] .bo-input { min-width: 9rem; }
+[data-catalog-new-row] textarea { min-width: 20rem; }
+[data-row-field="pourcentage"] { min-width: 5rem !important; width: 5rem; }
+.bo-new-row-actions { min-width: 13rem; }
+.bo-new-row-actions > * { margin-bottom: 0.5rem; }
+.bo-new-emoji { min-width: 12rem; }
+.bo-new-emoji[open] { min-width: 22rem; }
+.bo-new-emoji .bo-emoji-picker { margin-top: 1rem; }
+.bo-batch-toolbar { display: grid; gap: 1rem; padding: 0 1.25rem 1.25rem; }
+.bo-batch-error { color: var(--rose); font-size: 0.875rem; max-width: 65ch; }
+[data-row-field][aria-invalid="true"] { border-color: var(--rose); }
+.bo-btn:disabled { opacity: 0.55; }
+
+/* Thèmes réservés aux documents du backoffice ; la vitrine garde ses jetons. */
+html[data-backoffice-theme="dark"] {
+    color-scheme: dark;
+    --contrast-bg: #0b0b0a;
+    --contrast-fg: #ece9e5;
+    --cream: #161513;
+    --ivory: #201f1c;
+    --surface: #24231f;
+    --ink: #ece9e5;
+    --muted: #b8b4ae;
+    --rose: #ff86ab;
+    --pink: #ef9bad;
+    --blush: #35272b;
+    --gold: #dfb65e;
+    --gold-ink: #f0c878;
+    --leaf: #94c7b5;
+    --on-strong: #161513;
+}
+
+@media (prefers-color-scheme: dark) {
+    html[data-backoffice-theme="system"] {
+        color-scheme: dark;
+        --contrast-bg: #0b0b0a;
+        --contrast-fg: #ece9e5;
+        --cream: #161513;
+        --ivory: #201f1c;
+        --surface: #24231f;
+        --ink: #ece9e5;
+        --muted: #b8b4ae;
+        --rose: #ff86ab;
+        --pink: #ef9bad;
+        --blush: #35272b;
+        --gold: #dfb65e;
+        --gold-ink: #f0c878;
+        --leaf: #94c7b5;
+        --on-strong: #161513;
+    }
+}
+
+.bo-theme-controls { display: flex; align-items: center; gap: 0.4rem; }
+.bo-theme-toggle { position: relative; width: 2.75rem; min-height: 2.75rem; padding: 0; flex-shrink: 0; }
+.bo-theme-icon { position: absolute; width: 1.2rem; height: 1.2rem; }
+.bo-theme-toggle:not([data-dark="true"]) .bo-theme-icon--moon,
+.bo-theme-toggle[data-dark="true"] .bo-theme-icon--sun { display: none; }
+.bo-header .bo-theme-system[aria-pressed="true"] { background: color-mix(in srgb, var(--contrast-fg) 15%, transparent); }
+html[data-backoffice-theme]::view-transition-old(root),
+html[data-backoffice-theme]::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+html[data-backoffice-theme]::view-transition-old(root) { z-index: 1; }
+html[data-backoffice-theme]::view-transition-new(root) { z-index: 2; }
+.bo input, .bo textarea { caret-color: var(--rose); }
+.bo input::placeholder, .bo textarea::placeholder { color: var(--muted); opacity: 1; }
+.bo input[type="checkbox"] { accent-color: var(--rose); }
+.bo ::selection { background: var(--blush); color: var(--ink); }
+.bo .bo-table-wrap, .bo .bo-emoji-scroll { scrollbar-color: color-mix(in srgb, var(--ink) 30%, var(--cream)) var(--cream); }
+.bo-table { font-variant-numeric: tabular-nums; }
+
+@media (max-width: 40rem) {
+    .bo-header-inner { flex-wrap: wrap; }
+    .bo-header-actions { width: 100%; justify-content: flex-start; }
+    .bo-header-actions > [data-testid="backoffice-public-home-action"] { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .bo a[href], .bo button { transition: none; }
+}
+
+/* Grammaire visuelle commune au backoffice Kiss-Shot. */
+.bo-header .bo-btn {
+    border-color: color-mix(in srgb, var(--contrast-fg) 25%, transparent);
+    background: transparent;
+    color: var(--contrast-fg);
+    box-shadow: none;
+}
+.bo-header .bo-btn:hover {
+    background: color-mix(in srgb, var(--contrast-fg) 10%, transparent);
+    color: var(--contrast-fg);
+    filter: none;
+}
+.bo-sidenav-link:hover { background: var(--blush); color: var(--ink); }
+.bo-sidenav-link.is-active .bo-sidenav-icon {
+    border-color: transparent;
+    background: transparent;
+    color: inherit;
+}
+.bo-panel > .bo-table-wrap { margin-inline: 1.25rem; }
+.bo-issues li::before {
+    content: "";
+    position: absolute;
+    top: 0.55em;
+    left: 0;
+    width: 0.3rem;
+    height: 0.3rem;
+    border-radius: 50%;
+    background: var(--issue-color);
+}
+
+@media (max-width: 63.99rem) {
+    .bo-config-side { gap: 0.75rem; min-width: 0; }
+    .bo-sidenav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        scrollbar-color: var(--muted) var(--cream);
+    }
+    .bo-sidenav-group { display: contents; }
+    .bo-sidenav-title { display: none; }
+    .bo-sidenav-link { display: flex; flex-shrink: 0; gap: 0.5rem; white-space: nowrap; }
 }

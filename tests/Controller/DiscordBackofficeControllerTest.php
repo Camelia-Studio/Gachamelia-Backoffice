@@ -360,13 +360,13 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-roles"][aria-current="page"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] form[data-emoji-picker]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="emoji_source"][type="hidden"][data-emoji-field="source"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="emoji_value"][type="hidden"][data-emoji-field="value"]');
-        self::assertSelectorNotExists('[data-testid="catalog-create-panel"] input[name="emoji_value"]:not([type="hidden"])');
+        self::assertSelectorExists('[data-catalog-new-row][data-emoji-picker]');
+        self::assertSelectorExists('[data-catalog-new-row] input[data-row-field="emoji_source"][type="hidden"][data-emoji-field="source"]');
+        self::assertSelectorExists('[data-catalog-new-row] input[data-row-field="emoji"][type="hidden"][data-emoji-field="value"]');
+        self::assertSelectorNotExists('[data-catalog-new-row] input[data-row-field="emoji"]:not([type="hidden"])');
         self::assertSelectorExists('[data-testid="emoji-picker-option-server-246801357924680135"]');
         self::assertSelectorExists('[data-testid="emoji-picker-option-bot-135792468013579246"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] [data-testid="emoji-preview"] img[data-emoji-image]');
+        self::assertSelectorExists('[data-catalog-new-row] [data-testid="emoji-preview"] img[data-emoji-image]');
         self::assertSelectorExists('[data-testid="catalog-list-panel"]');
         self::assertSelectorExists('[data-testid="role-card"] img[alt="Emoji du rôle Guerrier"][src="https://cdn.discordapp.com/emojis/123456789012345678.webp?size=64&quality=lossless"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Guerrier');
@@ -387,9 +387,9 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-elements"][aria-current="page"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] form[data-emoji-picker]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="emoji_value"][type="hidden"][data-emoji-field="value"]');
-        self::assertSelectorNotExists('[data-testid="catalog-create-panel"] input[name="emoji_value"]:not([type="hidden"])');
+        self::assertSelectorExists('[data-catalog-new-row][data-emoji-picker]');
+        self::assertSelectorExists('[data-catalog-new-row] input[data-row-field="emoji"][type="hidden"][data-emoji-field="value"]');
+        self::assertSelectorNotExists('[data-catalog-new-row] input[data-row-field="emoji"]:not([type="hidden"])');
         self::assertSelectorExists('[data-testid="catalog-list-panel"] [data-testid="element-card"]');
         self::assertSelectorTextContains('[data-testid="element-card"]', '🔥');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Feu');
@@ -426,7 +426,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         $client->request('GET', '/app/serveurs/admin/configuration/ranks');
 
         self::assertResponseIsSuccessful();
-        self::assertSelectorExists('form[action="/app/serveurs/admin/catalogue/ranks"] select[name="discord_id"] option[value="777777777777777777"]');
+        self::assertSelectorExists('[data-catalog-new-row] select[data-row-field="discord_id"] option[value="777777777777777777"]');
         self::assertSelectorExists('form[action="/app/serveurs/admin/catalogue/ranks/'.$rankId.'"] select[name="discord_id"] option[value="777777777777777777"][selected]');
         self::assertSelectorTextContains('[data-testid="rank-card"]', '@Comète');
     }
@@ -531,7 +531,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('[data-testid="configuration-nav-role-stats"][aria-current="page"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Guerrier');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Force');
-        self::assertSelectorTextContains('[data-testid="configuration-panel"]', '70%');
+        self::assertSelectorTextContains('[data-testid="configuration-panel"]', '70 %');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Rôle externe');
         self::assertSelectorTextNotContains('[data-testid="configuration-panel"]', 'Stat externe');
 

@@ -1,6 +1,21 @@
+{% if app.request and app.request.headers.get('X-Gachamelia-Catalog') == '1' %}
+    <div data-catalog-response>
+        {% for message in app.flashes('error') %}<div data-testid="flash-error">{{ message }}</div>{% endfor %}
+        {% for message in app.flashes('success') %}<div data-testid="flash-success">{{ message }}</div>{% endfor %}
+        {{ block('body') }}
+    </div>
+{% else %}
 <!doctype html>
-<html lang="fr">
+<html lang="fr" data-backoffice-theme="system">
     <head>
+        <script>
+            (() => {
+                try {
+                    const theme = localStorage.getItem('gachamelia.theme');
+                    if (['light', 'dark', 'system'].includes(theme)) document.documentElement.dataset.backofficeTheme = theme;
+                } catch { /* Le thème système reste disponible sans stockage local. */ }
+            })();
+        </script>
         {% include 'partials/head_common.html.twig' %}
         <title>{% block title %}Gachamélia Backoffice{% endblock %}</title>
         <meta name="description" content="{% block meta_description %}Backoffice Gachamélia pour piloter le bot gacha communautaire Discord.{% endblock %}">
@@ -31,6 +46,18 @@
                     </a>
 
                     <div class="bo-header-actions">
+                        <div class="bo-theme-controls" role="group" aria-label="Thème du backoffice">
+                            <button type="button" class="bo-btn bo-theme-toggle" data-backoffice-theme-toggle aria-label="Activer le thème sombre">
+                                <svg class="bo-theme-icon bo-theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="4"></circle>
+                                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+                                </svg>
+                                <svg class="bo-theme-icon bo-theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"></path>
+                                </svg>
+                            </button>
+                            <button type="button" class="bo-btn bo-theme-system" data-backoffice-theme-system aria-label="Suivre le thème du système" aria-pressed="true">Système</button>
+                        </div>
                         <a href="{{ path('app_home') }}" class="bo-btn bo-btn--outline" data-testid="backoffice-public-home-action">
                             Accueil public
                         </a>
@@ -51,3 +78,5 @@
         </div>
     </body>
 </html>
+
+{% endif %}

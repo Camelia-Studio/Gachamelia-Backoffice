@@ -2,6 +2,8 @@
 
 {% import 'backoffice/_emoji_picker.html.twig' as ui %}
 
+{% import 'backoffice/_icons.html.twig' as icons %}
+
 {% block title %}Modèle {{ template.name }} - Gachamélia Backoffice{% endblock %}
 
 {% block navbar_actions %}
@@ -11,7 +13,7 @@
 
 {% block body %}
     {% set is_overview = active_section == 'overview' %}
-    {% set page_icon = is_overview ? 'MD' : active_configuration_section.icon %}
+    {% set page_icon = is_overview ? 'catalogue' : active_configuration_section.icon %}
     {% set page_title = is_overview ? 'Configuration du modèle' : active_configuration_section.label %}
     {% set page_description = is_overview ? 'Prépare le catalogue global qui pourra être importé par les serveurs.' : active_configuration_section.description %}
 
@@ -32,7 +34,7 @@
                             data-testid="template-configuration-nav-overview"
                             {% if is_overview %}aria-current="page"{% endif %}
                         >
-                            <span class="bo-sidenav-icon">MD</span>
+                            <span class="bo-sidenav-icon">{{ icons.icon('catalogue') }}</span>
                             <span>Configuration</span>
                         </a>
                     </div>
@@ -47,7 +49,7 @@
                                 data-testid="template-configuration-nav-{{ section.id }}"
                                 {% if is_active %}aria-current="page"{% endif %}
                             >
-                                <span class="bo-sidenav-icon">{{ section.icon }}</span>
+                                <span class="bo-sidenav-icon">{{ icons.icon(section.icon) }}</span>
                                 <span>{{ section.label }}</span>
                                 <span class="bo-sidenav-count">{{ section.count }}</span>
                             </a>
@@ -58,9 +60,8 @@
 
             <div class="bo-config-main">
                 <header class="bo-config-header">
-                    <span class="bo-config-icon">{{ page_icon }}</span>
+                    <span class="bo-config-icon">{{ icons.icon(page_icon) }}</span>
                     <div class="bo-config-heading">
-                        <p class="bo-eyebrow">{{ template.name }} · Modèle global</p>
                         <h1 class="bo-page-title">{{ page_title }}</h1>
                         <p class="bo-page-lead bo-page-lead--lg">{{ page_description }}</p>
                     </div>
@@ -81,7 +82,7 @@
                                 {% set tone = loop.index == 2 ? ' bo-template-mark--gold' : (loop.index == 3 ? ' bo-template-mark--leaf' : '') %}
                                 <article class="bo-template-card bo-template-card--large" data-testid="template-configuration-overview-card-{{ section.id }}">
                                     <div class="bo-panel-head bo-panel-head--bare">
-                                        <span class="bo-template-mark{{ tone }}">{{ section.icon }}</span>
+                                        <span class="bo-template-mark{{ tone }}">{{ icons.icon(section.icon) }}</span>
                                         <span class="bo-badge bo-badge--gold bo-badge--lg">{{ section.count }} entrées</span>
                                     </div>
                                     <div class="bo-stack bo-stack--tight">
@@ -110,151 +111,14 @@
                 {% else %}
                     <div data-testid="template-configuration-panel">
                         {% if active_section == 'ranks' %}
-                            <div class="bo-columns bo-columns--side" data-testid="template-catalog-layout">
-                                <section class="bo-panel" data-testid="catalog-create-panel">
-                                    <div class="bo-panel-head">
-                                        <div>
-                                            <h2 class="bo-section-title">Ajouter un rang</h2>
-                                            <p class="bo-panel-lead">La clé de rôle servira de repère au mapping Discord pendant l’import.</p>
-                                        </div>
-                                    </div>
-                                    <form method="post" action="{{ path('app_catalog_template_rank_create', { templateId: template.id }) }}" class="bo-panel-body bo-form">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="bo-field">
-                                            Clé de rôle
-                                            <input name="role_key" required placeholder="Comète" class="bo-input">
-                                        </label>
-                                        <label class="bo-field">
-                                            Nom
-                                            <input name="name" required class="bo-input">
-                                        </label>
-                                        <div class="bo-form-row bo-form-row--pct">
-                                            <label class="bo-field">
-                                                Titre du message de départ
-                                                <input name="bye_title" class="bo-input">
-                                            </label>
-                                            <label class="bo-field">
-                                                %
-                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="bo-input">
-                                            </label>
-                                        </div>
-                                        <label class="bo-check bo-check--box">
-                                            Rang staff prioritaire
-                                            <input name="is_staff" type="checkbox" value="1">
-                                        </label>
-                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Ajouter le rang</button>
-                                    </form>
-                                </section>
+                            <div class="bo-columns bo-columns--side bo-catalog-layout" data-testid="template-catalog-layout">
 
-                                <section class="bo-panel" data-testid="catalog-list-panel">
-                                    <div class="bo-panel-head">
-                                        <div>
-                                            <h2 class="bo-section-title">Rangs du modèle</h2>
-                                            <p class="bo-panel-lead">Chaque rang demandera une correspondance Discord au moment de l’import.</p>
-                                        </div>
-                                        <span class="bo-badge bo-badge--gold">{{ catalog.ranks|length }} entrées</span>
-                                    </div>
-                                    <div class="bo-panel-body bo-stack">
-                                        {% for rank in catalog.ranks %}
-                                            <article class="bo-card" data-testid="template-rank-card">
-                                                <form method="post" action="{{ path('app_catalog_template_rank_update', { templateId: template.id, rankId: rank.id }) }}" class="bo-form bo-form--tight">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <div class="bo-form-row bo-form-row--rank">
-                                                        <label class="bo-field bo-field--sm">
-                                                            Clé
-                                                            <input name="role_key" value="{{ rank.role_key }}" required class="bo-input">
-                                                        </label>
-                                                        <label class="bo-field bo-field--sm">
-                                                            Nom
-                                                            <input name="name" value="{{ rank.name }}" required class="bo-input">
-                                                        </label>
-                                                        <label class="bo-field bo-field--sm">
-                                                            %
-                                                            <input name="percentage" type="number" min="0" max="100" value="{{ rank.percentage }}" required class="bo-input">
-                                                        </label>
-                                                    </div>
-                                                    <label class="bo-field bo-field--sm">
-                                                        Titre du message de départ
-                                                        <input name="bye_title" value="{{ rank.bye_title }}" class="bo-input">
-                                                    </label>
-                                                    <label class="bo-check">
-                                                        <input name="is_staff" type="checkbox" value="1" {% if rank.is_staff %}checked{% endif %}>
-                                                        Rang staff prioritaire
-                                                    </label>
-                                                    <button type="submit" class="bo-btn bo-btn--ink bo-btn--start">Enregistrer</button>
-                                                </form>
-                                                <form method="post" action="{{ path('app_catalog_template_rank_delete', { templateId: template.id, rankId: rank.id }) }}">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <button type="submit" class="bo-link-danger">Supprimer</button>
-                                                </form>
-                                            </article>
-                                        {% else %}
-                                            <p class="bo-empty bo-empty--white">Aucun rang dans ce modèle.</p>
-                                        {% endfor %}
-                                    </div>
-                                </section>
+                                {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'template', target_id: template.id } %}
                             </div>
                         {% elseif active_section == 'role-stats' %}
-                            <div class="bo-columns bo-columns--side" data-testid="template-catalog-layout">
-                                <section class="bo-panel" data-testid="catalog-create-panel">
-                                    <div class="bo-panel-head">
-                                        <h2 class="bo-section-title">Associer une stat</h2>
-                                    </div>
-                                    <form method="post" action="{{ path('app_catalog_template_role_stat_upsert', { templateId: template.id }) }}" class="bo-panel-body bo-form">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="bo-field">
-                                            Rôle
-                                            <select name="role_id" required class="bo-input">
-                                                <option value="">Choisis un rôle</option>
-                                                {% for role in catalog.roles %}
-                                                    <option value="{{ role.id }}">{{ role.name }}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </label>
-                                        <label class="bo-field">
-                                            Stat
-                                            <select name="stat_id" required class="bo-input">
-                                                <option value="">Choisis une stat</option>
-                                                {% for stat in catalog.stats %}
-                                                    <option value="{{ stat.id }}">{{ stat.name }}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </label>
-                                        <label class="bo-field">
-                                            %
-                                            <input name="percentage" type="number" min="0" max="100" value="0" required class="bo-input">
-                                        </label>
-                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Enregistrer l’association</button>
-                                    </form>
-                                </section>
+                            <div class="bo-columns bo-columns--side bo-catalog-layout" data-testid="template-catalog-layout">
 
-                                <section class="bo-panel" data-testid="catalog-list-panel">
-                                    <div class="bo-panel-head">
-                                        <h2 class="bo-section-title">Probabilités du modèle</h2>
-                                        <span class="bo-badge bo-badge--gold">{{ catalog.role_stats|length }} entrées</span>
-                                    </div>
-                                    <div class="bo-panel-body bo-stack">
-                                        {% for role_stat in catalog.role_stats %}
-                                            <article class="bo-card" data-testid="template-role-stat-card">
-                                                <form method="post" action="{{ path('app_catalog_template_role_stat_upsert', { templateId: template.id }) }}" class="bo-form-row bo-form-row--role-stat">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <input type="hidden" name="role_id" value="{{ role_stat.role_id }}">
-                                                    <input type="hidden" name="stat_id" value="{{ role_stat.stat_id }}">
-                                                    <p class="bo-strong">{{ role_stat.role_name }}</p>
-                                                    <p class="bo-muted-strong">{{ role_stat.stat_name }}</p>
-                                                    <input name="percentage" type="number" min="0" max="100" value="{{ role_stat.percentage }}" required class="bo-input">
-                                                    <button type="submit" class="bo-btn bo-btn--ink">OK</button>
-                                                </form>
-                                                <form method="post" action="{{ path('app_catalog_template_role_stat_delete', { templateId: template.id, roleId: role_stat.role_id, statId: role_stat.stat_id }) }}">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <button type="submit" class="bo-link-danger">Supprimer</button>
-                                                </form>
-                                            </article>
-                                        {% else %}
-                                            <p class="bo-empty bo-empty--white">Aucune probabilité de stat.</p>
-                                        {% endfor %}
-                                    </div>
-                                </section>
+                                {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'template', target_id: template.id } %}
                             </div>
                         {% elseif active_section in ['welcome-messages', 'bye-messages'] %}
                             {% set is_welcome = active_section == 'welcome-messages' %}
@@ -262,54 +126,9 @@
                             {% set create_route = is_welcome ? 'app_catalog_template_welcome_message_create' : 'app_catalog_template_bye_message_create' %}
                             {% set update_route = is_welcome ? 'app_catalog_template_welcome_message_update' : 'app_catalog_template_bye_message_update' %}
                             {% set delete_route = is_welcome ? 'app_catalog_template_welcome_message_delete' : 'app_catalog_template_bye_message_delete' %}
-                            <div class="bo-columns bo-columns--side" data-testid="template-catalog-layout">
-                                <section class="bo-panel" data-testid="catalog-create-panel">
-                                    <div class="bo-panel-head">
-                                        <h2 class="bo-section-title">{{ is_welcome ? 'Ajouter un message d’arrivée' : 'Ajouter un message de départ' }}</h2>
-                                    </div>
-                                    <form method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="bo-panel-body bo-form">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="bo-field">
-                                            Rang
-                                            <select name="rank_id" required class="bo-input">
-                                                <option value="">Choisis un rang</option>
-                                                {% for rank in catalog.ranks %}
-                                                    <option value="{{ rank.id }}">{{ rank.name }}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </label>
-                                        <label class="bo-field">
-                                            Message
-                                            <textarea name="message" rows="4" required class="bo-input bo-textarea"></textarea>
-                                        </label>
-                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Ajouter le message</button>
-                                    </form>
-                                </section>
+                            <div class="bo-columns bo-columns--side bo-catalog-layout" data-testid="template-catalog-layout">
 
-                                <section class="bo-panel" data-testid="catalog-list-panel">
-                                    <div class="bo-panel-head">
-                                        <h2 class="bo-section-title">Messages du modèle</h2>
-                                        <span class="bo-badge bo-badge--gold">{{ messages|length }} entrées</span>
-                                    </div>
-                                    <div class="bo-panel-body bo-stack">
-                                        {% for message in messages %}
-                                            <article class="bo-card" data-testid="template-message-card">
-                                                <p class="bo-caption">{{ message.rank_name }}</p>
-                                                <form method="post" action="{{ path(update_route, { templateId: template.id, messageId: message.id }) }}" class="bo-form bo-form--tight">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <textarea name="message" rows="3" required class="bo-input bo-textarea bo-textarea--ivory">{{ message.message }}</textarea>
-                                                    <button type="submit" class="bo-btn bo-btn--ink bo-btn--start">Enregistrer</button>
-                                                </form>
-                                                <form method="post" action="{{ path(delete_route, { templateId: template.id, messageId: message.id }) }}">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <button type="submit" class="bo-link-danger">Supprimer</button>
-                                                </form>
-                                            </article>
-                                        {% else %}
-                                            <p class="bo-empty bo-empty--white">Aucun message.</p>
-                                        {% endfor %}
-                                    </div>
-                                </section>
+                                {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'template', target_id: template.id } %}
                             </div>
                         {% elseif active_section in ['roles', 'elements'] %}
                             {% set is_roles = active_section == 'roles' %}
@@ -319,122 +138,14 @@
                             {% set delete_route = is_roles ? 'app_catalog_template_role_delete' : 'app_catalog_template_element_delete' %}
                             {% set id_key = is_roles ? 'roleId' : 'elementId' %}
                             {% set default_emoji = is_roles ? '🎭' : '✨' %}
-                            <div class="bo-columns bo-columns--side" data-testid="template-catalog-layout">
-                                <section class="bo-panel" data-testid="catalog-create-panel">
-                                    <div class="bo-panel-head">
-                                        <h2 class="bo-section-title">{{ is_roles ? 'Ajouter un rôle' : 'Ajouter un élément' }}</h2>
-                                    </div>
-                                    <form method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="bo-panel-body bo-form" data-emoji-picker data-emoji-picker-default="{{ default_emoji }}">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="bo-field">
-                                            Nom
-                                            <input name="name" required class="bo-input">
-                                        </label>
-                                        {% if is_roles %}
-                                            <label class="bo-field">
-                                                %
-                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="bo-input">
-                                            </label>
-                                        {% endif %}
-                                        {{ ui.emoji_picker('unicode', default_emoji, emoji_picker, is_roles ? 'gold' : 'blush') }}
-                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">
-                                            {{ is_roles ? 'Ajouter le rôle' : 'Ajouter l’élément' }}
-                                        </button>
-                                    </form>
-                                </section>
+                            <div class="bo-columns bo-columns--side bo-catalog-layout" data-testid="template-catalog-layout">
 
-                                <section class="bo-panel" data-testid="catalog-list-panel">
-                                    <div class="bo-panel-head">
-                                        <h2 class="bo-section-title">{{ is_roles ? 'Rôles du modèle' : 'Éléments du modèle' }}</h2>
-                                        <span class="bo-badge bo-badge--gold">{{ entries|length }} entrées</span>
-                                    </div>
-                                    <div class="bo-panel-body bo-stack">
-                                        {% for entry in entries %}
-                                            {% set route_params = { templateId: template.id }|merge({ (id_key): entry.id }) %}
-                                            <article class="bo-card bo-card--roomy" data-testid="{{ is_roles ? 'template-role-card' : 'template-element-card' }}">
-                                                <div class="bo-entry-head">
-                                                    <span class="bo-entry-icon">
-                                                        {% if entry.emoji_cdn_url %}
-                                                            <img src="{{ entry.emoji_cdn_url }}" alt="Emoji {{ entry.name }}" class="bo-emoji bo-emoji--lg" loading="lazy">
-                                                        {% else %}
-                                                            {{ entry.emoji_markup }}
-                                                        {% endif %}
-                                                    </span>
-                                                    <div class="bo-entry-text">
-                                                        <h3 class="bo-strong">{{ entry.name }}</h3>
-                                                        <p class="bo-muted-strong bo-break">{{ entry.emoji_source_label }} · {{ entry.emoji_markup }}</p>
-                                                    </div>
-                                                    {% if is_roles %}
-                                                        <span class="bo-badge bo-badge--gold bo-push">{{ entry.percentage }}%</span>
-                                                    {% endif %}
-                                                </div>
-                                                <form method="post" action="{{ path(update_route, route_params) }}" class="bo-form bo-form--tight" data-emoji-picker data-emoji-picker-default="{{ entry.emoji_markup }}">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <div class="bo-form-row bo-form-row--pct">
-                                                        <label class="bo-field bo-field--sm">
-                                                            Nom
-                                                            <input name="name" value="{{ entry.name }}" required class="bo-input">
-                                                        </label>
-                                                        {% if is_roles %}
-                                                            <label class="bo-field bo-field--sm">
-                                                                %
-                                                                <input name="percentage" type="number" min="0" max="100" value="{{ entry.percentage }}" required class="bo-input">
-                                                            </label>
-                                                        {% endif %}
-                                                    </div>
-                                                    {{ ui.emoji_picker(entry.emoji_source, entry.emoji_markup, emoji_picker, is_roles ? 'gold' : 'blush') }}
-                                                    <button type="submit" class="bo-btn bo-btn--ink bo-btn--start">Enregistrer</button>
-                                                </form>
-                                                <form method="post" action="{{ path(delete_route, route_params) }}">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <button type="submit" class="bo-link-danger">Supprimer</button>
-                                                </form>
-                                            </article>
-                                        {% else %}
-                                            <p class="bo-empty bo-empty--white">Aucune entrée.</p>
-                                        {% endfor %}
-                                    </div>
-                                </section>
+                                {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'template', target_id: template.id } %}
                             </div>
                         {% elseif active_section == 'stats' %}
-                            <div class="bo-columns bo-columns--side" data-testid="template-catalog-layout">
-                                <section class="bo-panel" data-testid="catalog-create-panel">
-                                    <div class="bo-panel-head">
-                                        <h2 class="bo-section-title">Ajouter une stat</h2>
-                                    </div>
-                                    <form method="post" action="{{ path('app_catalog_template_stat_create', { templateId: template.id }) }}" class="bo-panel-body bo-form">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="bo-field">
-                                            Nom
-                                            <input name="name" required class="bo-input">
-                                        </label>
-                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Ajouter la stat</button>
-                                    </form>
-                                </section>
+                            <div class="bo-columns bo-columns--side bo-catalog-layout" data-testid="template-catalog-layout">
 
-                                <section class="bo-panel" data-testid="catalog-list-panel">
-                                    <div class="bo-panel-head">
-                                        <h2 class="bo-section-title">Stats du modèle</h2>
-                                        <span class="bo-badge bo-badge--gold">{{ catalog.stats|length }} entrées</span>
-                                    </div>
-                                    <div class="bo-panel-body bo-stack">
-                                        {% for stat in catalog.stats %}
-                                            <article class="bo-card" data-testid="template-stat-card">
-                                                <form method="post" action="{{ path('app_catalog_template_stat_update', { templateId: template.id, statId: stat.id }) }}" class="bo-form-row bo-form-row--name-action">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <input name="name" value="{{ stat.name }}" required class="bo-input">
-                                                    <button type="submit" class="bo-btn bo-btn--ink">Enregistrer</button>
-                                                </form>
-                                                <form method="post" action="{{ path('app_catalog_template_stat_delete', { templateId: template.id, statId: stat.id }) }}">
-                                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <button type="submit" class="bo-link-danger">Supprimer</button>
-                                                </form>
-                                            </article>
-                                        {% else %}
-                                            <p class="bo-empty bo-empty--white">Aucune stat.</p>
-                                        {% endfor %}
-                                    </div>
-                                </section>
+                                {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'template', target_id: template.id } %}
                             </div>
                         {% endif %}
                     </div>

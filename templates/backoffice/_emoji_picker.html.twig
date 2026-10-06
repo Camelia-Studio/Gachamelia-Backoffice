@@ -3,15 +3,15 @@
  À placer dans un <form data-emoji-picker data-emoji-picker-default="…"> : le comportement est géré par assets/emoji_picker.js.
  `tone` colore la vignette de prévisualisation : 'gold' ou 'blush'.
 #}
-{% macro emoji_picker(default_source, default_value, picker, tone) %}
+{% macro emoji_picker(default_source, default_value, picker, tone, prefix = '', form_id = null) %}
     {% set groups = [
         { id: 'standard', label: 'Standard', options: picker.standard },
         { id: 'bot', label: 'Bot', options: picker.bot },
         { id: 'server', label: 'Serveur', options: picker.server },
     ] %}
 
-    <input type="hidden" name="emoji_source" value="{{ default_source }}" data-emoji-field="source">
-    <input type="hidden" name="emoji_value" value="{{ default_value }}" data-emoji-field="value">
+    <input type="hidden" name="{{ prefix ? prefix ~ '[emoji_source]' : 'emoji_source' }}" value="{{ default_source }}" data-emoji-field="source" {% if form_id %}form="{{ form_id }}" data-row-field="emoji_source"{% endif %}>
+    <input type="hidden" name="{{ prefix ? prefix ~ '[emoji]' : 'emoji_value' }}" value="{{ default_value }}" data-emoji-field="value" {% if form_id %}form="{{ form_id }}" data-row-field="emoji"{% endif %}>
 
     <div class="bo-emoji-picker" data-testid="emoji-picker">
         <label class="bo-field">

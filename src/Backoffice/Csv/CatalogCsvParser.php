@@ -28,12 +28,23 @@ final class CatalogCsvParser
         if (false === $contents) {
             return $this->invalid('unreadable_file');
         }
+        if (str_starts_with($contents, "\xFF\xFE") || str_starts_with($contents, "\xFE\xFF")) {
+            $encoding = str_starts_with($contents, "\xFF\xFE") ? 'UTF-16LE' : 'UTF-16BE';
+            $contents = mb_convert_encoding(substr($contents, 2), 'UTF-8', $encoding);
+        }
+        $contents = preg_replace('/^\xEF\xBB\xBF/', '', $contents) ?? $contents;
+        $contents = str_replace(["\r\n", "\r"], "\n", $contents);
         if (1 !== preg_match('//u', $contents)) {
             return $this->invalid('invalid_utf8');
         }
 
-        $firstLineLength = strcspn($contents, "\r\n");
-        $firstLine = substr($contents, 0, $firstLineLength);
+        $firstLine = '';
+        foreach (explode("\n", $contents) as $candidate) {
+            if ('' !== trim($candidate)) {
+                $firstLine = $candidate;
+                break;
+            }
+        }
         $firstLine = preg_replace('/^\xEF\xBB\xBF/', '', $firstLine) ?? $firstLine;
         if (\strlen($firstLine) > self::MAX_HEADER_LENGTH) {
             return $this->invalid('header_too_long');
@@ -46,7 +57,9 @@ final class CatalogCsvParser
         }
 
         $delimiter = $this->detectDelimiter($firstLine);
-        $file = new \SplFileObject($path);
+        $file = new \SplTempFileObject();
+        $file->fwrite($contents);
+        $file->rewind();
         $file->setFlags(\SplFileObject::READ_CSV | \SplFileObject::DROP_NEW_LINE);
         $file->setCsvControl($delimiter, '"', '');
 
@@ -57,21 +70,26 @@ final class CatalogCsvParser
         $keys = [];
         $dataRowCount = 0;
 
+        $nextLine = 1;
+        $previousOffset = 0;
         foreach ($file as $record) {
+            $line = $nextLine;
+            $offset = $file->ftell();
+            $nextLine += substr_count(substr($contents, $previousOffset, $offset - $previousOffset), "\n");
+            $previousOffset = $offset;
             if (!\is_array($record) || $this->blankRecord($record)) {
                 continue;
             }
 
-            $line = $file->key() + 1;
             if (null === $headers) {
                 $headers = array_map(
-                    static fn (mixed $value): string => trim((string) $value),
+                    static fn (mixed $value): string => (new UnicodeString((string) $value))->trim()->lower()->toString(),
                     $record,
                 );
                 if (isset($headers[0])) {
                     $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', $headers[0]) ?? $headers[0];
                 }
-                [$headerIndexes, $headerErrors] = $this->validateHeaders($headers, $section);
+                [$headerIndexes, $headerErrors] = $this->validateHeaders($headers, $section, $line);
                 $errors = [...$errors, ...$headerErrors];
                 if ([] !== $headerErrors) {
                     break;
@@ -83,6 +101,11 @@ final class CatalogCsvParser
             ++$dataRowCount;
             if ($dataRowCount > self::MAX_DATA_ROWS) {
                 return $this->invalid('too_many_rows');
+            }
+
+            if (\count($record) !== \count($headers)) {
+                $errors[] = ['line' => $line, 'column' => null, 'message' => 'invalid_column_count', 'value' => (string) \count($record)];
+                continue;
             }
 
             [$values, $rowErrors] = $this->normalizeRecord($record, $line, $headerIndexes, $section);
@@ -109,6 +132,41 @@ final class CatalogCsvParser
 
         if (null === $headers) {
             $errors[] = ['line' => null, 'column' => null, 'message' => 'missing_header', 'value' => null];
+        }
+
+        return new CatalogCsvDocument($rows, $errors);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $records
+     */
+    public function parseRows(array $records, CatalogCsvSection $section): CatalogCsvDocument
+    {
+        $rows = [];
+        $errors = [];
+        $keys = [];
+        $indexes = array_flip($section->headers());
+        foreach ($records as $index => $record) {
+            $line = $index + 1;
+            foreach ($record as $column => $value) {
+                if (!\is_string($value)) {
+                    $errors[] = ['line' => $line, 'column' => $column, 'message' => 'invalid_value', 'value' => null];
+                }
+            }
+            $cells = array_map(static fn (string $column): string => \is_string($record[$column] ?? null) ? $record[$column] : '', $section->headers());
+            [$values, $rowErrors] = $this->normalizeRecord($cells, $line, $indexes, $section);
+            $errors = [...$errors, ...$rowErrors];
+            $key = $section->naturalKey($values);
+            if (isset($keys[$key])) {
+                $errors[] = ['line' => $line, 'column' => $section->naturalKeyColumns()[0], 'message' => 'duplicate_natural_key', 'value' => null];
+            }
+            $keys[$key] = true;
+            foreach (['role_key', 'emoji_source'] as $extra) {
+                if (\is_string($record[$extra] ?? null)) {
+                    $values[$extra] = trim($record[$extra]);
+                }
+            }
+            $rows[] = ['line' => $line, 'key' => $key, 'values' => $values];
         }
 
         return new CatalogCsvDocument($rows, $errors);
@@ -143,17 +201,17 @@ final class CatalogCsvParser
      *     list<array{line: ?int, column: ?string, message: string, value: ?string}>
      * }
      */
-    private function validateHeaders(array $headers, CatalogCsvSection $section): array
+    private function validateHeaders(array $headers, CatalogCsvSection $section, int $line): array
     {
         $indexes = [];
         $errors = [];
         foreach ($headers as $index => $header) {
             if (isset($indexes[$header])) {
-                $errors[] = ['line' => 1, 'column' => $header, 'message' => 'duplicate_header', 'value' => $header];
+                $errors[] = ['line' => $line, 'column' => $header, 'message' => 'duplicate_header', 'value' => $header];
                 continue;
             }
             if (!\in_array($header, $section->headers(), true)) {
-                $errors[] = ['line' => 1, 'column' => $header, 'message' => 'unknown_header', 'value' => $header];
+                $errors[] = ['line' => $line, 'column' => $header, 'message' => 'unknown_header', 'value' => $header];
                 continue;
             }
             $indexes[$header] = $index;
@@ -161,7 +219,7 @@ final class CatalogCsvParser
 
         foreach ($section->requiredHeaders() as $requiredHeader) {
             if (!isset($indexes[$requiredHeader])) {
-                $errors[] = ['line' => 1, 'column' => $requiredHeader, 'message' => 'missing_required_header', 'value' => null];
+                $errors[] = ['line' => $line, 'column' => $requiredHeader, 'message' => 'missing_required_header', 'value' => null];
             }
         }
 

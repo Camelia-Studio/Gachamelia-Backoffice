@@ -3,6 +3,13 @@
 Le frontend utilise AssetMapper et des modules JavaScript/CSS natifs. Aucun build
 Node n'est requis. Les deux points d'entrée sont `app` (vitrine) et `backoffice`.
 
+Le site local est accessible à `http://localhost:39000/gachamelia-backoffice/`.
+Les modifications d'interface sont vérifiées avec Playwright sur cette instance.
+Pour les essais authentifiés, demander au propriétaire de terminer la connexion
+Discord dans le navigateur ; ne pas remplacer ce parcours par une authentification
+de développement. Le serveur `Dev-Bots` et son catalogue vide sont prévus pour les
+essais de l'issue #8. Les tests automatisés restent séparés dans la base `_test`.
+
 ## Environnement Docker local
 
 Dans l'installation `web-infra`, le projet est monté dans le conteneur

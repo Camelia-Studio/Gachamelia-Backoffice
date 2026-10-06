@@ -1,8 +1,10 @@
 {% if active_section != 'overview' and active_section != 'settings' %}
     {% if target_type == 'server' %}
+        {% set export_url = path('app_server_catalog_csv_export', { guildId: target_id, section: active_section }) %}
         {% set import_url = path('app_server_catalog_csv_import', { guildId: target_id, section: active_section }) %}
         {% set example_url = path('app_server_catalog_csv_example', { guildId: target_id, section: active_section }) %}
     {% else %}
+        {% set export_url = path('app_catalog_template_csv_export', { templateId: target_id, section: active_section }) %}
         {% set import_url = path('app_catalog_template_csv_import', { templateId: target_id, section: active_section }) %}
         {% set example_url = path('app_catalog_template_csv_example', { templateId: target_id, section: active_section }) %}
     {% endif %}
@@ -12,6 +14,7 @@
             <p class="bo-card-title">Actions CSV</p>
             <p class="bo-panel-lead">Fusionne les lignes du fichier avec cette section du catalogue.</p>
         </div>
+        <a href="{{ export_url }}" class="bo-btn bo-btn--outline bo-btn--lg">Exporter le CSV actuel</a>
         <a href="{{ example_url }}" class="bo-btn bo-btn--outline bo-btn--lg">Télécharger un exemple</a>
         {% if not read_only %}
             <a href="{{ import_url }}" class="bo-btn bo-btn--ink bo-btn--lg">Importer un CSV</a>

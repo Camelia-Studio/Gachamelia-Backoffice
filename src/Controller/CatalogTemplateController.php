@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Backoffice\BackofficeAccess;
+use App\Backoffice\CatalogDisplayOrder;
 use App\Backoffice\BackofficeSession;
 use App\Backoffice\CatalogTemplateImporter;
 use App\Backoffice\CatalogValidator;
@@ -64,43 +65,43 @@ final class CatalogTemplateController extends AbstractController
             'label' => 'Rangs',
             'description' => 'Les rangs à importer, à relier aux rôles Discord du serveur.',
             'catalog_key' => 'ranks',
-            'icon' => 'R',
+            'icon' => 'ranks',
         ],
         'role-stats' => [
             'label' => 'Stats de rôle',
             'description' => 'Les probabilités de caractéristiques associées à chaque rôle.',
             'catalog_key' => 'role_stats',
-            'icon' => 'RS',
+            'icon' => 'role-stats',
         ],
         'welcome-messages' => [
             'label' => 'Arrivées',
             'description' => 'Les messages d’accueil disponibles selon le rang obtenu.',
             'catalog_key' => 'welcome_messages',
-            'icon' => 'IN',
+            'icon' => 'welcome-messages',
         ],
         'bye-messages' => [
             'label' => 'Départs',
             'description' => 'Les messages de départ disponibles selon le rang quitté.',
             'catalog_key' => 'bye_messages',
-            'icon' => 'BY',
+            'icon' => 'bye-messages',
         ],
         'roles' => [
             'label' => 'Rôles',
             'description' => 'Les rôles de personnage utilisés dans les tirages.',
             'catalog_key' => 'roles',
-            'icon' => 'RO',
+            'icon' => 'roles',
         ],
         'stats' => [
             'label' => 'Stats',
             'description' => 'Les caractéristiques disponibles sur les fiches personnage.',
             'catalog_key' => 'stats',
-            'icon' => 'S',
+            'icon' => 'stats',
         ],
         'elements' => [
             'label' => 'Éléments',
             'description' => 'Les affinités élémentaires que le bot peut attribuer.',
             'catalog_key' => 'elements',
-            'icon' => 'E',
+            'icon' => 'elements',
         ],
     ];
 
@@ -915,7 +916,7 @@ final class CatalogTemplateController extends AbstractController
      */
     private function templateCatalogPayload(EntityManagerInterface $entityManager, CatalogTemplate $template): array
     {
-        $ranks = $entityManager->getRepository(CatalogTemplateRank::class)->findBy(['template' => $template], ['percentage' => 'ASC', 'name' => 'ASC']);
+        $ranks = CatalogDisplayOrder::ranks($entityManager->getRepository(CatalogTemplateRank::class)->findBy(['template' => $template]));
 
         return [
             'ranks' => array_map(
