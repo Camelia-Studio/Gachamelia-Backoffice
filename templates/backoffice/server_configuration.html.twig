@@ -2,6 +2,8 @@
 
 {% import 'backoffice/_emoji_picker.html.twig' as ui %}
 
+{% import 'backoffice/_icons.html.twig' as icons %}
+
 {% block title %}Configuration - {{ guild.name }} - Gachamélia Backoffice{% endblock %}
 
 {% block navbar_actions %}
@@ -10,7 +12,7 @@
 
 {% block body %}
     {% set is_overview = active_section == 'overview' %}
-    {% set page_icon = is_overview ? 'CF' : active_configuration_section.icon %}
+    {% set page_icon = is_overview ? 'configuration' : active_configuration_section.icon %}
     {% set page_title = is_overview ? 'Configuration du serveur' : active_configuration_section.label %}
     {% set page_description = is_overview ? 'Choisis une partie du catalogue à compléter pour ce serveur.' : active_configuration_section.description %}
 
@@ -42,7 +44,7 @@
                     <div class="bo-sidenav-group">
                         <p class="bo-sidenav-title">Serveur</p>
                         <a href="{{ path('app_character_sheet', { guildId: guild.id }) }}" class="bo-sidenav-link">
-                            <span class="bo-sidenav-icon">FP</span>
+                            <span class="bo-sidenav-icon">{{ icons.icon('character') }}</span>
                             <span>Fiche personnage</span>
                         </a>
                         <a
@@ -51,7 +53,7 @@
                             data-testid="configuration-nav-overview"
                             {% if is_overview %}aria-current="page"{% endif %}
                         >
-                            <span class="bo-sidenav-icon">CF</span>
+                            <span class="bo-sidenav-icon">{{ icons.icon('configuration') }}</span>
                             <span>Configuration</span>
                         </a>
                     </div>
@@ -66,7 +68,7 @@
                                 data-testid="configuration-nav-{{ section.id }}"
                                 {% if is_active %}aria-current="page"{% endif %}
                             >
-                                <span class="bo-sidenav-icon">{{ section.icon }}</span>
+                                <span class="bo-sidenav-icon">{{ icons.icon(section.icon) }}</span>
                                 <span>{{ section.label }}</span>
                                 <span class="bo-sidenav-count">{{ section.count }}</span>
                             </a>
@@ -77,7 +79,7 @@
 
             <div class="bo-config-main">
                 <header class="bo-config-header">
-                    <span class="bo-config-icon">{{ page_icon }}</span>
+                    <span class="bo-config-icon">{{ icons.icon(page_icon) }}</span>
                     <div class="bo-config-heading">
                         <p class="bo-eyebrow">{{ guild.name }} · Catalogue</p>
                         <h1 class="bo-page-title">{{ page_title }}</h1>
@@ -108,7 +110,7 @@
                                 {% set tone = loop.index == 2 ? ' bo-template-mark--gold' : (loop.index == 3 ? ' bo-template-mark--leaf' : '') %}
                                 <article class="bo-template-card bo-template-card--large" data-testid="configuration-overview-card-{{ section.id }}">
                                     <div class="bo-panel-head bo-panel-head--bare">
-                                        <span class="bo-template-mark{{ tone }}">{{ section.icon }}</span>
+                                        <span class="bo-template-mark{{ tone }}">{{ icons.icon(section.icon) }}</span>
                                         <span class="bo-badge bo-badge--gold bo-badge--lg">{{ section.count }} entrées</span>
                                     </div>
                                     <div class="bo-stack bo-stack--tight">

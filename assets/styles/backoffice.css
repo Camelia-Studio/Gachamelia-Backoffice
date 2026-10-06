@@ -11,6 +11,19 @@
 
 /* ---------- Affordances interactives ---------- */
 
+.bo-icon {
+    display: block;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex-shrink: 0;
+}
+
+.bo-config-icon .bo-icon,
+.bo-template-mark .bo-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+}
+
 .bo a[href],
 .bo button {
     transition-property: filter, background-color, color, border-color;

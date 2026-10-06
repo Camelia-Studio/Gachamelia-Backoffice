@@ -2,6 +2,8 @@
 
 {% import 'backoffice/_emoji_picker.html.twig' as ui %}
 
+{% import 'backoffice/_icons.html.twig' as icons %}
+
 {% block title %}Modèle {{ template.name }} - Gachamélia Backoffice{% endblock %}
 
 {% block navbar_actions %}
@@ -11,7 +13,7 @@
 
 {% block body %}
     {% set is_overview = active_section == 'overview' %}
-    {% set page_icon = is_overview ? 'MD' : active_configuration_section.icon %}
+    {% set page_icon = is_overview ? 'catalogue' : active_configuration_section.icon %}
     {% set page_title = is_overview ? 'Configuration du modèle' : active_configuration_section.label %}
     {% set page_description = is_overview ? 'Prépare le catalogue global qui pourra être importé par les serveurs.' : active_configuration_section.description %}
 
@@ -32,7 +34,7 @@
                             data-testid="template-configuration-nav-overview"
                             {% if is_overview %}aria-current="page"{% endif %}
                         >
-                            <span class="bo-sidenav-icon">MD</span>
+                            <span class="bo-sidenav-icon">{{ icons.icon('catalogue') }}</span>
                             <span>Configuration</span>
                         </a>
                     </div>
@@ -47,7 +49,7 @@
                                 data-testid="template-configuration-nav-{{ section.id }}"
                                 {% if is_active %}aria-current="page"{% endif %}
                             >
-                                <span class="bo-sidenav-icon">{{ section.icon }}</span>
+                                <span class="bo-sidenav-icon">{{ icons.icon(section.icon) }}</span>
                                 <span>{{ section.label }}</span>
                                 <span class="bo-sidenav-count">{{ section.count }}</span>
                             </a>
@@ -58,7 +60,7 @@
 
             <div class="bo-config-main">
                 <header class="bo-config-header">
-                    <span class="bo-config-icon">{{ page_icon }}</span>
+                    <span class="bo-config-icon">{{ icons.icon(page_icon) }}</span>
                     <div class="bo-config-heading">
                         <p class="bo-eyebrow">{{ template.name }} · Modèle global</p>
                         <h1 class="bo-page-title">{{ page_title }}</h1>
@@ -81,7 +83,7 @@
                                 {% set tone = loop.index == 2 ? ' bo-template-mark--gold' : (loop.index == 3 ? ' bo-template-mark--leaf' : '') %}
                                 <article class="bo-template-card bo-template-card--large" data-testid="template-configuration-overview-card-{{ section.id }}">
                                     <div class="bo-panel-head bo-panel-head--bare">
-                                        <span class="bo-template-mark{{ tone }}">{{ section.icon }}</span>
+                                        <span class="bo-template-mark{{ tone }}">{{ icons.icon(section.icon) }}</span>
                                         <span class="bo-badge bo-badge--gold bo-badge--lg">{{ section.count }} entrées</span>
                                     </div>
                                     <div class="bo-stack bo-stack--tight">
