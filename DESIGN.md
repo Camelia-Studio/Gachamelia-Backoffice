@@ -1,6 +1,6 @@
 ---
 name: Gachamélia — backoffice
-description: Identité crème, encre et rose avec une variante sombre réservée au backoffice.
+description: Identité crème, encre et rose, en-tête sombre et surfaces arrondies dans le backoffice.
 colors:
   rose: "#c41649"
   dark-rose: "#ff86ab"
@@ -13,34 +13,42 @@ colors:
   leaf: "#2f594e"
   dark-leaf: "#94c7b5"
   cream: "#fbf3ea"
-  dark-cream: "#1d171b"
+  dark-cream: "#161513"
   ivory: "#fffaf4"
-  dark-ivory: "#272126"
+  dark-ivory: "#201f1c"
   surface: "#fff"
-  dark-surface: "#30292e"
+  dark-surface: "#24231f"
   ink: "#241813"
-  dark-ink: "#f9eee8"
+  dark-ink: "#ece9e5"
   muted: "#66544c"
-  dark-muted: "#c4b5af"
+  dark-muted: "#b8b4ae"
   blush: "#f5ded6"
-  dark-blush: "#422c34"
+  dark-blush: "#35272b"
   on-strong: "#fff"
-  dark-on-strong: "#1d171b"
+  dark-on-strong: "#161513"
+  contrast-bg: "#241813"
+  dark-contrast-bg: "#0b0b0a"
+  contrast-fg: "#fffaf4"
+  dark-contrast-fg: "#ece9e5"
 typography:
   headline:
     fontFamily: "Fraunces, Georgia, serif"
-    fontSize: "2.25rem"
-    fontWeight: 400
+    fontSize: "1.75rem"
+    fontWeight: 800
     lineHeight: 1.25
   headline-wide:
     fontFamily: "Fraunces, Georgia, serif"
-    fontSize: "3rem"
-    fontWeight: 400
+    fontSize: "2rem"
+    fontWeight: 800
     lineHeight: 1.25
   title:
+    fontFamily: "Fraunces, Georgia, serif"
+    fontSize: "1.25rem"
+    fontWeight: 800
+  card-heading:
     fontFamily: "DM Sans, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.125rem"
-    fontWeight: 900
+    fontSize: "1.25rem"
+    fontWeight: 800
   body:
     fontFamily: "DM Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.875rem"
@@ -49,12 +57,24 @@ typography:
     fontFamily: "DM Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 700
-  button:
+  lead:
     fontFamily: "DM Sans, ui-sans-serif, system-ui, sans-serif"
     fontSize: "0.875rem"
-    fontWeight: 900
+    fontWeight: 500
+    lineHeight: 1.625
+  lead-large:
+    fontFamily: "DM Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 500
+    lineHeight: 1.625
+  button:
+    fontFamily: "DM Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.8rem"
+    fontWeight: 800
 rounded:
-  flat: "0"
+  panel: "1rem"
+  soft: "0.75rem"
+  control: "0.6rem"
   pill: "999px"
   avatar: "50%"
 spacing:
@@ -65,7 +85,8 @@ spacing:
   card: "1.25rem"
   panel: "1.5rem"
   section: "2rem"
-  page: "2.5rem"
+  page-top: "1.75rem"
+  page-bottom: "3rem"
 components:
   button-ink:
     backgroundColor: "{colors.ink}"
@@ -102,11 +123,12 @@ components:
   input:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.flat}"
+    rounded: "{rounded.control}"
     padding: "0 0.75rem"
   navigation-active:
-    backgroundColor: "{colors.blush}"
-    textColor: "{colors.ink}"
+    backgroundColor: "{colors.contrast-bg}"
+    textColor: "{colors.contrast-fg}"
+    rounded: "{rounded.control}"
     padding: "0 0.75rem"
   badge-rose:
     backgroundColor: "{colors.blush}"
@@ -115,8 +137,33 @@ components:
     padding: "0 0.75rem"
   card:
     backgroundColor: "{colors.surface}"
-    rounded: "{rounded.flat}"
+    rounded: "{rounded.panel}"
     padding: "1.25rem"
+  panel:
+    backgroundColor: "{colors.surface}"
+    rounded: "{rounded.panel}"
+  template-card:
+    backgroundColor: "{colors.ivory}"
+    rounded: "{rounded.panel}"
+    padding: "1.5rem"
+  template-mark:
+    backgroundColor: "{colors.blush}"
+    textColor: "{colors.rose}"
+    rounded: "{rounded.soft}"
+    width: "3.5rem"
+    height: "3.5rem"
+  header-action:
+    backgroundColor: "transparent"
+    textColor: "{colors.contrast-fg}"
+    typography: "{typography.button}"
+    rounded: "{rounded.pill}"
+    padding: "0 1rem"
+  theme-toggle:
+    backgroundColor: "transparent"
+    textColor: "{colors.contrast-fg}"
+    rounded: "{rounded.pill}"
+    padding: "0"
+    width: "2.75rem"
 ---
 
 # Design System: Gachamélia — backoffice
@@ -125,40 +172,43 @@ components:
 
 **Creative North Star: "Identité crème, encre et rose"**
 
-Ce document décrit l’identité déjà présente et la variante sombre validée pour
-le backoffice. Il ne propose pas de nouvelle identité. Le socle partagé reste
-celui de `assets/styles/base.css` ; les composants et les substitutions du thème
-sont définis dans `assets/styles/backoffice.css`.
+Ce document décrit l’identité conservée et son rapprochement visuel validé avec
+le backoffice Kiss-Shot : en-tête sombre, titres compacts et surfaces adoucies.
+Le socle partagé reste celui de `assets/styles/base.css` ; les composants et les
+substitutions du thème sont définis dans `assets/styles/backoffice.css`.
 
 Les titres Fraunces conservent leur caractère éditorial, tandis que DM Sans porte
-les contrôles et les données. L’interface privilégie les panneaux rectangulaires,
+les contrôles et les données. L’interface privilégie les panneaux arrondis,
 les boutons en pilule et les repères rose. La variante sombre conserve ces formes,
 ces espacements et les rôles de couleur ; elle modifie leurs valeurs uniquement.
 
 **Key Characteristics:**
 - Crème et ivoire en mode clair ; surfaces chaudes sombres dans le backoffice.
 - Titres Fraunces, textes et contrôles DM Sans.
-- Panneaux rectangulaires, boutons et badges en pilule.
+- En-tête sombre dans les deux thèmes, navigation active contrastée.
+- Panneaux arrondis, petites surfaces douces, boutons et badges en pilule.
 - Catégories identifiées par un SVG accompagné d’un libellé.
 - Couleurs sémantiques partagées par les composants des deux thèmes.
 
-Périmètre : backoffice uniquement. `PRODUCT.md` reste la vérité produit. Les
-captures de revue desktop/mobile clair/sombre ont été inspectées ; elles montrent
-les mêmes composants et la même composition dans les deux palettes. Le mode
-Système suit la préférence CSS : son affichage clair a été vérifié pendant la
-revue ; le basculement de la préférence OS n’a pas été forcé. La configuration
-`buildPath: comp` ne désigne aucune maquette approuvée ni contrat de fidélité.
+Périmètre : backoffice uniquement. `PRODUCT.md` reste la vérité produit. La
+source finale et les captures desktop de la vue d’ensemble claire et des stats
+de rôle sombres ont été inspectées pour cette synchronisation. Les captures
+locales authentifiées de Kiss-Shot servent de référence de caractère visuel ;
+aucune maquette approuvée ni obligation de reproduction pixel à pixel n’existe.
+Le packet de revue consigne les essais desktop/mobile, clavier et rechargement.
+La préférence OS sombre et la réduction de mouvement restent vérifiées en
+source uniquement ; cette synchronisation ne répète pas ces essais en navigateur.
 
 ## Colors
 
 Les valeurs du frontmatter correspondent exactement aux déclarations CSS. Les
 clés sans préfixe décrivent le mode clair ; les clés `dark-` décrivent les mêmes
-rôles en mode sombre. Il existe douze rôles de couleur, chacun avec deux valeurs.
+rôles en mode sombre. Il existe quatorze rôles de couleur, chacun avec deux valeurs.
 Les composants référencent le rôle CSS actif, jamais une palette copiée localement.
 
 ### Primary
 
-- **Rose** (`rose`, `dark-rose`) : actions, liens, marqueur actif, erreurs,
+- **Rose** (`rose`, `dark-rose`) : actions, liens, icônes, badge Backoffice, erreurs,
   curseur de saisie et cases à cocher.
 - **Rose doux** (`pink`, `dark-pink`) : accents secondaires de la même famille.
 
@@ -172,15 +222,21 @@ Les composants référencent le rôle CSS actif, jamais une palette copiée loca
 ### Neutral
 
 - **Crème** (`cream`, `dark-cream`) : fond de page et nouvelles lignes.
-- **Ivoire** (`ivory`, `dark-ivory`) : panneaux, identité de serveur et navigation.
-- **Surface** (`surface`, `dark-surface`) : champs, cartes et boutons contour.
+- **Ivoire** (`ivory`, `dark-ivory`) : cartes de catégories, identité de serveur,
+  barres d’actions et en-têtes de tableau.
+- **Surface** (`surface`, `dark-surface`) : panneaux, champs, cartes et boutons contour.
 - **Encre** (`ink`, `dark-ink`) : texte principal et actions fortes.
 - **Texte discret** (`muted`, `dark-muted`) : indications et libellés secondaires.
 - **Blush** (`blush`, `dark-blush`) : sélection, erreurs et accents doux.
 - **Texte sur fond fort** (`on-strong`, `dark-on-strong`) : texte des boutons
-  encre/rose/feuille et des surfaces inversées. En sombre, il devient foncé.
+  encre/rose/feuille, du badge Backoffice et des surfaces inversées. En sombre,
+  il devient foncé.
+- **Fond contrasté** (`contrast-bg`, `dark-contrast-bg`) et **texte contrasté**
+  (`contrast-fg`, `dark-contrast-fg`) : en-tête et catégorie active ; ce couple
+  conserve un fond sombre dans les deux thèmes.
 
 Les bordures utilisent `color-mix(in srgb, var(--ink) 10%, transparent)`.
+Les champs renforcent leur bordure à (25%) de la même encre.
 Les fonds de succès, de badges et d’alerte sont des mélanges translucides des
 rôles existants ; ils suivent automatiquement le thème. Aucun nouveau ramp de
 couleur n’est défini en CSS. Les huit étapes OKLCH du sidecar sont des aperçus
@@ -188,10 +244,12 @@ synthétiques, pas des valeurs à reprendre dans l’implémentation.
 
 **The Scoped Theme Rule.** Le choix Clair / Sombre / Système et l’attribut de
 thème appartiennent au document du backoffice ; la vitrine conserve son identité
-claire et son point d’entrée séparé.
+claire et son point d’entrée séparé. Sombre explicite et Système avec préférence
+OS sombre utilisent exactement les mêmes substitutions de tokens.
 
-**The Semantic Pair Rule.** Toute surface forte associe son rôle de fond à
-`on-strong` ; les champs associent `surface` à `ink`. Ces couples suivent la
+**The Semantic Pair Rule.** Les actions fortes et le badge Backoffice associent
+leur fond à `on-strong` ; l’en-tête et la catégorie active associent `contrast-bg`
+à `contrast-fg` ; les champs associent `surface` à `ink`. Ces couples suivent la
 variante active.
 
 ## Typography
@@ -205,31 +263,38 @@ de ratio de progression déclaré.
 
 ### Hierarchy
 
-- **Headline** : titre de page ; rôle `headline`, puis `headline-wide` à partir
-  du breakpoint de page large.
-- **Title** : titre de section ; rôle `title`. Les titres de cartes utilisent
-  aussi une variante observée à (1.25rem).
-- **Body** : texte de carte ; rôle `body`. Les introductions utilisent
-  (0.875rem), une graisse déclarée de (700) et une hauteur de ligne de (1.625).
-- **Label** : libellé de champ, rôle `label` ; commandes, rôle `button`.
+- **Headline** : titre de page Fraunces fort ; rôle `headline`, puis
+  `headline-wide` à partir de (48rem), avec la même hauteur de ligne.
+- **Title** : titre de section Fraunces, rôle `title`. La variante de titre de
+  carte explicitement dimensionnée emploie DM Sans, rôle `card-heading` ; les
+  titres de carte simples gardent la taille héritée et la graisse (800).
+- **Body** : texte de carte, rôle `body`. Les introductions de page et de panneau
+  utilisent `lead`, avec `lead-large` pour la variante de page plus ample ; les
+  introductions de section conservent une variante sans serif à (0.875rem/600).
+- **Label** : libellé visible de champ, rôle `label` ; sa variante petite emploie
+  (0.75rem/800). Les commandes utilisent `button`.
 
-Les graisses consignées sont celles demandées par le CSS. Le chargement actuel
-des fontes fournit Fraunces 600/800 et DM Sans 400–800 : les demandes Fraunces
-400/900 et DM Sans 900 peuvent être substituées ou synthétisées. Cette divergence
-préexistante est signalée, pas consacrée comme consigne de chargement future.
-Les anciens surtitres en capitales espacées ne font pas partie de la rampe canonique.
+Le chargement des fontes fournit Fraunces 600/800 et DM Sans 400–800. Les
+commandes et titres forts demandent désormais (800), disponible dans ces fontes.
+Le titre de page d’erreur demande encore Fraunces (400), absent du chargement :
+ce cas préexistant reste signalé, sans être promu dans la rampe réutilisable.
+Les anciens surtitres et libellés en capitales espacées ne sont pas canonisés.
 
 ## Layout
 
-Le contenu et la navigation supérieure sont centrés dans un conteneur de
-(90rem) maximum. La page utilise (2.5rem) de padding vertical et (1rem) de
-padding horizontal, puis (1.5rem) à partir de (40rem) et (2rem) à partir de
-(64rem). Les sections sont généralement séparées par (2rem).
+Le contenu est centré dans un conteneur de (80rem) maximum ; la navigation
+supérieure conserve (90rem). La page utilise (1.75rem) en haut, (3rem) en bas
+et (1rem) de padding horizontal, puis (1.5rem) à partir de (40rem) et (2rem) à
+partir de (64rem). Les pages ont un espacement de (1.5rem), avec une variante
+large à (1.75rem) ; les piles internes réutilisent (0.5rem), (0.75rem) et (1rem).
 
-La configuration passe d’un empilement à une grille de (16.5rem) plus une
+La configuration passe d’un empilement à une grille de (14rem) plus une
 colonne flexible à partir de (64rem). La barre latérale devient alors sticky
-à (7rem). L’en-tête est sticky au sommet ; les actions se replient et occupent
-une ligne complète jusqu’à (40rem). Les autres breakpoints existants sont
+à (5.5rem). En dessous de (64rem), les catégories forment une navigation
+horizontale défilante ; leurs intitulés restent visibles et les titres de groupe
+sont masqués. L’en-tête est sticky au sommet, avec une hauteur minimale de
+(4rem) ; les actions occupent une ligne complète jusqu’à (40rem), où le lien
+Accueil public est masqué. Les autres breakpoints existants sont
 (48rem), pour les titres et formulaires, et (80rem), pour les grilles larges.
 
 Les tableaux de catalogue conservent leur structure sur mobile dans une région
@@ -242,29 +307,46 @@ Les nouvelles lignes restent dans le tableau ; le thème n’altère pas ce mod�
 ## Elevation & Depth
 
 La profondeur vient principalement de surfaces tonales et de bordures fines.
-L’ombre réutilisée est discrète et ambiante ; elle ne crée aucun décalage dur.
-L’en-tête utilise un fond ivoire à (92%) et un flou d’arrière-plan de (24px).
+Les panneaux et cartes de contenu standards n’ont aucune ombre ; l’en-tête
+emploie un fond contrasté opaque, sans flou. Les ombres ambiantes conservées
+appartiennent à des variantes précises, pas à tous les conteneurs.
 
 ### Shadow Vocabulary
 
-- **Ombre légère** (`0 1px 2px rgb(0 0 0 / 0.05)`) : panneaux, boutons contour,
-  identité de serveur et avatar.
+- **Ombre légère** (`0 1px 2px rgb(0 0 0 / 0.05)`) : boutons contour hors
+  en-tête, barres d’actions, cartes de catégories/modèles, statistiques d’import
+  et avatar de marque. L’identité de serveur et les panneaux n’en ont plus.
 - **Focus** (`0 0 0 2px color-mix(in srgb, var(--rose) 60%, transparent)`) :
   contrôles interactifs au clavier. Le tableau ajoute un contour encre de
   (3px), décalé de (3px).
 
 Les transitions de couleur/fond/bordure et le filtre de survol durent (0.15s).
-Les liens et boutons du backoffice sont assombris par `brightness(0.9)` au
-survol ; ces transitions sont supprimées avec `prefers-reduced-motion: reduce`.
-Le document du backoffice utilise `scroll-behavior: auto`.
+Les liens et boutons du backoffice sont généralement assombris par
+`brightness(0.9)` au survol ; les boutons d’en-tête remplacent ce filtre par une
+teinte contrastée à (10%). Ces transitions sont supprimées avec
+`prefers-reduced-motion: reduce`. La bascule de thème révèle le nouvel état dans
+un cercle centré sur le bouton pendant (450ms), avec
+`cubic-bezier(0.16, 1, 0.3, 1)` ; elle applique immédiatement le thème si le
+mouvement est réduit ou si View Transition est indisponible. Le document utilise
+`scroll-behavior: auto`.
+
+La médaille de rang de la fiche personnage et la carte d’erreur conservent leurs
+ombres propres. Ce sont des exceptions locales, pas des tokens d’élévation à
+reprendre pour de nouveaux panneaux.
 
 ## Shapes
 
-Les panneaux, cartes, tableaux et champs sont rectangulaires, sans arrondi
-déclaré. Les boutons et badges utilisent le rôle `pill` ; les avatars utilisent
-le rôle `avatar`. Les surfaces sont délimitées par une bordure de (1px).
-Les arrondis plus larges de la page d’erreur constituent une variante spécifique,
-pas une règle à appliquer aux tableaux.
+Les grands conteneurs utilisent `panel` : panneaux, cartes, serveurs, cartes de
+catégories/modèles et fiche personnage. Les petites surfaces utilisent `soft` :
+identité, messages, validation, tables enveloppées et marques de catégories.
+Les champs, liens de navigation et leurs icônes utilisent `control`.
+Les boutons et badges restent en `pill` ; les avatars restent en `avatar`.
+Les surfaces sont délimitées par une bordure de (1px).
+
+Les arrondis plus larges de la page d’erreur et le petit arrondi du code inline
+restent locaux. Certains anciens sous-conteneurs restent carrés, notamment les
+icônes d’entrée, lignes, statistiques d’import, sous-formulaires et zone de
+défilement d’emojis ; ce reliquat n’est pas une consigne pour les nouvelles surfaces.
 
 ## Components
 
@@ -275,6 +357,9 @@ standard est (2.5rem), avec les variantes (2.25rem), (2.75rem) et (3rem).
 L’action encre devient rose au survol ; rose et feuille deviennent encre.
 Le bouton contour conserve une surface neutre, puis une bordure et un texte rose.
 Le bouton de suppression conserve son libellé et son traitement rose.
+Dans l’en-tête, les boutons utilisent un fond transparent, le texte contrasté et
+une bordure à (25%) de ce texte ; leur survol garde la même couleur de texte,
+sans ombre.
 
 Les variantes douces existantes emploient blush/encre ou blush/rose, avec
 bordure mélangée depuis rose. La variante statique emploie line/muted.
@@ -290,29 +375,39 @@ Les badges ne deviennent pas des filtres interactifs.
 ### Cards / Containers
 
 Les cartes utilisent `surface`, une bordure sémantique et (1.25rem) de padding.
-Les panneaux utilisent `ivory`, la légère ombre et des zones internes de
-(1.5rem). Les panneaux de validation ajoutent une teinte feuille ou blush,
+Les panneaux utilisent aussi `surface`, sans ombre, et des zones internes de
+(1.25rem), avec variante entièrement rembourrée à (1.5rem). Les cartes de
+catégories et de modèles utilisent `ivory`, une ombre légère, (1.5rem) de padding
+et le rayon `panel` ; leur marque de (3.5rem) utilise `soft`. Les panneaux de
+validation ajoutent une teinte feuille ou blush,
 avec une explication écrite de l’état.
 
 ### Inputs / Fields
 
-Champs carrés, largeur disponible, hauteur minimale (2.75rem), padding
-horizontal (0.75rem), graisse de saisie (600). Les libellés restent visibles.
+Champs à coins doux (`control`), largeur disponible, hauteur minimale (2.75rem),
+padding horizontal (0.75rem), graisse de saisie (500). Les libellés restent visibles.
 Le curseur est rose ; les placeholders utilisent `muted` avec opacité (1).
 Les champs désactivés emploient `ivory` et `muted`. Les erreurs de nouvelles
 lignes utilisent une bordure rose et un message associé.
 
-Le sélecteur de thème emploie le même champ, avec hauteur minimale (2.5rem)
-et largeur minimale (7rem). La préférence `gachamelia.theme` est restaurée
-avant le chargement du CSS puis synchronisée entre les onglets ; en absence
-de stockage, le choix reste utilisable dans le document courant.
+### Theme Controls
+
+Un bouton soleil/lune de (2.75rem) de large et de hauteur minimale (2.75rem)
+alterne entre Clair et Sombre à partir du rendu courant ; son SVG de (1.2rem)
+et son libellé accessible suivent cet état. Le bouton Système reste voisin,
+avec `aria-pressed` et une teinte contrastée à (15%) quand il est sélectionné.
+Ces commandes reprennent le traitement des boutons d’en-tête. Système est le
+choix initial. La préférence `gachamelia.theme` est restaurée avant le CSS puis
+synchronisée entre les onglets ; sans stockage, le choix fonctionne dans le
+document courant. Les commandes sont désactivées pendant la révélation animée.
 
 ### Navigation
 
 Liens de catégorie en DM Sans, icône à gauche, libellé et compteur à droite.
 Les SVG utilisent un viewBox (24 × 24), un trait (1.75), des extrémités arrondies
 et `currentColor`. Ils sont décoratifs pour l’accessibilité car le libellé reste
-présent. L’état actif associe blush/encre à un marqueur rose de (0.25rem × 1.75rem).
+présent. L’état actif associe fond et texte contrastés, sans marqueur latéral ;
+son icône hérite du texte sur fond transparent. Le survol utilise blush/encre.
 
 **The Labeled Category Rule.** Une catégorie reste identifiée par un libellé
 visible accompagné d’un SVG. Les emojis choisis pour les personnages restent
@@ -332,6 +427,7 @@ La palette suit le thème sans changer ces signaux visuels.
 
 - **Do** réutiliser les rôles CSS sémantiques et leurs couples de texte/fond.
 - **Do** conserver Fraunces pour les titres et DM Sans pour les contrôles.
+- **Do** réutiliser les rayons panel, soft et control selon la taille du conteneur.
 - **Do** garder le libellé visible des catégories à côté de leur SVG.
 - **Do** conserver les états, messages et focus dans les deux palettes.
 
