@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Backoffice\BackofficeAccess;
+use App\Backoffice\CatalogDisplayOrder;
 use App\Backoffice\BackofficeSession;
 use App\Backoffice\CatalogValidator;
 use App\Backoffice\CharacterSheetProvider;
@@ -997,7 +998,7 @@ final class BackofficeController extends AbstractController
      */
     private function catalogPayload(EntityManagerInterface $entityManager, DiscordServer $server): array
     {
-        $ranks = $entityManager->getRepository(Rank::class)->findBy(['server' => $server], ['percentage' => 'ASC', 'name' => 'ASC']);
+        $ranks = CatalogDisplayOrder::ranks($entityManager->getRepository(Rank::class)->findBy(['server' => $server]));
 
         return [
             'settings' => $this->serverSettingsPayload($server),

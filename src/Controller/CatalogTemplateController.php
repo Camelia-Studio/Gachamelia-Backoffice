@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Backoffice\BackofficeAccess;
+use App\Backoffice\CatalogDisplayOrder;
 use App\Backoffice\BackofficeSession;
 use App\Backoffice\CatalogTemplateImporter;
 use App\Backoffice\CatalogValidator;
@@ -915,7 +916,7 @@ final class CatalogTemplateController extends AbstractController
      */
     private function templateCatalogPayload(EntityManagerInterface $entityManager, CatalogTemplate $template): array
     {
-        $ranks = $entityManager->getRepository(CatalogTemplateRank::class)->findBy(['template' => $template], ['percentage' => 'ASC', 'name' => 'ASC']);
+        $ranks = CatalogDisplayOrder::ranks($entityManager->getRepository(CatalogTemplateRank::class)->findBy(['template' => $template]));
 
         return [
             'ranks' => array_map(

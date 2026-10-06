@@ -7,6 +7,8 @@ namespace App\Tests\Controller;
 use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Entity\CatalogTemplate;
 use App\Entity\Stat;
+use App\Entity\Rank;
+use App\Entity\CatalogTemplateRank;
 use App\Entity\CatalogTemplateStat;
 use App\Entity\DiscordServer;
 use App\Entity\DiscordServerMember;
@@ -59,6 +61,24 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         self::assertSame('attachment; filename=exemple-rangs.csv', $client->getResponse()->headers->get('Content-Disposition'));
         self::assertStringStartsWith("\xEF\xBB\xBFnom;pourcentage;titre_depart;est_staff\n", $client->getResponse()->getContent());
         self::assertStringNotContainsString('discord', strtolower($client->getResponse()->getContent()));
+    }
+
+    public function testRankSelectorsUseNaturalNamesWithoutChangingPercentages(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        [, $server, $template] = $this->seedAccess($client);
+        foreach (['Rang 10' => 10, 'rang 2' => 20, 'RANG 1' => 70] as $name => $percentage) {
+            $this->entityManager->persist(new Rank($server, 'discord-'.$percentage, $name, $percentage));
+            $this->entityManager->persist(new CatalogTemplateRank($template, 'key-'.$percentage, $name, $percentage));
+        }
+        $this->entityManager->flush();
+        foreach (['/app/serveurs/guild', '/app/modeles-catalogue/'.$template->id()] as $base) {
+            $crawler = $client->request('GET', $base.'/configuration/welcome-messages');
+            self::assertResponseIsSuccessful();
+            self::assertSame(['RANG 1', 'rang 2', 'Rang 10'], $crawler->filter('select[name="rank_id"] option:not([value=""])')->each(static fn ($node): string => $node->text()));
+        }
+        self::assertSame([10, 20, 70], array_map('intval', $this->connection()->fetchFirstColumn('SELECT percentage FROM ranks ORDER BY percentage')));
     }
 
     public function testExportsOnlyCurrentTargetAndCanBeReimportedUnchanged(): void
