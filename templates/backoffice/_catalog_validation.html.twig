@@ -15,29 +15,29 @@
 } %}
 
 <section
-    class="grid gap-4 border p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(18rem,0.8fr)] md:items-start {{ validation.ready ? 'border-camelia-leaf/25 bg-camelia-leaf/5' : 'border-camelia-rose/25 bg-camelia-blush/45' }}"
+    class="bo-validation {{ validation.ready ? 'is-ready' : 'is-incomplete' }}"
     data-testid="catalog-validation"
     data-ready="{{ validation.ready ? 'true' : 'false' }}"
 >
     <div>
-        <p class="text-xs font-black tracking-[0.16em] uppercase {{ validation.ready ? 'text-camelia-leaf' : 'text-camelia-rose' }}">État du catalogue</p>
-        <h2 class="mt-2 text-lg font-black">{{ validation.ready ? 'Prêt pour le bot' : 'Catalogue à compléter' }}</h2>
-        <p class="mt-2 text-sm font-bold leading-relaxed text-camelia-muted">
+        <p class="bo-validation-eyebrow">État du catalogue</p>
+        <h2 class="bo-section-title">{{ validation.ready ? 'Prêt pour le bot' : 'Catalogue à compléter' }}</h2>
+        <p class="bo-panel-lead">
             {{ validation.ready ? 'Les données bloquantes sont en place.' : 'Tu peux continuer à éditer librement, mais ce catalogue n’est pas encore exploitable.' }}
         </p>
     </div>
-    <div class="grid gap-3 text-sm font-bold text-camelia-muted">
+    <div class="bo-stack bo-stack--tight">
         {% if validation.errors %}
-            <ul class="grid gap-2" data-testid="catalog-validation-errors">
+            <ul class="bo-issues bo-issues--error" data-testid="catalog-validation-errors">
                 {% for code in validation.errors %}
-                    <li class="border-l-2 border-camelia-rose pl-3">{{ labels[code] ?? code }}</li>
+                    <li>{{ labels[code] ?? code }}</li>
                 {% endfor %}
             </ul>
         {% endif %}
         {% if validation.warnings %}
-            <ul class="grid gap-2" data-testid="catalog-validation-warnings">
+            <ul class="bo-issues bo-issues--warning" data-testid="catalog-validation-warnings">
                 {% for code in validation.warnings %}
-                    <li class="border-l-2 border-camelia-gold pl-3">{{ labels[code] ?? code }}</li>
+                    <li>{{ labels[code] ?? code }}</li>
                 {% endfor %}
             </ul>
         {% endif %}

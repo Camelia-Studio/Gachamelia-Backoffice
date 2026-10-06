@@ -199,7 +199,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorNotExists('[data-testid="guild-member"] a[href="/app/serveurs/member/configuration"]');
         self::assertSelectorExists('[data-testid="guild-member"] a[href="/app/serveurs/member/fiche-personnage"]');
         self::assertStringContainsString(
-            'cursor-pointer',
+            'bo-btn',
             $crawler->filter('form[action="/deconnexion"] button[type="submit"]')->attr('class') ?? '',
         );
     }
@@ -219,9 +219,9 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorExists('[data-testid="configuration-nav-overview"][aria-current="page"]');
         self::assertSelectorExists('[data-testid="catalog-validation"][data-ready="false"]');
         self::assertSelectorExists('[data-testid="configuration-overview"]');
-        self::assertStringContainsString('xl:grid-cols-3', $crawler->filter('[data-testid="configuration-overview"] > div')->attr('class') ?? '');
+        self::assertStringContainsString('bo-card-grid', $crawler->filter('[data-testid="configuration-overview"] > div')->attr('class') ?? '');
         self::assertSelectorExists('[data-testid="configuration-overview-card-settings"] a[href="/app/serveurs/admin/configuration/settings"]');
-        self::assertStringContainsString('min-h-72', $crawler->filter('[data-testid="configuration-overview-card-ranks"]')->attr('class') ?? '');
+        self::assertStringContainsString('bo-template-card--large', $crawler->filter('[data-testid="configuration-overview-card-ranks"]')->attr('class') ?? '');
         self::assertSelectorExists('[data-testid="configuration-overview-card-ranks"] a[href="/app/serveurs/admin/configuration/ranks"]');
         self::assertSelectorExists('[data-testid="configuration-overview-card-roles"] a[href="/app/serveurs/admin/configuration/roles"]');
         self::assertSelectorExists('[data-testid="configuration-overview-card-stats"] a[href="/app/serveurs/admin/configuration/stats"]');
@@ -360,13 +360,13 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-roles"][aria-current="page"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] form[data-controller="emoji-picker"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="emoji_source"][type="hidden"][data-emoji-picker-target="source"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="emoji_value"][type="hidden"][data-emoji-picker-target="value"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] form[data-emoji-picker]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="emoji_source"][type="hidden"][data-emoji-field="source"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="emoji_value"][type="hidden"][data-emoji-field="value"]');
         self::assertSelectorNotExists('[data-testid="catalog-create-panel"] input[name="emoji_value"]:not([type="hidden"])');
         self::assertSelectorExists('[data-testid="emoji-picker-option-server-246801357924680135"]');
         self::assertSelectorExists('[data-testid="emoji-picker-option-bot-135792468013579246"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] [data-testid="emoji-preview"] img[data-emoji-picker-target="image"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] [data-testid="emoji-preview"] img[data-emoji-image]');
         self::assertSelectorExists('[data-testid="catalog-list-panel"]');
         self::assertSelectorExists('[data-testid="role-card"] img[alt="Emoji du rôle Guerrier"][src="https://cdn.discordapp.com/emojis/123456789012345678.webp?size=64&quality=lossless"]');
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Guerrier');
@@ -387,8 +387,8 @@ final class DiscordBackofficeControllerTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('[data-testid="configuration-nav-elements"][aria-current="page"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] form[data-controller="emoji-picker"]');
-        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="emoji_value"][type="hidden"][data-emoji-picker-target="value"]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] form[data-emoji-picker]');
+        self::assertSelectorExists('[data-testid="catalog-create-panel"] input[name="emoji_value"][type="hidden"][data-emoji-field="value"]');
         self::assertSelectorNotExists('[data-testid="catalog-create-panel"] input[name="emoji_value"]:not([type="hidden"])');
         self::assertSelectorExists('[data-testid="catalog-list-panel"] [data-testid="element-card"]');
         self::assertSelectorTextContains('[data-testid="element-card"]', '🔥');
@@ -1125,7 +1125,7 @@ final class DiscordBackofficeControllerTest extends WebTestCase
             '[data-testid="character-sheet-elements"] img[src="https://cdn.discordapp.com/emojis/123456789012345678.webp?size=64&quality=lossless"]',
         );
         self::assertStringContainsString(
-            'sm:grid-cols-2',
+            'bo-sheet-stats',
             $crawler->filter('[data-testid="character-sheet-stats"]')->attr('class') ?? '',
         );
         self::assertSelectorTextNotContains('[data-testid="character-sheet"]', 'Personnage voisin');

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+    <head>
+        {% include 'partials/head_common.html.twig' %}
+        <title>{% block title %}Gachamélia Backoffice{% endblock %}</title>
+        <meta name="description" content="{% block meta_description %}Backoffice Gachamélia pour piloter le bot gacha communautaire Discord.{% endblock %}">
+        <meta name="robots" content="{% block robots %}noindex, nofollow{% endblock %}">
+
+        {% block stylesheets %}
+        {% endblock %}
+
+        {% block javascripts %}
+            {% block importmap %}
+                {{ importmap('backoffice') }}
+            {% endblock %}
+        {% endblock %}
+
+        {% include 'partials/hot_reload.html.twig' %}
+    </head>
+
+    <body class="bo">
+        <div class="bo-layout" data-testid="backoffice-layout">
+            <header class="bo-header" data-testid="backoffice-navbar">
+                <nav class="bo-header-inner" aria-label="Navigation backoffice">
+                    <a href="{{ path('app_home') }}" class="bo-brand" data-testid="backoffice-brand">
+                        <img src="{{ asset('images/gachamelia-bot-avatar.png') }}" alt="" class="bo-brand-avatar">
+                        <span class="bo-brand-text">
+                            <span class="bo-brand-name">Gachamélia</span>
+                            <span class="bo-brand-sub">Backoffice</span>
+                        </span>
+                    </a>
+
+                    <div class="bo-header-actions">
+                        <a href="{{ path('app_home') }}" class="bo-btn bo-btn--outline" data-testid="backoffice-public-home-action">
+                            Accueil public
+                        </a>
+                        {% block navbar_actions %}{% endblock %}
+                    </div>
+                </nav>
+            </header>
+
+            <main class="bo-main">
+                {% for message in app.flashes('error') %}
+                    <div class="bo-flash bo-flash--error" data-testid="flash-error">{{ message }}</div>
+                {% endfor %}
+                {% for message in app.flashes('success') %}
+                    <div class="bo-flash bo-flash--success" data-testid="flash-success">{{ message }}</div>
+                {% endfor %}
+                {% block body %}{% endblock %}
+            </main>
+        </div>
+    </body>
+</html>

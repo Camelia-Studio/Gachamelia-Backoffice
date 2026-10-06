@@ -1,7 +1,7 @@
 # Déploiement Apache dans un sous-chemin
 
 Le projet peut être servi sous un sous-chemin, par exemple `/gachamelia`, à condition
-de configurer le même préfixe côté Symfony et côté build Encore.
+de configurer le préfixe côté Symfony.
 
 ## Variables à définir
 
@@ -11,28 +11,44 @@ DEFAULT_URI=https://example.test/gachamelia/
 ```
 
 `APP_BASE_PATH` est utilisé par le front controller pour que Symfony reconnaisse
-le sous-chemin public pendant les requêtes HTTP, et par Encore pour préfixer les
-assets compilés. Le build Encore lit les fichiers `.env` Symfony, dont
-`.env.local`, avant de calculer son `publicPath`. Les assets publics classiques,
-comme `public/images`, utilisent ensuite le base path de la requête Symfony ; il
-ne faut donc pas aussi le définir dans `framework.assets.base_path`, sinon les
-URLs sont préfixées deux fois.
+le sous-chemin public pendant les requêtes HTTP. Le front est servi par
+AssetMapper : les URLs des assets (`importmap()`, `asset()`) sont préfixées à
+l'exécution avec le base path de la requête Symfony, et les imports relatifs entre
+modules JavaScript/CSS sont résolus par le navigateur. Le préfixe n'est donc pas
+figé au moment de la compilation et il ne faut pas le définir dans
+`framework.assets.base_path`, sinon les URLs sont préfixées deux fois.
 `DEFAULT_URI` permet à Symfony de générer des URLs correctes hors requête HTTP.
 
-Après avoir changé `APP_BASE_PATH`, il faut reconstruire les assets :
+Changer `APP_BASE_PATH` ne demande pas de recompiler les assets, seulement de vider
+le cache :
 
 ```shell
-npm run build
 php bin/console cache:clear
 ```
 
-Une variable d'environnement réellement exportée dans le shell garde la priorité
-sur les fichiers `.env`, ce qui permet toujours de forcer ponctuellement un
-autre préfixe :
+## Assets du front
+
+Le front n'a pas d'étape de build Node : `assets/` contient du JavaScript et du CSS
+natifs, exposés par `importmap.php`.
+
+- En développement, AssetMapper sert directement les fichiers de `assets/`.
+- En production, compiler les assets (digest dans les noms de fichiers) lors de
+  la préparation de la release :
 
 ```shell
-APP_BASE_PATH=/autre-chemin npm run build
+APP_ENV=prod APP_DEBUG=0 php bin/console asset-map:compile
 ```
+
+La compilation écrit `public/assets/` (ignoré par git). Supprimer ce dossier en
+local pour retrouver le mode développement.
+
+Le workflow de release inclut les assets compilés dans le ZIP : leur compilation
+sur l'hébergeur n'est pas nécessaire. L'archive conserve `assets/` et `importmap.php`,
+utilisés par AssetMapper, et exclut les fichiers d'environnement locaux, les traces
+de navigateur et les anciens fichiers de build Encore.
+
+Les images statiques référencées par URL stable (`public/images`, `site.webmanifest`,
+image Open Graph) restent dans `public/` et ne passent pas par AssetMapper.
 
 ## Apache recommandé : alias vers `public/`
 

@@ -1,90 +1,12 @@
-{% extends 'base.html.twig' %}
+{% extends 'base_backoffice.html.twig' %}
 
-{% macro emoji_picker(default_source, default_value, picker, tone) %}
-    {% set groups = [
-        { id: 'standard', label: 'Standard', options: picker.standard },
-        { id: 'bot', label: 'Bot', options: picker.bot },
-        { id: 'server', label: 'Serveur', options: picker.server },
-    ] %}
-
-    <input type="hidden" name="emoji_source" value="{{ default_source }}" data-emoji-picker-target="source">
-    <input type="hidden" name="emoji_value" value="{{ default_value }}" data-emoji-picker-target="value">
-
-    <div class="grid gap-4" data-testid="emoji-picker">
-        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
-            Rechercher un emoji
-            <input type="search" class="min-h-11 w-full border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50" placeholder="Nom de l’emoji" data-emoji-picker-target="search" data-action="input->emoji-picker#filter">
-        </label>
-
-        <div class="grid max-h-72 gap-4 overflow-y-auto border border-camelia-ink/10 bg-white p-3">
-            {% for group in groups %}
-                <section class="grid gap-2" data-emoji-picker-target="group">
-                    <p class="text-[0.68rem] font-black tracking-[0.16em] text-camelia-muted uppercase">{{ group.label }}</p>
-                    <div class="grid grid-cols-[repeat(auto-fill,minmax(3.25rem,1fr))] gap-2">
-                        {% for option in group.options %}
-                            {% set test_id = option.discord_id ? 'emoji-picker-option-' ~ option.source ~ '-' ~ option.discord_id : 'emoji-picker-option-standard-' ~ loop.index %}
-                            <button
-                                type="button"
-                                class="grid min-h-14 place-items-center border border-camelia-ink/10 bg-camelia-ivory p-2 text-center transition hover:border-camelia-rose/40 hover:bg-camelia-blush/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 data-[selected=true]:border-camelia-rose data-[selected=true]:bg-camelia-blush"
-                                data-emoji-picker-target="option"
-                                data-action="click->emoji-picker#choose"
-                                data-emoji-source="{{ option.source }}"
-                                data-emoji-value="{{ option.value }}"
-                                data-emoji-name="{{ option.name }}"
-                                data-emoji-cdn-url="{{ option.cdn_url }}"
-                                data-testid="{{ test_id }}"
-                                title="{{ option.name }}"
-                            >
-                                {% if option.cdn_url %}
-                                    <img src="{{ option.cdn_url }}" alt="" class="size-8 object-contain" loading="lazy">
-                                {% else %}
-                                    <span class="text-2xl leading-none">{{ option.markup }}</span>
-                                {% endif %}
-                                <span class="mt-1 max-w-full truncate text-[0.62rem] font-black text-camelia-muted">{{ option.name }}</span>
-                            </button>
-                        {% else %}
-                            <span class="col-span-full border border-dashed border-camelia-ink/15 bg-camelia-blush/30 px-3 py-2 text-xs font-bold text-camelia-muted">Aucun emoji en cache.</span>
-                        {% endfor %}
-                    </div>
-                </section>
-            {% endfor %}
-        </div>
-
-        <div class="grid gap-4 border border-camelia-ink/10 bg-camelia-blush/50 p-4 sm:grid-cols-[5rem_minmax(0,1fr)] sm:items-center" data-testid="emoji-preview">
-            <span class="relative flex size-20 shrink-0 items-center justify-center overflow-hidden {{ tone }}">
-                <img
-                    alt=""
-                    class="hidden size-full object-contain"
-                    data-emoji-picker-target="image"
-                    data-action="load->emoji-picker#imageLoaded error->emoji-picker#imageError"
-                >
-                <span class="flex size-full items-center justify-center font-display text-2xl font-black text-camelia-rose" data-emoji-picker-target="glyph">{{ default_value }}</span>
-            </span>
-            <div>
-                <strong class="text-sm">Prévisualisation Discord</strong>
-                <p class="mt-1 text-xs font-bold leading-relaxed text-camelia-muted" data-emoji-picker-target="status">Emoji sélectionné pour les fiches.</p>
-            </div>
-        </div>
-    </div>
-{% endmacro %}
-
-{% import _self as ui %}
+{% import 'backoffice/_emoji_picker.html.twig' as ui %}
 
 {% block title %}Modèle {{ template.name }} - Gachamélia Backoffice{% endblock %}
 
 {% block navbar_actions %}
-    <a
-        href="{{ path('app_catalog_templates') }}"
-        class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-ink/10 bg-white px-4 text-sm font-black text-camelia-ink shadow-sm transition hover:border-camelia-rose/30 hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
-    >
-        Modèles
-    </a>
-    <a
-        href="{{ path('app_dashboard') }}"
-        class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-ink/10 bg-white px-4 text-sm font-black text-camelia-ink shadow-sm transition hover:border-camelia-rose/30 hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
-    >
-        Serveurs
-    </a>
+    <a href="{{ path('app_catalog_templates') }}" class="bo-btn bo-btn--outline">Modèles</a>
+    <a href="{{ path('app_dashboard') }}" class="bo-btn bo-btn--outline">Serveurs</a>
 {% endblock %}
 
 {% block body %}
@@ -92,60 +14,55 @@
     {% set page_icon = is_overview ? 'MD' : active_configuration_section.icon %}
     {% set page_title = is_overview ? 'Configuration du modèle' : active_configuration_section.label %}
     {% set page_description = is_overview ? 'Prépare le catalogue global qui pourra être importé par les serveurs.' : active_configuration_section.description %}
-    {% set input_class = 'min-h-11 border border-camelia-ink/10 bg-white px-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50' %}
 
-    <section class="grid gap-10" data-testid="catalog-template-configuration">
-        <div class="grid gap-8 lg:grid-cols-[16.5rem_minmax(0,1fr)] xl:gap-12">
-            <aside class="lg:sticky lg:top-28 lg:self-start">
-                <div class="grid gap-7">
-                    <div class="border border-camelia-ink/10 bg-camelia-ivory p-4 shadow-sm">
-                        <p class="truncate text-sm font-black leading-tight">{{ template.name }}</p>
-                        <p class="mt-1 text-xs font-bold leading-tight text-camelia-muted">{{ template.published ? 'Modèle publié' : 'Brouillon global' }}</p>
+    <section class="bo-page bo-page--wide" data-testid="catalog-template-configuration">
+        <div class="bo-config">
+            <aside class="bo-config-side">
+                <div class="bo-identity">
+                    <p class="bo-identity-name">{{ template.name }}</p>
+                    <p class="bo-identity-sub">{{ template.published ? 'Modèle publié' : 'Brouillon global' }}</p>
+                </div>
+
+                <nav class="bo-sidenav" aria-label="Sections du modèle" data-testid="template-configuration-sidebar">
+                    <div class="bo-sidenav-group">
+                        <p class="bo-sidenav-title">Modèle</p>
+                        <a
+                            href="{{ path('app_catalog_template_configuration', { templateId: template.id }) }}"
+                            class="bo-sidenav-link{{ is_overview ? ' is-active' }}"
+                            data-testid="template-configuration-nav-overview"
+                            {% if is_overview %}aria-current="page"{% endif %}
+                        >
+                            <span class="bo-sidenav-icon">MD</span>
+                            <span>Configuration</span>
+                        </a>
                     </div>
 
-                    <nav class="grid gap-7" aria-label="Sections du modèle" data-testid="template-configuration-sidebar">
-                        <div class="grid gap-2">
-                            <p class="px-3 text-[0.68rem] font-black tracking-[0.16em] text-camelia-muted uppercase">Modèle</p>
+                    <div class="bo-sidenav-group">
+                        <p class="bo-sidenav-title">Catalogue</p>
+                        {% for section in configuration_sections %}
+                            {% set is_active = section.id == active_section %}
                             <a
-                                href="{{ path('app_catalog_template_configuration', { templateId: template.id }) }}"
-                                class="relative grid min-h-12 grid-cols-[1.8rem_minmax(0,1fr)] items-center gap-3 px-3 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 {{ is_overview ? 'bg-camelia-blush text-camelia-ink before:absolute before:left-0 before:h-7 before:w-1 before:rounded-full before:bg-camelia-rose' : 'text-camelia-muted hover:text-camelia-rose' }}"
-                                data-testid="template-configuration-nav-overview"
-                                {% if is_overview %}aria-current="page"{% endif %}
+                                href="{{ path('app_catalog_template_configuration_section', { templateId: template.id, section: section.id }) }}"
+                                class="bo-sidenav-link{{ is_active ? ' is-active' }}"
+                                data-testid="template-configuration-nav-{{ section.id }}"
+                                {% if is_active %}aria-current="page"{% endif %}
                             >
-                                <span class="flex size-7 items-center justify-center border border-camelia-ink/10 bg-white text-[0.68rem] font-black text-camelia-rose">MD</span>
-                                Configuration
+                                <span class="bo-sidenav-icon">{{ section.icon }}</span>
+                                <span>{{ section.label }}</span>
+                                <span class="bo-sidenav-count">{{ section.count }}</span>
                             </a>
-                        </div>
-
-                        <div class="grid gap-2">
-                            <p class="px-3 text-[0.68rem] font-black tracking-[0.16em] text-camelia-muted uppercase">Catalogue</p>
-                            {% for section in configuration_sections %}
-                                {% set is_active = section.id == active_section %}
-                                <a
-                                    href="{{ path('app_catalog_template_configuration_section', { templateId: template.id, section: section.id }) }}"
-                                    class="relative grid min-h-12 grid-cols-[1.8rem_minmax(0,1fr)_auto] items-center gap-3 px-3 text-sm font-black transition focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 {{ is_active ? 'bg-camelia-blush text-camelia-ink before:absolute before:left-0 before:h-7 before:w-1 before:rounded-full before:bg-camelia-rose' : 'text-camelia-muted hover:text-camelia-rose' }}"
-                                    data-testid="template-configuration-nav-{{ section.id }}"
-                                    {% if is_active %}aria-current="page"{% endif %}
-                                >
-                                    <span class="flex size-7 items-center justify-center border border-camelia-ink/10 bg-white text-[0.68rem] font-black text-camelia-rose">{{ section.icon }}</span>
-                                    <span>{{ section.label }}</span>
-                                    <span class="text-xs font-black text-camelia-rose">{{ section.count }}</span>
-                                </a>
-                            {% endfor %}
-                        </div>
-                    </nav>
-                </div>
+                        {% endfor %}
+                    </div>
+                </nav>
             </aside>
 
-            <div class="grid min-w-0 gap-8">
-                <header class="flex items-start gap-5 border-b border-camelia-ink/10 pb-8">
-                    <span class="flex size-16 shrink-0 items-center justify-center border border-camelia-ink/10 bg-camelia-blush font-display text-2xl font-black text-camelia-rose">
-                        {{ page_icon }}
-                    </span>
-                    <div class="min-w-0">
-                        <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">{{ template.name }} · Modèle global</p>
-                        <h1 class="mt-2 font-display text-4xl leading-tight md:text-5xl">{{ page_title }}</h1>
-                        <p class="mt-4 max-w-3xl text-base font-bold leading-relaxed text-camelia-muted">{{ page_description }}</p>
+            <div class="bo-config-main">
+                <header class="bo-config-header">
+                    <span class="bo-config-icon">{{ page_icon }}</span>
+                    <div class="bo-config-heading">
+                        <p class="bo-eyebrow">{{ template.name }} · Modèle global</p>
+                        <h1 class="bo-page-title">{{ page_title }}</h1>
+                        <p class="bo-page-lead bo-page-lead--lg">{{ page_description }}</p>
                     </div>
                 </header>
 
@@ -158,195 +75,183 @@
                 } only %}
 
                 {% if is_overview %}
-                    <section class="grid gap-7" data-testid="template-configuration-overview">
-                        <div class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    <section class="bo-page" data-testid="template-configuration-overview">
+                        <div class="bo-card-grid">
                             {% for section in configuration_sections %}
-                                {% set tone = loop.index == 2 ? 'bg-camelia-gold/20 text-[#7a5415]' : (loop.index == 3 ? 'bg-camelia-leaf/15 text-camelia-leaf' : 'bg-camelia-blush text-camelia-rose') %}
-                                <article
-                                    class="grid min-h-72 gap-6 border border-camelia-ink/10 bg-camelia-ivory p-7 shadow-sm"
-                                    data-testid="template-configuration-overview-card-{{ section.id }}"
-                                >
-                                    <div class="flex items-start justify-between gap-4">
-                                        <span class="flex size-14 items-center justify-center {{ tone }} font-display text-xl font-black">{{ section.icon }}</span>
-                                        <span class="inline-flex min-h-8 items-center rounded-full bg-camelia-gold/20 px-4 text-xs font-black text-[#7a5415]">{{ section.count }} entrées</span>
+                                {% set tone = loop.index == 2 ? ' bo-template-mark--gold' : (loop.index == 3 ? ' bo-template-mark--leaf' : '') %}
+                                <article class="bo-template-card bo-template-card--large" data-testid="template-configuration-overview-card-{{ section.id }}">
+                                    <div class="bo-panel-head bo-panel-head--bare">
+                                        <span class="bo-template-mark{{ tone }}">{{ section.icon }}</span>
+                                        <span class="bo-badge bo-badge--gold bo-badge--lg">{{ section.count }} entrées</span>
                                     </div>
-                                    <div class="grid gap-3">
-                                        <h2 class="text-xl font-black">{{ section.label }}</h2>
-                                        <p class="max-w-sm text-base font-bold leading-relaxed text-camelia-muted">{{ section.description }}</p>
+                                    <div class="bo-stack bo-stack--tight">
+                                        <h2 class="bo-card-heading">{{ section.label }}</h2>
+                                        <p class="bo-page-lead">{{ section.description }}</p>
                                     </div>
-                                    <a
-                                        href="{{ path('app_catalog_template_configuration_section', { templateId: template.id, section: section.id }) }}"
-                                        class="mt-auto inline-flex min-h-11 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
-                                    >
+                                    <a href="{{ path('app_catalog_template_configuration_section', { templateId: template.id, section: section.id }) }}" class="bo-btn bo-btn--ink bo-btn--lg bo-template-action">
                                         Configurer
                                     </a>
                                 </article>
                             {% endfor %}
                         </div>
 
-                        <form method="post" action="{{ path('app_catalog_template_publish', { templateId: template.id }) }}" class="flex flex-wrap items-center justify-between gap-4 border border-camelia-ink/10 bg-camelia-ivory p-6 shadow-sm">
+                        <form method="post" action="{{ path('app_catalog_template_publish', { templateId: template.id }) }}" class="bo-toolbar bo-toolbar--between">
                             <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                             <div>
-                                <h2 class="text-lg font-black">Publication</h2>
-                                <p class="mt-1 text-sm font-bold leading-relaxed text-camelia-muted">Un modèle publié apparaît dans l’écran d’import des serveurs.</p>
+                                <h2 class="bo-section-title">Publication</h2>
+                                <p class="bo-section-lead">Un modèle publié apparaît dans l’écran d’import des serveurs.</p>
                             </div>
-                            <div class="flex flex-wrap gap-2">
-                                <button name="published" value="1" type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-leaf px-4 text-sm font-black text-white transition hover:bg-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-leaf/50">
-                                    Publier
-                                </button>
-                                <button name="published" value="0" type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-ink/10 bg-white px-4 text-sm font-black text-camelia-ink transition hover:border-camelia-rose/30 hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">
-                                    Repasser en brouillon
-                                </button>
+                            <div class="bo-inline">
+                                <button name="published" value="1" type="submit" class="bo-btn bo-btn--leaf">Publier</button>
+                                <button name="published" value="0" type="submit" class="bo-btn bo-btn--outline">Repasser en brouillon</button>
                             </div>
                         </form>
                     </section>
                 {% else %}
                     <div data-testid="template-configuration-panel">
                         {% if active_section == 'ranks' %}
-                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] xl:items-start" data-testid="template-catalog-layout">
-                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
-                                    <div class="border-b border-camelia-ink/10 p-6">
-                                        <h2 class="text-lg font-black">Ajouter un rang</h2>
-                                        <p class="mt-1 text-sm font-bold text-camelia-muted">La clé de rôle servira de repère au mapping Discord pendant l’import.</p>
+                            <div class="bo-columns bo-columns--side" data-testid="template-catalog-layout">
+                                <section class="bo-panel" data-testid="catalog-create-panel">
+                                    <div class="bo-panel-head">
+                                        <div>
+                                            <h2 class="bo-section-title">Ajouter un rang</h2>
+                                            <p class="bo-panel-lead">La clé de rôle servira de repère au mapping Discord pendant l’import.</p>
+                                        </div>
                                     </div>
-                                    <form method="post" action="{{ path('app_catalog_template_rank_create', { templateId: template.id }) }}" class="grid gap-5 p-6">
+                                    <form method="post" action="{{ path('app_catalog_template_rank_create', { templateId: template.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                        <label class="bo-field">
                                             Clé de rôle
-                                            <input name="role_key" required placeholder="Comète" class="{{ input_class }}">
+                                            <input name="role_key" required placeholder="Comète" class="bo-input">
                                         </label>
-                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                        <label class="bo-field">
                                             Nom
-                                            <input name="name" required class="{{ input_class }}">
+                                            <input name="name" required class="bo-input">
                                         </label>
-                                        <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
-                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                        <div class="bo-form-row bo-form-row--pct">
+                                            <label class="bo-field">
                                                 Titre du message de départ
-                                                <input name="bye_title" class="{{ input_class }}">
+                                                <input name="bye_title" class="bo-input">
                                             </label>
-                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            <label class="bo-field">
                                                 %
-                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="{{ input_class }}">
+                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="bo-input">
                                             </label>
                                         </div>
-                                        <label class="flex items-center justify-between gap-3 border border-camelia-ink/10 bg-camelia-blush/60 px-3 py-3 text-sm font-black text-camelia-ink">
+                                        <label class="bo-check bo-check--box">
                                             Rang staff prioritaire
-                                            <input name="is_staff" type="checkbox" value="1" class="size-4 accent-camelia-rose">
+                                            <input name="is_staff" type="checkbox" value="1">
                                         </label>
-                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
-                                            Ajouter le rang
-                                        </button>
+                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Ajouter le rang</button>
                                     </form>
                                 </section>
 
-                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
-                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
+                                <section class="bo-panel" data-testid="catalog-list-panel">
+                                    <div class="bo-panel-head">
                                         <div>
-                                            <h2 class="text-lg font-black">Rangs du modèle</h2>
-                                            <p class="mt-1 text-sm font-bold text-camelia-muted">Chaque rang demandera une correspondance Discord au moment de l’import.</p>
+                                            <h2 class="bo-section-title">Rangs du modèle</h2>
+                                            <p class="bo-panel-lead">Chaque rang demandera une correspondance Discord au moment de l’import.</p>
                                         </div>
-                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ catalog.ranks|length }} entrées</span>
+                                        <span class="bo-badge bo-badge--gold">{{ catalog.ranks|length }} entrées</span>
                                     </div>
-                                    <div class="grid gap-4 p-6">
+                                    <div class="bo-panel-body bo-stack">
                                         {% for rank in catalog.ranks %}
-                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="template-rank-card">
-                                                <form method="post" action="{{ path('app_catalog_template_rank_update', { templateId: template.id, rankId: rank.id }) }}" class="grid gap-4">
+                                            <article class="bo-card" data-testid="template-rank-card">
+                                                <form method="post" action="{{ path('app_catalog_template_rank_update', { templateId: template.id, rankId: rank.id }) }}" class="bo-form bo-form--tight">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_6rem]">
-                                                        <label class="grid gap-1 text-xs font-black text-camelia-muted">
+                                                    <div class="bo-form-row bo-form-row--rank">
+                                                        <label class="bo-field bo-field--sm">
                                                             Clé
-                                                            <input name="role_key" value="{{ rank.role_key }}" required class="{{ input_class }}">
+                                                            <input name="role_key" value="{{ rank.role_key }}" required class="bo-input">
                                                         </label>
-                                                        <label class="grid gap-1 text-xs font-black text-camelia-muted">
+                                                        <label class="bo-field bo-field--sm">
                                                             Nom
-                                                            <input name="name" value="{{ rank.name }}" required class="{{ input_class }}">
+                                                            <input name="name" value="{{ rank.name }}" required class="bo-input">
                                                         </label>
-                                                        <label class="grid gap-1 text-xs font-black text-camelia-muted">
+                                                        <label class="bo-field bo-field--sm">
                                                             %
-                                                            <input name="percentage" type="number" min="0" max="100" value="{{ rank.percentage }}" required class="{{ input_class }}">
+                                                            <input name="percentage" type="number" min="0" max="100" value="{{ rank.percentage }}" required class="bo-input">
                                                         </label>
                                                     </div>
-                                                    <label class="grid gap-1 text-xs font-black text-camelia-muted">
+                                                    <label class="bo-field bo-field--sm">
                                                         Titre du message de départ
-                                                        <input name="bye_title" value="{{ rank.bye_title }}" class="{{ input_class }}">
+                                                        <input name="bye_title" value="{{ rank.bye_title }}" class="bo-input">
                                                     </label>
-                                                    <label class="flex items-center gap-3 text-sm font-black text-camelia-muted">
-                                                        <input name="is_staff" type="checkbox" value="1" class="size-4 accent-camelia-rose" {% if rank.is_staff %}checked{% endif %}>
+                                                    <label class="bo-check">
+                                                        <input name="is_staff" type="checkbox" value="1" {% if rank.is_staff %}checked{% endif %}>
                                                         Rang staff prioritaire
                                                     </label>
-                                                    <button type="submit" class="inline-flex min-h-10 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-4 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">Enregistrer</button>
+                                                    <button type="submit" class="bo-btn bo-btn--ink bo-btn--start">Enregistrer</button>
                                                 </form>
                                                 <form method="post" action="{{ path('app_catalog_template_rank_delete', { templateId: template.id, rankId: rank.id }) }}">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <button type="submit" class="text-sm font-black text-camelia-rose">Supprimer</button>
+                                                    <button type="submit" class="bo-link-danger">Supprimer</button>
                                                 </form>
                                             </article>
                                         {% else %}
-                                            <p class="border border-dashed border-camelia-ink/15 bg-white p-6 text-sm font-bold leading-relaxed text-camelia-muted">Aucun rang dans ce modèle.</p>
+                                            <p class="bo-empty bo-empty--white">Aucun rang dans ce modèle.</p>
                                         {% endfor %}
                                     </div>
                                 </section>
                             </div>
                         {% elseif active_section == 'role-stats' %}
-                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] xl:items-start" data-testid="template-catalog-layout">
-                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
-                                    <div class="border-b border-camelia-ink/10 p-6">
-                                        <h2 class="text-lg font-black">Associer une stat</h2>
+                            <div class="bo-columns bo-columns--side" data-testid="template-catalog-layout">
+                                <section class="bo-panel" data-testid="catalog-create-panel">
+                                    <div class="bo-panel-head">
+                                        <h2 class="bo-section-title">Associer une stat</h2>
                                     </div>
-                                    <form method="post" action="{{ path('app_catalog_template_role_stat_upsert', { templateId: template.id }) }}" class="grid gap-5 p-6">
+                                    <form method="post" action="{{ path('app_catalog_template_role_stat_upsert', { templateId: template.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                        <label class="bo-field">
                                             Rôle
-                                            <select name="role_id" required class="{{ input_class }}">
+                                            <select name="role_id" required class="bo-input">
                                                 <option value="">Choisis un rôle</option>
                                                 {% for role in catalog.roles %}
                                                     <option value="{{ role.id }}">{{ role.name }}</option>
                                                 {% endfor %}
                                             </select>
                                         </label>
-                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                        <label class="bo-field">
                                             Stat
-                                            <select name="stat_id" required class="{{ input_class }}">
+                                            <select name="stat_id" required class="bo-input">
                                                 <option value="">Choisis une stat</option>
                                                 {% for stat in catalog.stats %}
                                                     <option value="{{ stat.id }}">{{ stat.name }}</option>
                                                 {% endfor %}
                                             </select>
                                         </label>
-                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                        <label class="bo-field">
                                             %
-                                            <input name="percentage" type="number" min="0" max="100" value="0" required class="{{ input_class }}">
+                                            <input name="percentage" type="number" min="0" max="100" value="0" required class="bo-input">
                                         </label>
-                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
-                                            Enregistrer l’association
-                                        </button>
+                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Enregistrer l’association</button>
                                     </form>
                                 </section>
 
-                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
-                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
-                                        <h2 class="text-lg font-black">Probabilités du modèle</h2>
-                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ catalog.role_stats|length }} entrées</span>
+                                <section class="bo-panel" data-testid="catalog-list-panel">
+                                    <div class="bo-panel-head">
+                                        <h2 class="bo-section-title">Probabilités du modèle</h2>
+                                        <span class="bo-badge bo-badge--gold">{{ catalog.role_stats|length }} entrées</span>
                                     </div>
-                                    <div class="grid gap-4 p-6">
+                                    <div class="bo-panel-body bo-stack">
                                         {% for role_stat in catalog.role_stats %}
-                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="template-role-stat-card">
-                                                <form method="post" action="{{ path('app_catalog_template_role_stat_upsert', { templateId: template.id }) }}" class="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_6rem_auto] md:items-end">
+                                            <article class="bo-card" data-testid="template-role-stat-card">
+                                                <form method="post" action="{{ path('app_catalog_template_role_stat_upsert', { templateId: template.id }) }}" class="bo-form-row bo-form-row--role-stat">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
                                                     <input type="hidden" name="role_id" value="{{ role_stat.role_id }}">
                                                     <input type="hidden" name="stat_id" value="{{ role_stat.stat_id }}">
-                                                    <p class="font-black">{{ role_stat.role_name }}</p>
-                                                    <p class="font-bold text-camelia-muted">{{ role_stat.stat_name }}</p>
-                                                    <input name="percentage" type="number" min="0" max="100" value="{{ role_stat.percentage }}" required class="{{ input_class }}">
-                                                    <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white">OK</button>
+                                                    <p class="bo-strong">{{ role_stat.role_name }}</p>
+                                                    <p class="bo-muted-strong">{{ role_stat.stat_name }}</p>
+                                                    <input name="percentage" type="number" min="0" max="100" value="{{ role_stat.percentage }}" required class="bo-input">
+                                                    <button type="submit" class="bo-btn bo-btn--ink">OK</button>
                                                 </form>
                                                 <form method="post" action="{{ path('app_catalog_template_role_stat_delete', { templateId: template.id, roleId: role_stat.role_id, statId: role_stat.stat_id }) }}">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <button type="submit" class="text-sm font-black text-camelia-rose">Supprimer</button>
+                                                    <button type="submit" class="bo-link-danger">Supprimer</button>
                                                 </form>
                                             </article>
                                         {% else %}
-                                            <p class="border border-dashed border-camelia-ink/15 bg-white p-6 text-sm font-bold leading-relaxed text-camelia-muted">Aucune probabilité de stat.</p>
+                                            <p class="bo-empty bo-empty--white">Aucune probabilité de stat.</p>
                                         {% endfor %}
                                     </div>
                                 </section>
@@ -357,53 +262,51 @@
                             {% set create_route = is_welcome ? 'app_catalog_template_welcome_message_create' : 'app_catalog_template_bye_message_create' %}
                             {% set update_route = is_welcome ? 'app_catalog_template_welcome_message_update' : 'app_catalog_template_bye_message_update' %}
                             {% set delete_route = is_welcome ? 'app_catalog_template_welcome_message_delete' : 'app_catalog_template_bye_message_delete' %}
-                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] xl:items-start" data-testid="template-catalog-layout">
-                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
-                                    <div class="border-b border-camelia-ink/10 p-6">
-                                        <h2 class="text-lg font-black">{{ is_welcome ? 'Ajouter un message d’arrivée' : 'Ajouter un message de départ' }}</h2>
+                            <div class="bo-columns bo-columns--side" data-testid="template-catalog-layout">
+                                <section class="bo-panel" data-testid="catalog-create-panel">
+                                    <div class="bo-panel-head">
+                                        <h2 class="bo-section-title">{{ is_welcome ? 'Ajouter un message d’arrivée' : 'Ajouter un message de départ' }}</h2>
                                     </div>
-                                    <form method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="grid gap-5 p-6">
+                                    <form method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                        <label class="bo-field">
                                             Rang
-                                            <select name="rank_id" required class="{{ input_class }}">
+                                            <select name="rank_id" required class="bo-input">
                                                 <option value="">Choisis un rang</option>
                                                 {% for rank in catalog.ranks %}
                                                     <option value="{{ rank.id }}">{{ rank.name }}</option>
                                                 {% endfor %}
                                             </select>
                                         </label>
-                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                        <label class="bo-field">
                                             Message
-                                            <textarea name="message" rows="4" required class="min-h-24 border border-camelia-ink/10 bg-white px-3 py-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50"></textarea>
+                                            <textarea name="message" rows="4" required class="bo-input bo-textarea"></textarea>
                                         </label>
-                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
-                                            Ajouter le message
-                                        </button>
+                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Ajouter le message</button>
                                     </form>
                                 </section>
 
-                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
-                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
-                                        <h2 class="text-lg font-black">Messages du modèle</h2>
-                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ messages|length }} entrées</span>
+                                <section class="bo-panel" data-testid="catalog-list-panel">
+                                    <div class="bo-panel-head">
+                                        <h2 class="bo-section-title">Messages du modèle</h2>
+                                        <span class="bo-badge bo-badge--gold">{{ messages|length }} entrées</span>
                                     </div>
-                                    <div class="grid gap-4 p-6">
+                                    <div class="bo-panel-body bo-stack">
                                         {% for message in messages %}
-                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="template-message-card">
-                                                <p class="text-xs font-black uppercase tracking-[0.12em] text-camelia-muted">{{ message.rank_name }}</p>
-                                                <form method="post" action="{{ path(update_route, { templateId: template.id, messageId: message.id }) }}" class="grid gap-3">
+                                            <article class="bo-card" data-testid="template-message-card">
+                                                <p class="bo-caption">{{ message.rank_name }}</p>
+                                                <form method="post" action="{{ path(update_route, { templateId: template.id, messageId: message.id }) }}" class="bo-form bo-form--tight">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <textarea name="message" rows="3" required class="min-h-20 border border-camelia-ink/10 bg-camelia-ivory px-3 py-3 font-semibold text-camelia-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/50">{{ message.message }}</textarea>
-                                                    <button type="submit" class="inline-flex min-h-10 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-4 text-sm font-black text-white">Enregistrer</button>
+                                                    <textarea name="message" rows="3" required class="bo-input bo-textarea bo-textarea--ivory">{{ message.message }}</textarea>
+                                                    <button type="submit" class="bo-btn bo-btn--ink bo-btn--start">Enregistrer</button>
                                                 </form>
                                                 <form method="post" action="{{ path(delete_route, { templateId: template.id, messageId: message.id }) }}">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <button type="submit" class="text-sm font-black text-camelia-rose">Supprimer</button>
+                                                    <button type="submit" class="bo-link-danger">Supprimer</button>
                                                 </form>
                                             </article>
                                         {% else %}
-                                            <p class="border border-dashed border-camelia-ink/15 bg-white p-6 text-sm font-bold leading-relaxed text-camelia-muted">Aucun message.</p>
+                                            <p class="bo-empty bo-empty--white">Aucun message.</p>
                                         {% endfor %}
                                     </div>
                                 </section>
@@ -416,119 +319,119 @@
                             {% set delete_route = is_roles ? 'app_catalog_template_role_delete' : 'app_catalog_template_element_delete' %}
                             {% set id_key = is_roles ? 'roleId' : 'elementId' %}
                             {% set default_emoji = is_roles ? '🎭' : '✨' %}
-                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] xl:items-start" data-testid="template-catalog-layout">
-                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
-                                    <div class="border-b border-camelia-ink/10 p-6">
-                                        <h2 class="text-lg font-black">{{ is_roles ? 'Ajouter un rôle' : 'Ajouter un élément' }}</h2>
+                            <div class="bo-columns bo-columns--side" data-testid="template-catalog-layout">
+                                <section class="bo-panel" data-testid="catalog-create-panel">
+                                    <div class="bo-panel-head">
+                                        <h2 class="bo-section-title">{{ is_roles ? 'Ajouter un rôle' : 'Ajouter un élément' }}</h2>
                                     </div>
-                                    <form method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="grid gap-5 p-6" data-controller="emoji-picker" data-emoji-picker-default-value="{{ default_emoji }}">
+                                    <form method="post" action="{{ path(create_route, { templateId: template.id }) }}" class="bo-panel-body bo-form" data-emoji-picker data-emoji-picker-default="{{ default_emoji }}">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                        <label class="bo-field">
                                             Nom
-                                            <input name="name" required class="{{ input_class }}">
+                                            <input name="name" required class="bo-input">
                                         </label>
                                         {% if is_roles %}
-                                            <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                            <label class="bo-field">
                                                 %
-                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="{{ input_class }}">
+                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="bo-input">
                                             </label>
                                         {% endif %}
-                                        {{ ui.emoji_picker('unicode', default_emoji, emoji_picker, is_roles ? 'bg-camelia-gold/20' : 'bg-camelia-blush') }}
-                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">
+                                        {{ ui.emoji_picker('unicode', default_emoji, emoji_picker, is_roles ? 'gold' : 'blush') }}
+                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">
                                             {{ is_roles ? 'Ajouter le rôle' : 'Ajouter l’élément' }}
                                         </button>
                                     </form>
                                 </section>
 
-                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
-                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
-                                        <h2 class="text-lg font-black">{{ is_roles ? 'Rôles du modèle' : 'Éléments du modèle' }}</h2>
-                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ entries|length }} entrées</span>
+                                <section class="bo-panel" data-testid="catalog-list-panel">
+                                    <div class="bo-panel-head">
+                                        <h2 class="bo-section-title">{{ is_roles ? 'Rôles du modèle' : 'Éléments du modèle' }}</h2>
+                                        <span class="bo-badge bo-badge--gold">{{ entries|length }} entrées</span>
                                     </div>
-                                    <div class="grid gap-4 p-6">
+                                    <div class="bo-panel-body bo-stack">
                                         {% for entry in entries %}
                                             {% set route_params = { templateId: template.id }|merge({ (id_key): entry.id }) %}
-                                            <article class="grid gap-5 border border-camelia-ink/10 bg-white p-5" data-testid="{{ is_roles ? 'template-role-card' : 'template-element-card' }}">
-                                                <div class="flex min-w-0 items-center gap-4">
-                                                    <span class="flex size-16 shrink-0 items-center justify-center bg-camelia-blush font-display text-lg font-black text-camelia-rose">
+                                            <article class="bo-card bo-card--roomy" data-testid="{{ is_roles ? 'template-role-card' : 'template-element-card' }}">
+                                                <div class="bo-entry-head">
+                                                    <span class="bo-entry-icon">
                                                         {% if entry.emoji_cdn_url %}
-                                                            <img src="{{ entry.emoji_cdn_url }}" alt="Emoji {{ entry.name }}" class="size-10 object-contain" loading="lazy">
+                                                            <img src="{{ entry.emoji_cdn_url }}" alt="Emoji {{ entry.name }}" class="bo-emoji bo-emoji--lg" loading="lazy">
                                                         {% else %}
                                                             {{ entry.emoji_markup }}
                                                         {% endif %}
                                                     </span>
-                                                    <div class="min-w-0">
-                                                        <h3 class="font-black">{{ entry.name }}</h3>
-                                                        <p class="break-all text-sm font-bold text-camelia-muted">{{ entry.emoji_source_label }} · {{ entry.emoji_markup }}</p>
+                                                    <div class="bo-entry-text">
+                                                        <h3 class="bo-strong">{{ entry.name }}</h3>
+                                                        <p class="bo-muted-strong bo-break">{{ entry.emoji_source_label }} · {{ entry.emoji_markup }}</p>
                                                     </div>
                                                     {% if is_roles %}
-                                                        <span class="ml-auto inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ entry.percentage }}%</span>
+                                                        <span class="bo-badge bo-badge--gold bo-push">{{ entry.percentage }}%</span>
                                                     {% endif %}
                                                 </div>
-                                                <form method="post" action="{{ path(update_route, route_params) }}" class="grid gap-4" data-controller="emoji-picker" data-emoji-picker-default-value="{{ entry.emoji_markup }}">
+                                                <form method="post" action="{{ path(update_route, route_params) }}" class="bo-form bo-form--tight" data-emoji-picker data-emoji-picker-default="{{ entry.emoji_markup }}">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_6rem]">
-                                                        <label class="grid gap-1 text-xs font-black text-camelia-muted">
+                                                    <div class="bo-form-row bo-form-row--pct">
+                                                        <label class="bo-field bo-field--sm">
                                                             Nom
-                                                            <input name="name" value="{{ entry.name }}" required class="{{ input_class }}">
+                                                            <input name="name" value="{{ entry.name }}" required class="bo-input">
                                                         </label>
                                                         {% if is_roles %}
-                                                            <label class="grid gap-1 text-xs font-black text-camelia-muted">
+                                                            <label class="bo-field bo-field--sm">
                                                                 %
-                                                                <input name="percentage" type="number" min="0" max="100" value="{{ entry.percentage }}" required class="{{ input_class }}">
+                                                                <input name="percentage" type="number" min="0" max="100" value="{{ entry.percentage }}" required class="bo-input">
                                                             </label>
                                                         {% endif %}
                                                     </div>
-                                                    {{ ui.emoji_picker(entry.emoji_source, entry.emoji_markup, emoji_picker, is_roles ? 'bg-camelia-gold/20' : 'bg-camelia-blush') }}
-                                                    <button type="submit" class="inline-flex min-h-10 items-center justify-center justify-self-start rounded-full bg-camelia-ink px-4 text-sm font-black text-white">Enregistrer</button>
+                                                    {{ ui.emoji_picker(entry.emoji_source, entry.emoji_markup, emoji_picker, is_roles ? 'gold' : 'blush') }}
+                                                    <button type="submit" class="bo-btn bo-btn--ink bo-btn--start">Enregistrer</button>
                                                 </form>
                                                 <form method="post" action="{{ path(delete_route, route_params) }}">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <button type="submit" class="text-sm font-black text-camelia-rose">Supprimer</button>
+                                                    <button type="submit" class="bo-link-danger">Supprimer</button>
                                                 </form>
                                             </article>
                                         {% else %}
-                                            <p class="border border-dashed border-camelia-ink/15 bg-white p-6 text-sm font-bold leading-relaxed text-camelia-muted">Aucune entrée.</p>
+                                            <p class="bo-empty bo-empty--white">Aucune entrée.</p>
                                         {% endfor %}
                                     </div>
                                 </section>
                             </div>
                         {% elseif active_section == 'stats' %}
-                            <div class="grid gap-7 xl:grid-cols-[minmax(20rem,28rem)_minmax(0,1fr)] xl:items-start" data-testid="template-catalog-layout">
-                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-create-panel">
-                                    <div class="border-b border-camelia-ink/10 p-6">
-                                        <h2 class="text-lg font-black">Ajouter une stat</h2>
+                            <div class="bo-columns bo-columns--side" data-testid="template-catalog-layout">
+                                <section class="bo-panel" data-testid="catalog-create-panel">
+                                    <div class="bo-panel-head">
+                                        <h2 class="bo-section-title">Ajouter une stat</h2>
                                     </div>
-                                    <form method="post" action="{{ path('app_catalog_template_stat_create', { templateId: template.id }) }}" class="grid gap-5 p-6">
+                                    <form method="post" action="{{ path('app_catalog_template_stat_create', { templateId: template.id }) }}" class="bo-panel-body bo-form">
                                         <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="grid gap-1 text-sm font-bold text-camelia-muted">
+                                        <label class="bo-field">
                                             Nom
-                                            <input name="name" required class="{{ input_class }}">
+                                            <input name="name" required class="bo-input">
                                         </label>
-                                        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60">Ajouter la stat</button>
+                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Ajouter la stat</button>
                                     </form>
                                 </section>
 
-                                <section class="grid gap-6 border border-camelia-ink/10 bg-camelia-ivory shadow-sm" data-testid="catalog-list-panel">
-                                    <div class="flex items-start justify-between gap-4 border-b border-camelia-ink/10 p-6">
-                                        <h2 class="text-lg font-black">Stats du modèle</h2>
-                                        <span class="inline-flex min-h-7 items-center rounded-full bg-camelia-gold/20 px-3 text-xs font-black text-[#7a5415]">{{ catalog.stats|length }} entrées</span>
+                                <section class="bo-panel" data-testid="catalog-list-panel">
+                                    <div class="bo-panel-head">
+                                        <h2 class="bo-section-title">Stats du modèle</h2>
+                                        <span class="bo-badge bo-badge--gold">{{ catalog.stats|length }} entrées</span>
                                     </div>
-                                    <div class="grid gap-4 p-6">
+                                    <div class="bo-panel-body bo-stack">
                                         {% for stat in catalog.stats %}
-                                            <article class="grid gap-4 border border-camelia-ink/10 bg-white p-5" data-testid="template-stat-card">
-                                                <form method="post" action="{{ path('app_catalog_template_stat_update', { templateId: template.id, statId: stat.id }) }}" class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                                            <article class="bo-card" data-testid="template-stat-card">
+                                                <form method="post" action="{{ path('app_catalog_template_stat_update', { templateId: template.id, statId: stat.id }) }}" class="bo-form-row bo-form-row--name-action">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <input name="name" value="{{ stat.name }}" required class="{{ input_class }}">
-                                                    <button type="submit" class="inline-flex min-h-10 items-center justify-center rounded-full bg-camelia-ink px-4 text-sm font-black text-white">Enregistrer</button>
+                                                    <input name="name" value="{{ stat.name }}" required class="bo-input">
+                                                    <button type="submit" class="bo-btn bo-btn--ink">Enregistrer</button>
                                                 </form>
                                                 <form method="post" action="{{ path('app_catalog_template_stat_delete', { templateId: template.id, statId: stat.id }) }}">
                                                     <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                                    <button type="submit" class="text-sm font-black text-camelia-rose">Supprimer</button>
+                                                    <button type="submit" class="bo-link-danger">Supprimer</button>
                                                 </form>
                                             </article>
                                         {% else %}
-                                            <p class="border border-dashed border-camelia-ink/15 bg-white p-6 text-sm font-bold leading-relaxed text-camelia-muted">Aucune stat.</p>
+                                            <p class="bo-empty bo-empty--white">Aucune stat.</p>
                                         {% endfor %}
                                     </div>
                                 </section>

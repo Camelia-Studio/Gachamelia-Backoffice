@@ -1,76 +1,25 @@
 <!doctype html>
-<html lang="fr" class="h-full scroll-smooth motion-reduce:scroll-auto">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}Gachamélia Backoffice{% endblock %}</title>
-    <meta name="description" content="{% block meta_description %}Backoffice Gachamélia pour piloter le bot gacha communautaire Discord.{% endblock %}">
-    <meta name="robots" content="{% block robots %}noindex, nofollow{% endblock %}">
-    <meta name="author" content="Camélia Studio">
-    <meta name="theme-color" content="#241813">
-    <link rel="icon" type="image/png" href="{{ asset('images/gachamelia-bot-avatar.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/gachamelia-bot-avatar.png') }}">
-    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
-    {% block stylesheets %}
-        {{ encore_entry_link_tags('app') }}
-    {% endblock %}
+<html lang="fr">
+    <head>
+        {% include 'partials/head_common.html.twig' %}
+        <title>{% block title %}Gachamélia - Bot gacha communautaire Discord{% endblock %}</title>
+        <meta name="description" content="{% block meta_description %}Gachamélia transforme les arrivées Discord en invocations gacha communautaires avec rareté, rôle, élément et fiche personnage.{% endblock %}">
+        <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+        {% block seo %}{% endblock %}
 
-    {% block javascripts %}
-        {{ encore_entry_script_tags('app') }}
-    {% endblock %}
+        {% block stylesheets %}
+        {% endblock %}
 
-    {% set frankenphpHotReload = app.request ? app.request.server.get('FRANKENPHP_HOT_RELOAD') : null %}
-    {% if frankenphpHotReload %}
-        <meta name="frankenphp-hot-reload:url" content="{{ frankenphpHotReload }}">
-        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
-        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
-    {% endif %}
-</head>
-<body class="min-h-full bg-camelia-cream font-sans text-camelia-ink antialiased [&_a[href]]:transition [&_a[href]:hover]:brightness-90 [&_button:not(:disabled)]:cursor-pointer [&_button:not(:disabled)]:transition [&_button:not(:disabled):hover]:brightness-90 [&_button:disabled]:cursor-not-allowed [&_input[type=checkbox]:not(:disabled)]:cursor-pointer [&_select:not(:disabled)]:cursor-pointer" data-turbo="false">
-    <div class="flex min-h-dvh flex-col bg-camelia-cream" data-testid="backoffice-layout">
-        <header class="sticky top-0 z-40 border-b border-camelia-ink/10 bg-camelia-ivory/92 backdrop-blur-xl" data-testid="backoffice-navbar">
-            <nav class="mx-auto flex min-h-18 w-full max-w-[90rem] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8" aria-label="Navigation backoffice">
-                <a href="{{ path('app_home') }}" class="flex min-w-0 items-center gap-3 rounded-full pr-2 text-camelia-ink transition hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60" data-testid="backoffice-brand">
-                    <img
-                        src="{{ asset('images/gachamelia-bot-avatar.png') }}"
-                        alt=""
-                        class="size-10 shrink-0 rounded-full object-cover shadow-sm"
-                    >
-                    <span class="min-w-0">
-                        <span class="block text-sm font-black leading-tight tracking-wide">Gachamélia</span>
-                        <span class="block text-xs font-bold leading-tight text-camelia-muted">Backoffice</span>
-                    </span>
-                </a>
+        {% block javascripts %}
+            {% block importmap %}
+                {{ importmap('app') }}
+            {% endblock %}
+        {% endblock %}
 
-                <div class="flex items-center gap-2">
-                    <a
-                        href="{{ path('app_home') }}"
-                        class="inline-flex min-h-10 items-center justify-center rounded-full border border-camelia-ink/10 bg-white px-4 text-sm font-black text-camelia-ink shadow-sm transition hover:border-camelia-rose/30 hover:text-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
-                        data-testid="backoffice-public-home-action"
-                    >
-                        Accueil public
-                    </a>
-                    {% block navbar_actions %}{% endblock %}
-                </div>
-            </nav>
-        </header>
+        {% include 'partials/hot_reload.html.twig' %}
+    </head>
 
-        <main class="mx-auto flex w-full max-w-[90rem] flex-1 flex-col px-4 py-10 sm:px-6 lg:px-8">
-            {% for message in app.flashes('error') %}
-                <div class="mb-6 border border-camelia-rose/30 bg-camelia-blush px-5 py-4 text-sm font-bold text-camelia-ink" data-testid="flash-error">
-                    {{ message }}
-                </div>
-            {% endfor %}
-            {% for message in app.flashes('success') %}
-                <div class="mb-6 border border-camelia-leaf/30 bg-camelia-leaf/10 px-5 py-4 text-sm font-bold text-camelia-ink" data-testid="flash-success">
-                    {{ message }}
-                </div>
-            {% endfor %}
-            {% block body %}{% endblock %}
-        </main>
-    </div>
-</body>
+    <body data-layout="landing">
+        {% block body %}{% endblock %}
+    </body>
 </html>

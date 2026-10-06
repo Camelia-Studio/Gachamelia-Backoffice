@@ -1,0 +1,66 @@
+{#
+ Sélecteur d'emoji (standard, bot, serveur) avec prévisualisation Discord.
+ À placer dans un <form data-emoji-picker data-emoji-picker-default="…"> : le comportement est géré par assets/emoji_picker.js.
+ `tone` colore la vignette de prévisualisation : 'gold' ou 'blush'.
+#}
+{% macro emoji_picker(default_source, default_value, picker, tone) %}
+    {% set groups = [
+        { id: 'standard', label: 'Standard', options: picker.standard },
+        { id: 'bot', label: 'Bot', options: picker.bot },
+        { id: 'server', label: 'Serveur', options: picker.server },
+    ] %}
+
+    <input type="hidden" name="emoji_source" value="{{ default_source }}" data-emoji-field="source">
+    <input type="hidden" name="emoji_value" value="{{ default_value }}" data-emoji-field="value">
+
+    <div class="bo-emoji-picker" data-testid="emoji-picker">
+        <label class="bo-field">
+            Rechercher un emoji
+            <input type="search" class="bo-input" placeholder="Nom de l’emoji" data-emoji-search>
+        </label>
+
+        <div class="bo-emoji-scroll">
+            {% for group in groups %}
+                <section class="bo-stack bo-stack--tight">
+                    <p class="bo-label bo-label--sm">{{ group.label }}</p>
+                    <div class="bo-emoji-grid">
+                        {% for option in group.options %}
+                            {% set test_id = option.discord_id ? 'emoji-picker-option-' ~ option.source ~ '-' ~ option.discord_id : 'emoji-picker-option-standard-' ~ loop.index %}
+                            <button
+                                type="button"
+                                class="bo-emoji-option"
+                                data-emoji-option
+                                data-emoji-source="{{ option.source }}"
+                                data-emoji-value="{{ option.value }}"
+                                data-emoji-name="{{ option.name }}"
+                                data-emoji-cdn-url="{{ option.cdn_url }}"
+                                data-testid="{{ test_id }}"
+                                title="{{ option.name }}"
+                            >
+                                {% if option.cdn_url %}
+                                    <img src="{{ option.cdn_url }}" alt="" class="bo-emoji bo-emoji--md" loading="lazy">
+                                {% else %}
+                                    <span class="bo-emoji-glyph">{{ option.markup }}</span>
+                                {% endif %}
+                                <span class="bo-emoji-name">{{ option.name }}</span>
+                            </button>
+                        {% else %}
+                            <span class="bo-empty bo-empty--inline">Aucun emoji en cache.</span>
+                        {% endfor %}
+                    </div>
+                </section>
+            {% endfor %}
+        </div>
+
+        <div class="bo-emoji-preview" data-testid="emoji-preview">
+            <span class="bo-emoji-preview-tile bo-emoji-preview-tile--{{ tone }}">
+                <img alt="" class="bo-emoji-preview-image hidden" data-emoji-image>
+                <span class="bo-emoji-preview-glyph" data-emoji-glyph>{{ default_value }}</span>
+            </span>
+            <div>
+                <strong>Prévisualisation Discord</strong>
+                <p class="bo-emoji-preview-status" data-emoji-status>Emoji sélectionné pour les fiches.</p>
+            </div>
+        </div>
+    </div>
+{% endmacro %}

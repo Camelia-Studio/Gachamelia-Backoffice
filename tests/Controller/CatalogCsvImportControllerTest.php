@@ -68,18 +68,15 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         $crawler = $client->request('GET', '/app/serveurs/guild/configuration/roles/csv');
 
         self::assertResponseIsSuccessful();
-        $bodyClasses = $crawler->filter('body')->attr('class') ?? '';
-        self::assertStringContainsString('[&_button:not(:disabled)]:cursor-pointer', $bodyClasses);
-        self::assertStringContainsString('[&_button:not(:disabled):hover]:brightness-90', $bodyClasses);
-        self::assertStringContainsString('[&_button:disabled]:cursor-not-allowed', $bodyClasses);
-        self::assertStringContainsString('[&_a[href]:hover]:brightness-90', $bodyClasses);
-        self::assertStringContainsString('[&_select:not(:disabled)]:cursor-pointer', $bodyClasses);
-        self::assertStringContainsString('[&_input[type=checkbox]:not(:disabled)]:cursor-pointer', $bodyClasses);
+        self::assertSelectorExists('body.bo');
 
         $fileClasses = $crawler->filter('input[type="file"][name="csv_file"]')->attr('class') ?? '';
-        self::assertStringContainsString('cursor-pointer', $fileClasses);
-        self::assertStringContainsString('file:cursor-pointer', $fileClasses);
-        self::assertStringContainsString('file:hover:bg-camelia-rose', $fileClasses);
+        self::assertStringContainsString('bo-input--file', $fileClasses);
+
+        $stylesheet = file_get_contents(\dirname(__DIR__, 2).'/assets/styles/backoffice.css');
+        self::assertIsString($stylesheet);
+        self::assertStringContainsString('.bo button:not(:disabled):hover', $stylesheet);
+        self::assertStringContainsString('.bo-input--file::file-selector-button', $stylesheet);
     }
 
     public function testInvalidFileShowsStructuredErrorsAndDoesNotWrite(): void

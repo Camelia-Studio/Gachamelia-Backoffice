@@ -9,7 +9,7 @@ use Symfony\Component\Yaml\Yaml;
 
 final class RuntimeFootprintTest extends TestCase
 {
-    public function testRuntimeKeepsDoctrineSymfonyUxAndApiSecurityButDropsUnusedBundles(): void
+    public function testRuntimeKeepsDoctrineAndApiSecurityButDropsUnusedBundles(): void
     {
         /** @var array<class-string, array<string, bool>> $bundles */
         $bundles = require \dirname(__DIR__, 2).'/config/bundles.php';
@@ -17,10 +17,11 @@ final class RuntimeFootprintTest extends TestCase
         self::assertArrayHasKey(\Doctrine\Bundle\DoctrineBundle\DoctrineBundle::class, $bundles);
         self::assertArrayHasKey(\Doctrine\Bundle\MigrationsBundle\DoctrineMigrationsBundle::class, $bundles);
         self::assertArrayHasKey(\Symfony\Bundle\SecurityBundle\SecurityBundle::class, $bundles);
-        self::assertArrayHasKey(\Symfony\UX\StimulusBundle\StimulusBundle::class, $bundles);
-        self::assertArrayHasKey(\Symfony\UX\Turbo\TurboBundle::class, $bundles);
 
         self::assertArrayNotHasKey('Twig\\Extra\\TwigExtraBundle', $bundles);
+        self::assertArrayNotHasKey('Symfony\\UX\\StimulusBundle\\StimulusBundle', $bundles);
+        self::assertArrayNotHasKey('Symfony\\UX\\Turbo\\TurboBundle', $bundles);
+        self::assertArrayNotHasKey('Symfony\\WebpackEncoreBundle\\WebpackEncoreBundle', $bundles);
     }
 
     public function testDoctrineDefaultsTargetMysql(): void

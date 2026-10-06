@@ -1,0 +1,8 @@
+/*
+ * Point d'entrée JavaScript du backoffice.
+ *
+ * Inclus via importmap('backoffice') dans base_backoffice.html.twig.
+ */
+import './styles/base.css';
+import './styles/backoffice.css';
+import './emoji_picker.js';
