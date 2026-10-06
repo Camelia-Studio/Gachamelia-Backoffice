@@ -410,9 +410,11 @@ body.has-open-menu {
     position: relative;
     z-index: 10;
     display: flex;
-    min-height: calc(100vh - 88px);
+    min-height: 100vh;
+    min-height: 100svh;
     align-items: flex-end;
-    padding: 0 1.5rem 4rem;
+    /* La navigation fixe garde son espace, même quand le contenu dépasse l'écran. */
+    padding: 6rem 1.5rem 4rem;
 }
 
 .lp-hero-inner {
@@ -822,7 +824,8 @@ body.has-open-menu {
     }
 
     .lp-hero-body {
-        padding: 0 3rem 6rem;
+        /* Le résumé flottant dispose aussi d'une zone réservée sous l'introduction. */
+        padding: 7rem 3rem 8rem;
     }
 
     .lp-hero-title {
