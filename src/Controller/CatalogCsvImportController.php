@@ -6,6 +6,8 @@ namespace App\Controller;
 
 use App\Backoffice\BackofficeAccess;
 use App\Backoffice\BackofficeSession;
+use App\Backoffice\CatalogBatchService;
+use App\Backoffice\CatalogBatchValidationException;
 use App\Backoffice\Csv\CatalogCsvDocument;
 use App\Backoffice\Csv\CatalogCsvDraftStore;
 use App\Backoffice\Csv\CatalogCsvImportService;
@@ -18,6 +20,7 @@ use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Entity\CatalogTemplate;
 use App\Entity\DiscordServer;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
@@ -271,6 +274,35 @@ final class CatalogCsvImportController extends AbstractController
             'Content-Disposition' => 'attachment; filename=catalogue-'.substr($section->exampleFilename(), 8),
             'Cache-Control' => 'private, no-store',
         ]);
+    }
+
+    #[Route('/app/serveurs/{guildId}/configuration/{section}/nouvelles-entrees', name: 'app_server_catalog_batch', requirements: ['section' => self::SECTION_REQUIREMENT], methods: ['POST'])]
+    public function serverBatch(string $guildId, string $section, Request $request, BackofficeSession $session, BackofficeAccess $access, EntityManagerInterface $entityManager, CatalogBatchService $batch, DiscordGuildResourcesProviderInterface $resources): Response
+    {
+        $target = $this->serverTarget($guildId, $session, $access, $entityManager, true);
+
+        return $this->batch('server', $target, $this->section($section), $request, $batch, $resources);
+    }
+
+    #[Route('/app/modeles-catalogue/{templateId}/configuration/{section}/nouvelles-entrees', name: 'app_catalog_template_batch', requirements: ['templateId' => '\\d+', 'section' => self::SECTION_REQUIREMENT], methods: ['POST'])]
+    public function templateBatch(string $templateId, string $section, Request $request, BackofficeSession $session, BackofficeAccess $access, EntityManagerInterface $entityManager, CatalogBatchService $batch, DiscordGuildResourcesProviderInterface $resources): Response
+    {
+        $target = $this->templateTarget($templateId, $session, $access, $entityManager);
+
+        return $this->batch('template', $target, $this->section($section), $request, $batch, $resources);
+    }
+
+    private function batch(string $targetType, DiscordServer|CatalogTemplate $target, CatalogCsvSection $section, Request $request, CatalogBatchService $batch, DiscordGuildResourcesProviderInterface $resources): Response
+    {
+        try {
+            $created = $batch->create($target, $section, array_values($request->request->all('rows')), array_column($this->discordRoles($target, $section, $resources, true), 'id'));
+        } catch (CatalogBatchValidationException $exception) {
+            return $this->json(['errors' => $this->translatedErrors($exception->errors)], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (UniqueConstraintViolationException) {
+            return $this->json(['errors' => [$this->error('Une entrée ou une clé existe déjà dans ce catalogue. Aucun ajout du lot n’a été enregistré. Vérifie les doublons et recharge les données avant de réessayer.')]], Response::HTTP_CONFLICT);
+        }
+
+        return $this->json(['created' => $created, 'url' => $this->routes($targetType, $target, $section, null)['back']]);
     }
 
     private function example(DiscordServer|CatalogTemplate $target, CatalogCsvSection $section, CatalogCsvExampleFactory $generator): Response
@@ -590,6 +622,13 @@ final class CatalogCsvImportController extends AbstractController
     private function translatedErrors(array $errors): array
     {
         $labels = [
+            'batch_size' => 'Saisis entre 1 et 100 nouvelles lignes par enregistrement.',
+            'invalid_value' => 'Cette valeur n’est pas valide. Corrige le champ indiqué.',
+            'entry_exists' => 'Cette entrée existe déjà. Modifie la ligne existante ou change la nouvelle valeur.',
+            'role_key_required' => 'Renseigne une clé de rôle de 1 à 255 caractères.',
+            'role_key_exists' => 'Cette clé de rôle est déjà utilisée. Choisis une autre clé.',
+            'discord_role_required' => 'Choisis un rôle Discord actuel et non géré par un bot.',
+            'discord_role_exists' => 'Ce rôle Discord est déjà relié à un rang. Choisis un autre rôle.',
             'unreadable_file' => 'Le fichier n’a pas pu être lu. Sélectionne-le à nouveau puis relance l’aperçu.',
             'header_too_long' => 'L’en-tête dépasse 8 192 caractères. Repars des colonnes de l’exemple.',
             'too_many_columns' => 'L’en-tête comporte trop de colonnes. Garde uniquement les colonnes de l’exemple.',

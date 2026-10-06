@@ -1,4 +1,5 @@
 {% set is_server = target_type == 'server' %}
+{% set batch_form_id = 'catalog-batch-form' %}
 {% set columns = {
     'ranks': {name: 'Nom', identity: is_server ? 'Rôle Discord' : 'Clé de rôle', percentage: '%', bye_title: 'Titre du message de départ', is_staff: 'Staff'},
     'role-stats': {role_name: 'Rôle', stat_name: 'Stat', percentage: '%'},
@@ -21,6 +22,17 @@
         <span class="bo-badge bo-badge--gold" data-catalog-count>{{ entries|length }} entrées</span>
     </div>
     <p class="bo-catalog-result" data-catalog-operation-status role="status" aria-live="polite" hidden></p>
+    {% if active_section in ['welcome-messages', 'bye-messages'] %}
+        <div class="bo-rank-default">
+            <label class="bo-field">Rang pour les prochains messages
+                <select class="bo-input" data-rank-choice="{{ target_type }}-{{ target_id }}" data-batch-rank-default aria-describedby="rank-choice-help">
+                    <option value="">Choisis un rang</option>
+                    {% for rank in catalog.ranks %}<option value="{{ rank.id }}">{{ rank.name }}</option>{% endfor %}
+                </select>
+            </label>
+            <p id="rank-choice-help" class="bo-muted">Le choix est mémorisé. Chaque ligne peut utiliser un autre rang.</p>
+        </div>
+    {% endif %}
     <form class="bo-catalog-filters" data-catalog-filters role="search" aria-label="Filtrer {{ page_title }}">
         {% for key, label in columns %}
             {% if key == 'percentage' %}
@@ -92,6 +104,24 @@
                 {% endfor %}
                 <tr data-catalog-no-match hidden><td colspan="{{ columns|length + 1 }}">Aucune entrée ne correspond. Modifie ou efface les filtres.</td></tr>
             </tbody>
+            {% if active_section != 'settings' %}
+                <tbody data-catalog-new-rows>
+                    <tr class="bo-new-rows-heading"><td colspan="{{ columns|length + 1 }}"><h3 class="bo-section-title">Nouvelles entrées</h3><p class="bo-muted">Prépare tes lignes, puis enregistre tout le lot. Une erreur bloque tous les ajouts.</p></td></tr>
+                    {% include 'backoffice/_catalog_new_row.html.twig' with { row_index: 0 } %}
+                </tbody>
+            {% endif %}
         </table>
     </div>
+    {% if active_section != 'settings' %}
+        <template data-catalog-new-row-template>{% include 'backoffice/_catalog_new_row.html.twig' with { row_index: '__index__' } %}</template>
+        <form id="{{ batch_form_id }}" method="post" action="{{ path(is_server ? 'app_server_catalog_batch' : 'app_catalog_template_batch', (is_server ? {guildId: target_id} : {templateId: target_id})|merge({section: active_section})) }}" class="bo-batch-toolbar" data-catalog-batch data-testid="catalog-create-panel" novalidate>
+            <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+            <p data-batch-status role="status" aria-live="polite" hidden></p>
+            <div class="bo-inline">
+                <button type="button" class="bo-btn bo-btn--outline" data-batch-add>Ajouter une ligne</button>
+                <button type="submit" class="bo-btn bo-btn--ink">Enregistrer les nouvelles entrées</button>
+                <span class="bo-muted" data-batch-count>1 ligne à enregistrer · 100 maximum</span>
+            </div>
+        </form>
+    {% endif %}
 </section>

@@ -137,6 +137,41 @@ final class CatalogCsvParser
         return new CatalogCsvDocument($rows, $errors);
     }
 
+    /**
+     * @param list<array<string, mixed>> $records
+     */
+    public function parseRows(array $records, CatalogCsvSection $section): CatalogCsvDocument
+    {
+        $rows = [];
+        $errors = [];
+        $keys = [];
+        $indexes = array_flip($section->headers());
+        foreach ($records as $index => $record) {
+            $line = $index + 1;
+            foreach ($record as $column => $value) {
+                if (!\is_string($value)) {
+                    $errors[] = ['line' => $line, 'column' => $column, 'message' => 'invalid_value', 'value' => null];
+                }
+            }
+            $cells = array_map(static fn (string $column): string => \is_string($record[$column] ?? null) ? $record[$column] : '', $section->headers());
+            [$values, $rowErrors] = $this->normalizeRecord($cells, $line, $indexes, $section);
+            $errors = [...$errors, ...$rowErrors];
+            $key = $section->naturalKey($values);
+            if (isset($keys[$key])) {
+                $errors[] = ['line' => $line, 'column' => $section->naturalKeyColumns()[0], 'message' => 'duplicate_natural_key', 'value' => null];
+            }
+            $keys[$key] = true;
+            foreach (['role_key', 'emoji_source'] as $extra) {
+                if (\is_string($record[$extra] ?? null)) {
+                    $values[$extra] = trim($record[$extra]);
+                }
+            }
+            $rows[] = ['line' => $line, 'key' => $key, 'values' => $values];
+        }
+
+        return new CatalogCsvDocument($rows, $errors);
+    }
+
     private function detectDelimiter(string $firstLine): string
     {
         return \count(str_getcsv($firstLine, ';', '"', '')) >= \count(str_getcsv($firstLine, ',', '"', ''))

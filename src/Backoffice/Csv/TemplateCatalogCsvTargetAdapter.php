@@ -59,8 +59,8 @@ final class TemplateCatalogCsvTargetAdapter extends AbstractCatalogCsvTargetAdap
         }
         $base = (new AsciiSlugger())->slug((string) $values['nom'])->lower()->toString();
         $base = '' === $base ? 'rang' : $base;
-        $roleKey = $base;
-        for ($suffix = 2; isset($usedKeys[$roleKey]); ++$suffix) {
+        $roleKey = isset($values['role_key']) ? (string) $values['role_key'] : $base;
+        for ($suffix = 2; !isset($values['role_key']) && isset($usedKeys[$roleKey]); ++$suffix) {
             $roleKey = \sprintf('%s-%d', $base, $suffix);
         }
 

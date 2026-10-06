@@ -3,6 +3,12 @@ import { initEmojiPickers } from './emoji_picker.js';
 import { initRankChoices } from './rank_choice.js';
 
 let busy = false;
+export function acquireCatalogMutation() {
+    if (busy) return false;
+    busy = true;
+    return true;
+}
+export function releaseCatalogMutation() { busy = false; }
 const cellValues = (row) => JSON.stringify(Array.from(row.querySelectorAll('td[data-column]')).map((cell) => cell.dataset.filterValue));
 
 export function refreshCatalogue(fresh, editedRow = null) {
@@ -48,8 +54,7 @@ document.addEventListener('submit', async (event) => {
     event.preventDefault();
     const panel = document.querySelector('[data-catalog-scope]');
     const feedback = panel.querySelector('[data-catalog-operation-status]');
-    if (busy) return;
-    busy = true;
+    if (!acquireCatalogMutation()) return;
     const scroll = { x: window.scrollX, y: window.scrollY, left: panel.querySelector('.bo-table-wrap').scrollLeft };
     feedback.hidden = false;
     feedback.classList.remove('bo-flash--error');
@@ -83,7 +88,7 @@ document.addEventListener('submit', async (event) => {
     } finally {
         buttons.forEach((button) => { button.disabled = false; });
         form.removeAttribute('aria-busy');
-        busy = false;
+        releaseCatalogMutation();
         requestAnimationFrame(() => {
             panel.querySelector('.bo-table-wrap').scrollLeft = scroll.left;
             window.scrollTo(scroll.x, scroll.y);

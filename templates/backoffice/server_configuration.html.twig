@@ -208,95 +208,11 @@
                             </div>
                         {% elseif active_section == 'ranks' %}
                             <div class="bo-columns bo-columns--side bo-catalog-layout">
-                                <section class="bo-panel" data-testid="catalog-create-panel">
-                                    <div class="bo-panel-head">
-                                        <div>
-                                            <h2 class="bo-section-title">Ajouter un rang</h2>
-                                            <p class="bo-panel-lead">Renseigne les infos minimales pour alimenter le bot.</p>
-                                        </div>
-                                    </div>
-                                    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_rank_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        {% if discord_resources.roles is empty %}
-                                            <p class="bo-notice bo-notice--rose">Rôles Discord temporairement indisponibles. L’ID reste éditable manuellement.</p>
-                                        {% endif %}
-                                        <label class="bo-field">
-                                            Rôle Discord
-                                            {% if discord_resources.roles is not empty %}
-                                                <select name="discord_id" required class="bo-input">
-                                                    <option value="">Choisis un rôle Discord</option>
-                                                    {% for role in discord_resources.roles %}
-                                                        <option value="{{ role.id }}">{{ role.label }}</option>
-                                                    {% endfor %}
-                                                </select>
-                                            {% else %}
-                                                <input name="discord_id" required inputmode="numeric" placeholder="ID du rôle Discord" class="bo-input">
-                                            {% endif %}
-                                        </label>
-                                        <label class="bo-field">
-                                            Nom
-                                            <input name="name" required class="bo-input">
-                                        </label>
-                                        <div class="bo-form-row bo-form-row--pct">
-                                            <label class="bo-field">
-                                                Titre du message de départ
-                                                <input name="bye_title" class="bo-input">
-                                            </label>
-                                            <label class="bo-field">
-                                                %
-                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="bo-input">
-                                            </label>
-                                        </div>
-                                        <label class="bo-check bo-check--box">
-                                            Rang staff prioritaire
-                                            <input name="is_staff" type="checkbox" value="1">
-                                        </label>
-                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Ajouter le rang</button>
-                                    </form>
-                                </section>
 
                                 {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'server', target_id: guild.id } %}
                             </div>
                         {% elseif active_section == 'role-stats' %}
                             <div class="bo-columns bo-columns--side bo-catalog-layout">
-                                <section class="bo-panel" data-testid="catalog-create-panel">
-                                    <div class="bo-panel-head">
-                                        <div>
-                                            <h2 class="bo-section-title">Lier une stat à un rôle</h2>
-                                            <p class="bo-panel-lead">Cette probabilité définit la distribution des caractéristiques de ce rôle.</p>
-                                        </div>
-                                    </div>
-                                    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_role_stat_upsert_dedicated', { guildId: guild.id }) }}" class="bo-panel-body bo-form">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="bo-field">
-                                            Rôle
-                                            <select name="role_id" required class="bo-input">
-                                                {% for role in catalog.roles %}
-                                                    <option value="{{ role.id }}">{{ role.name }}</option>
-                                                {% else %}
-                                                    <option value="">Ajoute un rôle d’abord</option>
-                                                {% endfor %}
-                                            </select>
-                                        </label>
-                                        <div class="bo-form-row bo-form-row--stat">
-                                            <label class="bo-field">
-                                                Stat
-                                                <select name="stat_id" required class="bo-input">
-                                                    {% for stat in catalog.stats %}
-                                                        <option value="{{ stat.id }}">{{ stat.name }}</option>
-                                                    {% else %}
-                                                        <option value="">Ajoute une stat d’abord</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </label>
-                                            <label class="bo-field">
-                                                %
-                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="bo-input">
-                                            </label>
-                                        </div>
-                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Enregistrer la probabilité</button>
-                                    </form>
-                                </section>
 
                                 {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'server', target_id: guild.id } %}
                             </div>
@@ -310,104 +226,21 @@
                             {% set list_title = is_welcome_messages ? 'Messages d’arrivée' : 'Messages de départ' %}
                             {% set submit_label = is_welcome_messages ? 'Ajouter le message d’arrivée' : 'Ajouter le message de départ' %}
                             <div class="bo-columns bo-columns--side bo-catalog-layout">
-                                <section class="bo-panel" data-testid="catalog-create-panel">
-                                    <div class="bo-panel-head">
-                                        <div>
-                                            <h2 class="bo-section-title">{{ create_title }}</h2>
-                                            <p class="bo-panel-lead">Le message reste rattaché au rang sélectionné et uniquement à ce serveur.</p>
-                                        </div>
-                                    </div>
-                                    <form data-catalog-mutation method="post" action="{{ path(create_route, { guildId: guild.id }) }}" class="bo-panel-body bo-form">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="bo-field">
-                                            Rang
-                                            <select name="rank_id" required class="bo-input" data-rank-choice="server-{{ guild.id }}" aria-describedby="rank-choice-help">
-                                                {% for rank in catalog.ranks %}
-                                                    <option value="{{ rank.id }}">{{ rank.name }}</option>
-                                                {% else %}
-                                                    <option value="">Ajoute un rang d’abord</option>
-                                                {% endfor %}
-                                            </select>
-                                        </label>
-                                        <p id="rank-choice-help" class="bo-muted">Le rang choisi sera repris pour les prochains messages de ce catalogue. Tu peux le changer à tout moment.</p>
-                                        <label class="bo-field">
-                                            Message
-                                            <textarea name="message" required maxlength="255" rows="5" class="bo-input bo-textarea bo-textarea--tall"></textarea>
-                                        </label>
-                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">{{ submit_label }}</button>
-                                    </form>
-                                </section>
 
                                 {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'server', target_id: guild.id } %}
                             </div>
                         {% elseif active_section == 'roles' %}
                             <div class="bo-columns bo-columns--side bo-catalog-layout">
-                                <section class="bo-panel" data-testid="catalog-create-panel">
-                                    <div class="bo-panel-head">
-                                        <div>
-                                            <h2 class="bo-section-title">Ajouter un rôle</h2>
-                                            <p class="bo-panel-lead">L’emoji sera affiché sur les fiches Discord et les tirages.</p>
-                                        </div>
-                                    </div>
-                                    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_role_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form" data-emoji-picker data-emoji-picker-default="🎭">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <div class="bo-form-row bo-form-row--pct">
-                                            <label class="bo-field">
-                                                Nom
-                                                <input name="name" required class="bo-input">
-                                            </label>
-                                            <label class="bo-field">
-                                                %
-                                                <input name="percentage" type="number" min="0" max="100" value="0" required class="bo-input">
-                                            </label>
-                                        </div>
-                                        {{ ui.emoji_picker('unicode', '🎭', emoji_picker, 'gold') }}
-                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Ajouter le rôle</button>
-                                    </form>
-                                </section>
 
                                 {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'server', target_id: guild.id } %}
                             </div>
                         {% elseif active_section == 'stats' %}
                             <div class="bo-columns bo-columns--side bo-catalog-layout">
-                                <section class="bo-panel" data-testid="catalog-create-panel">
-                                    <div class="bo-panel-head">
-                                        <div>
-                                            <h2 class="bo-section-title">Ajouter une stat</h2>
-                                            <p class="bo-panel-lead">Une stat est simplement un nom pour l’instant.</p>
-                                        </div>
-                                    </div>
-                                    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_stat_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="bo-field">
-                                            Nom
-                                            <input name="name" required class="bo-input">
-                                        </label>
-                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Ajouter la stat</button>
-                                    </form>
-                                </section>
 
                                 {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'server', target_id: guild.id } %}
                             </div>
                         {% elseif active_section == 'elements' %}
                             <div class="bo-columns bo-columns--side bo-catalog-layout">
-                                <section class="bo-panel" data-testid="catalog-create-panel">
-                                    <div class="bo-panel-head">
-                                        <div>
-                                            <h2 class="bo-section-title">Ajouter un élément</h2>
-                                            <p class="bo-panel-lead">L’emoji sera affiché dans les fiches Discord.</p>
-                                        </div>
-                                    </div>
-                                    <form data-catalog-mutation method="post" action="{{ path('app_server_catalog_element_create', { guildId: guild.id }) }}" class="bo-panel-body bo-form" data-emoji-picker data-emoji-picker-default="✨">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
-                                        <label class="bo-field">
-                                            Nom
-                                            <input name="name" required class="bo-input">
-                                        </label>
-                                        {{ ui.emoji_picker('unicode', '✨', emoji_picker, 'blush') }}
-                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Ajouter l’élément</button>
-                                    </form>
-                                </section>
 
                                 {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'server', target_id: guild.id } %}
                             </div>

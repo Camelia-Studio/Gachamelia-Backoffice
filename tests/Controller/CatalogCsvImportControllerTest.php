@@ -65,6 +65,34 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         self::assertStringNotContainsString('discord', strtolower($client->getResponse()->getContent()));
     }
 
+    public function testBatchEndpointsValidateEveryRowBeforeWritingAndRequireCsrf(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        [, , $template] = $this->seedAccess($client);
+        foreach (['/app/serveurs/guild', '/app/modeles-catalogue/'.$template->id()] as $base) {
+            $url = $base.'/configuration/stats/nouvelles-entrees';
+            $client->request('POST', $url, ['rows' => [['nom' => 'Force'], ['nom' => '']]]);
+            self::assertResponseStatusCodeSame(403);
+            $token = $this->csrfToken($client);
+            $client->request('POST', $url, ['_token' => $token, 'rows' => [['nom' => 'Force'], ['nom' => '']]]);
+            self::assertResponseStatusCodeSame(422);
+            $result = json_decode($client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+            self::assertSame(2, $result['errors'][0]['line']);
+            self::assertSame('nom', $result['errors'][0]['column']);
+            $table = str_contains($base, 'modeles') ? 'catalog_template_stats' : 'stats';
+            self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM '.$table));
+            $client->request('POST', $url, ['_token' => $token, 'rows' => [['nom' => 'Force'], ['nom' => 'Agilité']]]);
+            self::assertResponseIsSuccessful();
+            self::assertSame(['created' => 2, 'url' => $base.'/configuration/stats'], json_decode($client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR));
+            self::assertSame(2, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM '.$table));
+        }
+        $this->connection()->executeStatement("UPDATE discord_servers SET active = 0 WHERE discord_id = 'guild'");
+        $client->request('POST', '/app/serveurs/guild/configuration/stats/nouvelles-entrees', ['_token' => $this->csrfToken($client), 'rows' => [['nom' => 'Interdit']]]);
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame(0, (int) $this->connection()->fetchOne("SELECT COUNT(*) FROM stats WHERE name = 'Interdit'"));
+    }
+
     public function testPartialResponsesKeepAuthenticationAndCsrfGuards(): void
     {
         $client = self::createClient();
@@ -97,9 +125,9 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         foreach (['/app/serveurs/guild', '/app/modeles-catalogue/'.$template->id()] as $base) {
             $crawler = $client->request('GET', $base.'/configuration/welcome-messages');
             self::assertResponseIsSuccessful();
-            self::assertSame(['RANG 1', 'rang 2', 'Rang 10'], $crawler->filter('select[name="rank_id"] option:not([value=""])')->each(static fn ($node): string => $node->text()));
+            self::assertSame(['RANG 1', 'rang 2', 'Rang 10'], $crawler->filter('select[data-rank-choice] option:not([value=""])')->each(static fn ($node): string => $node->text()));
         }
-        self::assertSame([10, 20, 70], array_map('intval', $this->connection()->fetchFirstColumn('SELECT percentage FROM ranks ORDER BY percentage')));
+        self::assertSame([10, 20, 70], array_map(intval(...), $this->connection()->fetchFirstColumn('SELECT percentage FROM ranks ORDER BY percentage')));
     }
 
     public function testExportsOnlyCurrentTargetAndCanBeReimportedUnchanged(): void

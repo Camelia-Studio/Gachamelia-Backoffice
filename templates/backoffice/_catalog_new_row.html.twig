@@ -1,0 +1,38 @@
+{% import 'backoffice/_emoji_picker.html.twig' as ui %}
+{% set default_emoji = active_section == 'roles' ? '🎭' : '✨' %}
+<tr data-catalog-new-row {% if active_section in ['roles', 'elements'] %}data-emoji-picker data-emoji-picker-default="{{ default_emoji }}"{% endif %}>
+    {% for key, label in columns %}
+        {% set field = {name: 'nom', identity: is_server ? 'discord_id' : 'role_key', percentage: 'pourcentage', bye_title: 'titre_depart', is_staff: 'est_staff', rank_name: 'rang', role_name: 'role', stat_name: 'stat', message: 'message'}[key]|default(null) %}
+        <td>
+            {% if key == 'identity' and is_server %}
+                <select aria-label="Rôle Discord de la nouvelle ligne" class="bo-input" name="rows[{{ row_index }}][discord_id]" data-row-field="discord_id" form="{{ batch_form_id }}" required>
+                    <option value="">Choisis un rôle</option>
+                    {% for role in discord_resources.roles %}<option value="{{ role.id }}">{{ role.label }}</option>{% endfor %}
+                </select>
+            {% elseif key in ['rank_name', 'role_name', 'stat_name'] %}
+                {% set options = key == 'rank_name' ? catalog.ranks : (key == 'role_name' ? catalog.roles : catalog.stats) %}
+                <select aria-label="{{ label }} de la nouvelle ligne" class="bo-input" name="rows[{{ row_index }}][{{ field }}]" data-row-field="{{ field }}" form="{{ batch_form_id }}" required>
+                    <option value="">Choisis {{ key == 'stat_name' ? 'une stat' : (key == 'role_name' ? 'un rôle' : 'un rang') }}</option>
+                    {% for option in options %}<option value="{{ option.name }}">{{ option.name }}</option>{% endfor %}
+                </select>
+            {% elseif key == 'is_staff' %}
+                <input aria-label="Rang staff de la nouvelle ligne" type="checkbox" name="rows[{{ row_index }}][{{ field }}]" data-row-field="{{ field }}" value="oui" form="{{ batch_form_id }}">
+            {% elseif key == 'message' %}
+                <textarea aria-label="Message de la nouvelle ligne" class="bo-input bo-textarea" name="rows[{{ row_index }}][{{ field }}]" data-row-field="{{ field }}" rows="3" maxlength="255" form="{{ batch_form_id }}" required></textarea>
+            {% elseif key == 'emoji_markup' %}
+                <details class="bo-new-emoji"><summary class="bo-btn bo-btn--outline"><span data-batch-emoji-label>{{ default_emoji }}</span> Choisir l’emoji</summary>
+                    {{ ui.emoji_picker('unicode', default_emoji, emoji_picker, active_section == 'roles' ? 'gold' : 'blush', 'rows[' ~ row_index ~ ']', batch_form_id) }}
+                </details>
+            {% elseif key == 'emoji_source_label' %}
+                <span class="bo-muted" data-batch-emoji-source>Standard</span>
+            {% else %}
+                <input aria-label="{{ label }} de la nouvelle ligne" class="bo-input" name="rows[{{ row_index }}][{{ field }}]" data-row-field="{{ field }}" form="{{ batch_form_id }}" {% if key == 'percentage' %}type="number" min="0" max="100" value="0"{% else %}maxlength="255"{% endif %} {% if key != 'bye_title' %}required{% endif %}>
+            {% endif %}
+        </td>
+    {% endfor %}
+    <td class="bo-new-row-actions">
+        <span class="bo-muted" data-batch-row-label>Ligne {{ row_index == '__index__' ? '' : row_index + 1 }}</span>
+        <button type="button" class="bo-btn bo-btn--outline" data-batch-remove>Retirer la ligne</button>
+        <p class="bo-batch-error" data-batch-error role="alert" hidden></p>
+    </td>
+</tr>

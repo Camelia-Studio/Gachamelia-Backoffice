@@ -2207,3 +2207,31 @@
 .bo-config-main {
     overflow-anchor: none;
 }
+
+.bo-rank-default {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    max-width: 32rem;
+}
+
+.bo-new-rows-heading td {
+    padding-top: 2rem;
+    border-top: 2px solid var(--ink);
+}
+
+.bo-new-rows-heading h3 { margin-bottom: 0.5rem; }
+[data-catalog-new-row] { background: var(--cream); }
+[data-catalog-new-row] td { vertical-align: top; }
+[data-catalog-new-row] .bo-input { min-width: 9rem; }
+[data-catalog-new-row] textarea { min-width: 20rem; }
+[data-row-field="pourcentage"] { min-width: 5rem !important; width: 5rem; }
+.bo-new-row-actions { min-width: 13rem; }
+.bo-new-row-actions > * { margin-bottom: 0.5rem; }
+.bo-new-emoji { min-width: 12rem; }
+.bo-new-emoji[open] { min-width: 22rem; }
+.bo-new-emoji .bo-emoji-picker { margin-top: 1rem; }
+.bo-batch-toolbar { display: grid; gap: 1rem; padding: 1.5rem; }
+.bo-batch-error { color: var(--rose); font-size: 0.875rem; max-width: 65ch; }
+[data-row-field][aria-invalid="true"] { border-color: var(--rose); }
+.bo-btn:disabled { opacity: 0.55; }
