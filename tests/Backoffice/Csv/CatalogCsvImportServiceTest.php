@@ -51,6 +51,23 @@ final class CatalogCsvImportServiceTest extends KernelTestCase
         );
     }
 
+    public function testExportReimportPreservesCustomEmojiWhenOtherFieldsChange(): void
+    {
+        $server = new DiscordServer('export-guild', 'Export');
+        $role = new CharacterRole($server, 'Oracle', 100, 'bot', null, '12345678901234567', 'oracle', true);
+        $this->entityManager->persist($server);
+        $this->entityManager->persist($role);
+        $this->entityManager->flush();
+        $rows = $this->service->rows($server, CatalogCsvSection::Roles);
+        self::assertSame('<a:oracle:12345678901234567>', $rows[0]['emoji']);
+        $rows[0]['nom'] = 'ORACLE';
+        $this->apply($server, CatalogCsvSection::Roles, $rows);
+        self::assertSame('bot', $role->emojiSource());
+        self::assertSame('12345678901234567', $role->emojiId());
+        self::assertTrue($role->emojiAnimated());
+        self::assertNull($role->emojiUnicode());
+    }
+
     public function testExamplesUseExistingReferencesAndValidTotals(): void
     {
         $server = new DiscordServer('sample-guild', 'Exemples');

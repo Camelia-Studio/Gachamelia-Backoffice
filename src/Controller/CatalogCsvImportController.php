@@ -13,6 +13,7 @@ use App\Backoffice\Csv\CatalogCsvParser;
 use App\Backoffice\Csv\CatalogCsvPreview;
 use App\Backoffice\Csv\CatalogCsvExampleFactory;
 use App\Backoffice\Csv\CatalogCsvSection;
+use App\Backoffice\Csv\CatalogCsvSampleGenerator;
 use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Entity\CatalogTemplate;
 use App\Entity\DiscordServer;
@@ -242,6 +243,34 @@ final class CatalogCsvImportController extends AbstractController
             $draftStore,
             $resourcesProvider,
         );
+    }
+
+    #[Route('/app/serveurs/{guildId}/configuration/{section}/csv/exporter', name: 'app_server_catalog_csv_export', requirements: ['section' => self::SECTION_REQUIREMENT], methods: ['GET'])]
+    public function serverExport(string $guildId, string $section, BackofficeSession $session, BackofficeAccess $access, EntityManagerInterface $entityManager, CatalogCsvImportService $catalogue, CatalogCsvSampleGenerator $writer): Response
+    {
+        if (!$session->isAuthenticated()) {
+            return $this->redirectToRoute('app_discord_login');
+        }
+        $target = $this->serverTarget($guildId, $session, $access, $entityManager, false);
+
+        return $this->export($target, $this->section($section), $catalogue, $writer);
+    }
+
+    #[Route('/app/modeles-catalogue/{templateId}/configuration/{section}/csv/exporter', name: 'app_catalog_template_csv_export', requirements: ['templateId' => '\\d+', 'section' => self::SECTION_REQUIREMENT], methods: ['GET'])]
+    public function templateExport(string $templateId, string $section, BackofficeSession $session, BackofficeAccess $access, EntityManagerInterface $entityManager, CatalogCsvImportService $catalogue, CatalogCsvSampleGenerator $writer): Response
+    {
+        $target = $this->templateTarget($templateId, $session, $access, $entityManager);
+
+        return $this->export($target, $this->section($section), $catalogue, $writer);
+    }
+
+    private function export(DiscordServer|CatalogTemplate $target, CatalogCsvSection $section, CatalogCsvImportService $catalogue, CatalogCsvSampleGenerator $writer): Response
+    {
+        return new Response($writer->generate($section, $catalogue->rows($target, $section)), headers: [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename=catalogue-'.substr($section->exampleFilename(), 8),
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     private function example(DiscordServer|CatalogTemplate $target, CatalogCsvSection $section, CatalogCsvExampleFactory $generator): Response

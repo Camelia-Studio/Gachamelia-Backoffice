@@ -33,7 +33,7 @@
                 <a href="{{ routes.example }}" class="bo-btn bo-btn--outline">Télécharger l’exemple</a>
             </div>
             <p class="bo-panel-lead">Colonnes : {{ section.headers|join(' ; ') }}. Obligatoires : {{ section.requiredHeaders|join(', ') }}. Garde la première ligne d’en-tête ; les pourcentages sont des entiers sans « % ».</p>
-            <p class="bo-panel-lead">L’exemple reprend les noms déjà présents et propose des totaux de 100 %. Les emojis acceptent les caractères Unicode. Les textes contenant un séparateur doivent être entourés de guillemets.</p>
+            <p class="bo-panel-lead">L’exemple reprend les noms déjà présents et propose des totaux de 100 %. Les emojis acceptent les caractères Unicode et le format Discord « &lt;:nom:id&gt; » (ou « &lt;a:nom:id&gt; » pour un emoji animé). Les textes contenant un séparateur doivent être entourés de guillemets.</p>
             {% if section.value in ['welcome-messages', 'bye-messages'] %}
                 <p class="bo-panel-lead">Crée les rangs avant les messages. Sans rang, l’exemple contient uniquement l’en-tête. Pour de nouveaux rangs de serveur, l’import demande ensuite de choisir les rôles Discord.</p>
             {% elseif section.value == 'role-stats' %}

@@ -6,6 +6,8 @@ namespace App\Tests\Controller;
 
 use App\Discord\DiscordGuildResourcesProviderInterface;
 use App\Entity\CatalogTemplate;
+use App\Entity\Stat;
+use App\Entity\CatalogTemplateStat;
 use App\Entity\DiscordServer;
 use App\Entity\DiscordServerMember;
 use App\Entity\DiscordUser;
@@ -57,6 +59,32 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         self::assertSame('attachment; filename=exemple-rangs.csv', $client->getResponse()->headers->get('Content-Disposition'));
         self::assertStringStartsWith("\xEF\xBB\xBFnom;pourcentage;titre_depart;est_staff\n", $client->getResponse()->getContent());
         self::assertStringNotContainsString('discord', strtolower($client->getResponse()->getContent()));
+    }
+
+    public function testExportsOnlyCurrentTargetAndCanBeReimportedUnchanged(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        [, $server, $template] = $this->seedAccess($client);
+        $this->entityManager->persist(new Stat($server, 'Force; physique'));
+        $this->entityManager->persist(new CatalogTemplateStat($template, 'Agilité'));
+        $this->entityManager->flush();
+        foreach (['/app/serveurs/guild' => 'Force; physique', '/app/modeles-catalogue/'.$template->id() => 'Agilité'] as $base => $name) {
+            $client->request('GET', $base.'/configuration/stats/csv/exporter');
+            self::assertResponseIsSuccessful();
+            self::assertSame('attachment; filename=catalogue-stats.csv', $client->getResponse()->headers->get('Content-Disposition'));
+            $csv = $client->getResponse()->getContent();
+            self::assertIsString($csv);
+            self::assertStringContainsString($name, $csv);
+            self::assertStringNotContainsString('Force; physique' === $name ? 'Agilité' : 'Force; physique', $csv);
+            $this->upload($client, $base.'/configuration/stats/csv/apercu', $csv);
+            self::assertResponseIsSuccessful();
+            self::assertSelectorExists('[data-testid="catalog-csv-operation"][data-action="unchanged"]');
+        }
+        $server->deactivate();
+        $this->entityManager->flush();
+        $client->request('GET', '/app/serveurs/guild/configuration/stats/csv/exporter');
+        self::assertResponseIsSuccessful();
     }
 
     public function testEveryDownloadedExampleCanBePreviewedUnchangedOnAnEmptyCatalogue(): void
