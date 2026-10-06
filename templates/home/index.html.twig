@@ -1,17 +1,7 @@
-<!doctype html>
-<html lang="fr" class="scroll-smooth motion-reduce:scroll-auto">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Gachamélia - Bot gacha communautaire Discord</title>
-    <meta name="description" content="Gachamélia transforme les arrivées Discord en invocations gacha communautaires avec rareté, rôle, élément et fiche personnage.">
-    <meta name="robots" content="index, follow">
-    <meta name="author" content="Camélia Studio">
-    <meta name="theme-color" content="#241813">
+{% extends 'base.html.twig' %}
+
+{% block seo %}
     <link rel="canonical" href="{{ absolute_url(path('app_home')) }}">
-    <link rel="icon" type="image/png" href="{{ asset('images/gachamelia-bot-avatar.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/gachamelia-bot-avatar.png') }}">
-    <link rel="manifest" href="{{ asset('site.webmanifest') }}">
     <meta property="og:locale" content="fr_FR">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Gachamélia">
@@ -45,324 +35,247 @@
         'downloadUrl': 'https://git.crystalyx.net/camelia-studio/Gachamelia/wiki'
     } %}
     <script type="application/ld+json">{{ structuredData|json_encode(320)|raw }}</script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,800&display=swap" rel="stylesheet">
-    {{ encore_entry_link_tags('app') }}
-    {{ encore_entry_script_tags('app') }}
+{% endblock %}
 
-    {% set frankenphpHotReload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
-    {% if frankenphpHotReload %}
-        <meta name="frankenphp-hot-reload:url" content="{{ frankenphpHotReload }}">
-        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
-        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
-    {% endif %}
-</head>
-<body class="bg-camelia-cream font-sans text-camelia-ink antialiased" data-layout="landing" data-turbo="false">
+{% block body %}
     {% set heroImage = asset('images/gachamelia-hero.jpg') %}
     {% set botAvatarImage = asset('images/gachamelia-bot-avatar.png') %}
     {% set installUrl = 'https://git.crystalyx.net/camelia-studio/Gachamelia/wiki' %}
     {% set repositoryUrl = 'https://git.crystalyx.net/camelia-studio/Gachamelia' %}
     {% set discordUrl = 'https://discord.gg/nBuZ9vJ' %}
 
-    <main class="overflow-hidden bg-camelia-cream">
-        <section class="relative min-h-screen overflow-hidden text-white">
+    <main>
+        <section class="lp-hero">
             <img
                 src="{{ heroImage }}"
                 alt="Illustration de l'univers Camélia Studio dans une bibliothèque chaleureuse"
-                class="absolute inset-0 size-full object-cover object-[60%_center]"
+                class="lp-hero-image"
                 data-testid="hero-visual"
             >
-            <div class="absolute inset-0 bg-linear-to-r from-camelia-ink/90 via-camelia-ink/55 to-camelia-ink/10"></div>
-            <div class="absolute inset-0 bg-linear-to-b from-camelia-ink/20 via-transparent to-camelia-ink/70"></div>
+            <div class="lp-hero-shade lp-hero-shade--x"></div>
+            <div class="lp-hero-shade lp-hero-shade--y"></div>
 
-            <nav
-                class="fixed inset-x-4 top-4 z-50 flex items-center justify-between gap-3 text-camelia-ink md:inset-x-8 md:top-5 xl:inset-x-18"
-                data-controller="mobile-menu"
-                data-action="keydown.esc@window->mobile-menu#close"
-            >
-                <a href="#" class="flex items-center gap-3 rounded-full border border-white/60 bg-white/88 py-2 pr-4 pl-2 text-sm font-extrabold tracking-wide text-camelia-ink shadow-xl shadow-camelia-ink/10 backdrop-blur-xl transition hover:bg-white">
-                    <img
-                        src="{{ botAvatarImage }}"
-                        alt=""
-                        class="size-8 rounded-full object-cover"
-                    >
+            <nav class="lp-nav" data-mobile-menu>
+                <a href="#" class="lp-brand lp-glass">
+                    <img src="{{ botAvatarImage }}" alt="">
                     <span>Gachamélia</span>
                 </a>
 
-                <div class="hidden items-center gap-1 rounded-full border border-white/60 bg-white/86 p-1 text-sm font-extrabold text-camelia-ink shadow-xl shadow-camelia-ink/10 backdrop-blur-xl lg:flex">
-                    <a href="#bot" class="rounded-full px-4 py-2 transition hover:bg-camelia-blush hover:text-camelia-rose" data-action="mobile-menu#navigate">Le projet</a>
-                    <a href="#fiche" class="rounded-full px-4 py-2 transition hover:bg-camelia-blush hover:text-camelia-rose" data-action="mobile-menu#navigate">La fiche</a>
-                    <a href="#espaces" class="rounded-full px-4 py-2 transition hover:bg-camelia-blush hover:text-camelia-rose" data-action="mobile-menu#navigate">L’équipe</a>
-                    <a href="{{ repositoryUrl }}" class="rounded-full px-4 py-2 transition hover:bg-camelia-blush hover:text-camelia-rose" target="_blank" rel="noopener noreferrer">Gitea</a>
-                    <a href="{{ discordUrl }}" class="rounded-full px-4 py-2 transition hover:bg-camelia-blush hover:text-camelia-rose" target="_blank" rel="noopener noreferrer">Discord</a>
+                <div class="lp-nav-links lp-glass">
+                    <a href="#bot" data-mobile-menu-link>Le projet</a>
+                    <a href="#fiche" data-mobile-menu-link>La fiche</a>
+                    <a href="#espaces" data-mobile-menu-link>L’équipe</a>
+                    <a href="{{ repositoryUrl }}" target="_blank" rel="noopener noreferrer">Gitea</a>
+                    <a href="{{ discordUrl }}" target="_blank" rel="noopener noreferrer">Discord</a>
                 </div>
 
-                <div class="hidden items-center gap-2 md:flex">
-                    <a
-                        href="{{ path('app_dashboard') }}"
-                        class="inline-flex min-h-11 items-center justify-center rounded-full border border-camelia-ink/10 bg-camelia-ink px-5 text-sm font-black text-white shadow-xl shadow-camelia-ink/10 transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
-                        data-testid="landing-backoffice-link"
-                    >
+                <div class="lp-nav-actions">
+                    <a href="{{ path('app_dashboard') }}" class="lp-btn lp-btn--nav lp-btn--dark" data-testid="landing-backoffice-link">
                         Backoffice
                     </a>
-                    <a
-                        href="{{ installUrl }}"
-                        class="inline-flex min-h-11 items-center justify-center rounded-full border border-white/60 bg-white/88 px-5 text-sm font-black text-camelia-rose shadow-xl shadow-camelia-ink/10 backdrop-blur-xl transition hover:bg-camelia-blush focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
+                    <a href="{{ installUrl }}" class="lp-btn lp-btn--nav lp-btn--glass" target="_blank" rel="noopener noreferrer">
                         Ajouter à mon serveur
                     </a>
                 </div>
 
                 <button
                     type="button"
-                    class="inline-flex size-11 items-center justify-center rounded-full border border-white/60 bg-white/88 text-camelia-ink shadow-xl shadow-camelia-ink/10 backdrop-blur-xl transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60 md:hidden"
+                    class="lp-burger lp-glass"
                     aria-controls="mobile-menu"
                     aria-expanded="false"
-                    data-mobile-menu-target="button"
-                    data-action="mobile-menu#open"
+                    data-mobile-menu-toggle
                 >
                     <span class="sr-only">Ouvrir le menu</span>
-                    <span class="flex w-5 flex-col gap-1.5" aria-hidden="true">
-                        <span class="h-0.5 rounded-full bg-current"></span>
-                        <span class="h-0.5 rounded-full bg-current"></span>
+                    <span class="lp-burger-lines" aria-hidden="true">
+                        <span></span>
+                        <span></span>
                     </span>
                 </button>
 
-                <div
-                    class="pointer-events-none fixed inset-0 z-40 bg-camelia-ink/65 opacity-0 backdrop-blur-sm transition-opacity duration-300 md:hidden"
-                    aria-hidden="true"
-                    data-mobile-menu-target="backdrop"
-                    data-action="mobile-menu#close"
-                ></div>
+                <div class="lp-backdrop" aria-hidden="true" data-mobile-menu-backdrop></div>
 
-                <aside
-                    id="mobile-menu"
-                    class="fixed top-0 right-0 z-50 flex h-dvh w-[min(22rem,calc(100vw-1.5rem))] translate-x-full flex-col overflow-y-auto rounded-l-4xl bg-camelia-ivory p-6 text-camelia-ink shadow-2xl transition-transform duration-300 ease-out md:hidden"
-                    aria-hidden="true"
-                    inert
-                    data-mobile-menu-target="panel"
-                >
-                    <div class="flex items-center justify-between gap-4">
-                        <a href="#" class="flex items-center gap-3 text-sm font-extrabold" data-action="mobile-menu#close">
-                            <img
-                                src="{{ botAvatarImage }}"
-                                alt=""
-                                class="size-9 rounded-full object-cover"
-                            >
+                <aside id="mobile-menu" class="lp-drawer" aria-hidden="true" inert data-mobile-menu-panel>
+                    <div class="lp-drawer-head">
+                        <a href="#" class="lp-drawer-brand" data-mobile-menu-close>
+                            <img src="{{ botAvatarImage }}" alt="">
                             <span>Gachamélia</span>
                         </a>
-                        <button
-                            type="button"
-                            class="inline-flex size-11 items-center justify-center rounded-full bg-camelia-ink text-white transition hover:bg-camelia-rose focus:outline-none focus-visible:ring-2 focus-visible:ring-camelia-rose/60"
-                            data-action="mobile-menu#close"
-                        >
+                        <button type="button" class="lp-drawer-close" data-mobile-menu-close>
                             <span class="sr-only">Fermer le menu</span>
-                            <span class="text-2xl leading-none" aria-hidden="true">×</span>
+                            <span aria-hidden="true">×</span>
                         </button>
                     </div>
 
-                    <div class="mt-12 flex flex-col gap-2">
-                        <a href="#bot" class="rounded-3xl bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" data-action="mobile-menu#navigate">
-                            Le rituel
-                        </a>
-                        <a href="#fiche" class="rounded-3xl bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" data-action="mobile-menu#navigate">
-                            La fiche
-                        </a>
-                        <a href="#espaces" class="rounded-3xl bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" data-action="mobile-menu#navigate">
-                            La collection
-                        </a>
-                        <a href="{{ path('app_dashboard') }}" class="rounded-3xl bg-camelia-ink px-5 py-4 font-display text-3xl leading-none text-white shadow-sm transition hover:bg-camelia-rose" data-testid="landing-backoffice-link">
-                            Backoffice
-                        </a>
-                        <a href="{{ installUrl }}" class="rounded-3xl bg-camelia-rose px-5 py-4 font-display text-3xl leading-none text-white shadow-sm transition hover:bg-camelia-ink" target="_blank" rel="noopener noreferrer">
-                            Ajouter
-                        </a>
-                        <a href="{{ repositoryUrl }}" class="rounded-3xl bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" target="_blank" rel="noopener noreferrer">
-                            Gitea
-                        </a>
-                        <a href="{{ discordUrl }}" class="rounded-3xl bg-white px-5 py-4 font-display text-3xl leading-none shadow-sm transition hover:bg-camelia-blush" target="_blank" rel="noopener noreferrer">
-                            Discord
-                        </a>
+                    <div class="lp-drawer-links">
+                        <a href="#bot" class="lp-drawer-link" data-mobile-menu-link>Le rituel</a>
+                        <a href="#fiche" class="lp-drawer-link" data-mobile-menu-link>La fiche</a>
+                        <a href="#espaces" class="lp-drawer-link" data-mobile-menu-link>La collection</a>
+                        <a href="{{ path('app_dashboard') }}" class="lp-drawer-link lp-drawer-link--ink" data-testid="landing-backoffice-link">Backoffice</a>
+                        <a href="{{ installUrl }}" class="lp-drawer-link lp-drawer-link--rose" target="_blank" rel="noopener noreferrer">Ajouter</a>
+                        <a href="{{ repositoryUrl }}" class="lp-drawer-link" target="_blank" rel="noopener noreferrer">Gitea</a>
+                        <a href="{{ discordUrl }}" class="lp-drawer-link" target="_blank" rel="noopener noreferrer">Discord</a>
                     </div>
 
-                    <div class="mt-auto rounded-[1.75rem] bg-camelia-ink p-5 text-white">
-                        <p class="text-xs font-black tracking-[0.18em] text-camelia-blush uppercase">Invocation</p>
-                        <p class="mt-4 font-display text-4xl leading-none">1★ à 5★</p>
-                        <p class="mt-3 text-sm leading-6 text-white/72">
+                    <div class="lp-drawer-note">
+                        <p class="lp-eyebrow">Invocation</p>
+                        <p class="lp-drawer-note-title">1★ à 5★</p>
+                        <p class="lp-drawer-note-text">
                             Rareté, rôle, élément : le tirage pose la première page du personnage.
                         </p>
                     </div>
                 </aside>
             </nav>
 
-            <div class="relative z-10 flex min-h-[calc(100vh-88px)] items-end px-6 pb-16 md:px-12 md:pb-24 xl:px-18">
-                <div class="max-w-5xl">
-                    <p class="mb-6 inline-flex border-b-2 border-camelia-pink pb-2 text-xs font-black uppercase tracking-[0.18em] text-white/80">
-                        Bot gacha communautaire
-                    </p>
-                    <h1 class="max-w-5xl font-display text-6xl leading-[0.86] tracking-normal text-white sm:text-7xl md:text-8xl xl:text-[9.25rem]">
-                        Chaque arrivée devient une <span class="italic text-camelia-blush">invocation</span>.
+            <div class="lp-hero-body">
+                <div class="lp-hero-inner">
+                    <p class="lp-eyebrow lp-eyebrow--underlined">Bot gacha communautaire</p>
+                    <h1 class="lp-hero-title">
+                        Chaque arrivée devient une <em>invocation</em>.
                     </h1>
-                    <div class="mt-8 max-w-2xl">
-                        <p class="max-w-2xl text-lg leading-8 text-white/82 md:text-2xl">
+                    <div class="lp-hero-copy">
+                        <p>
                             Sur Discord, Gachamélia transforme un nouveau membre en personnage
                             de l’univers Camélia : une rareté, un rôle, un élément, puis une fiche
                             que la communauté peut retrouver.
                         </p>
-                        <div class="mt-6 flex flex-wrap gap-3" data-testid="hero-actions">
-                            <a
-                                href="#bot"
-                                class="inline-flex min-h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-black text-camelia-rose shadow-xl shadow-camelia-ink/15 transition hover:bg-camelia-blush"
-                            >
-                                Découvrir le projet
-                            </a>
+                        <div class="lp-hero-actions" data-testid="hero-actions">
+                            <a href="#bot" class="lp-btn lp-btn--white">Découvrir le projet</a>
                         </div>
                     </div>
-                    <div class="mt-10 grid grid-cols-2 gap-2 rounded-[1.75rem] border border-white/20 bg-camelia-ink/45 p-2 text-camelia-ink shadow-2xl backdrop-blur-xl md:hidden">
-                        <span class="min-w-0 rounded-[1.25rem] bg-white/94 px-3 py-3 shadow-sm">
-                            <small class="block text-[0.62rem] font-black tracking-[0.14em] text-camelia-rose uppercase">Rareté</small>
-                            <b class="mt-1 block text-sm leading-tight break-words">1★ à 5★</b>
+                    <div class="lp-summary lp-summary--mobile">
+                        <span class="lp-stat">
+                            <small class="lp-stat-label">Rareté</small>
+                            <b class="lp-stat-value">1★ à 5★</b>
                         </span>
-                        <span class="min-w-0 rounded-[1.25rem] bg-camelia-blush px-3 py-3 shadow-sm">
-                            <small class="block text-[0.62rem] font-black tracking-[0.14em] text-camelia-rose uppercase">Rôle</small>
-                            <b class="mt-1 block text-sm leading-tight break-words">{{ gachaRole.value }}</b>
+                        <span class="lp-stat lp-stat--blush">
+                            <small class="lp-stat-label">Rôle</small>
+                            <b class="lp-stat-value">{{ gachaRole.value }}</b>
                         </span>
-                        <span class="min-w-0 rounded-[1.25rem] bg-white/94 px-3 py-3 shadow-sm">
-                            <small class="block text-[0.62rem] font-black tracking-[0.14em] text-camelia-rose uppercase">Élément</small>
-                            <b class="mt-1 block text-sm leading-tight break-words">{{ gachaElement.value }}</b>
+                        <span class="lp-stat">
+                            <small class="lp-stat-label">Élément</small>
+                            <b class="lp-stat-value">{{ gachaElement.value }}</b>
                         </span>
-                        <span class="min-w-0 rounded-[1.25rem] bg-camelia-rose px-3 py-3 text-white shadow-sm">
-                            <small class="block text-[0.62rem] font-black tracking-[0.14em] text-white/70 uppercase">Fiche</small>
-                            <b class="mt-1 block text-sm leading-tight break-words">À conserver</b>
+                        <span class="lp-stat lp-stat--rose">
+                            <small class="lp-stat-label">Fiche</small>
+                            <b class="lp-stat-value">À conserver</b>
                         </span>
                     </div>
                 </div>
             </div>
 
-            <div class="absolute right-6 bottom-5 z-10 hidden w-[min(calc(100vw-3rem),48rem)] rounded-4xl border border-white/20 bg-camelia-ink/45 p-2 text-camelia-ink shadow-2xl backdrop-blur-xl md:block xl:right-18" data-testid="hero-desktop-gacha-summary">
-                <div class="grid grid-cols-[minmax(5.5rem,0.75fr)_minmax(12rem,1.6fr)_minmax(6rem,0.9fr)_minmax(7rem,1fr)] gap-2" data-testid="hero-desktop-gacha-summary-grid">
-                    <span class="min-w-0 rounded-[1.45rem] bg-white/94 px-4 py-3 shadow-sm" data-testid="hero-gacha-summary-card">
-                        <small class="block text-[0.65rem] font-black tracking-[0.18em] text-camelia-rose uppercase">Rareté</small>
-                        <b class="mt-1 block text-sm leading-tight break-words" data-testid="hero-gacha-summary-value">1★ à 5★</b>
+            <div class="lp-summary lp-summary--desktop" data-testid="hero-desktop-gacha-summary">
+                <div class="lp-summary-grid" data-testid="hero-desktop-gacha-summary-grid">
+                    <span class="lp-stat" data-testid="hero-gacha-summary-card">
+                        <small class="lp-stat-label">Rareté</small>
+                        <b class="lp-stat-value" data-testid="hero-gacha-summary-value">1★ à 5★</b>
                     </span>
-                    <span class="min-w-0 rounded-[1.45rem] bg-camelia-blush px-4 py-3 shadow-sm" data-testid="hero-gacha-summary-card">
-                        <small class="block text-[0.65rem] font-black tracking-[0.18em] text-camelia-rose uppercase">Rôle</small>
-                        <b class="mt-1 block text-sm leading-tight break-words" data-testid="hero-gacha-summary-value">{{ gachaRole.value }}</b>
+                    <span class="lp-stat lp-stat--blush" data-testid="hero-gacha-summary-card">
+                        <small class="lp-stat-label">Rôle</small>
+                        <b class="lp-stat-value" data-testid="hero-gacha-summary-value">{{ gachaRole.value }}</b>
                     </span>
-                    <span class="min-w-0 rounded-[1.45rem] bg-white/94 px-4 py-3 shadow-sm" data-testid="hero-gacha-summary-card">
-                        <small class="block text-[0.65rem] font-black tracking-[0.18em] text-camelia-rose uppercase">Élément</small>
-                        <b class="mt-1 block text-sm leading-tight break-words" data-testid="hero-gacha-summary-value">{{ gachaElement.value }}</b>
+                    <span class="lp-stat" data-testid="hero-gacha-summary-card">
+                        <small class="lp-stat-label">Élément</small>
+                        <b class="lp-stat-value" data-testid="hero-gacha-summary-value">{{ gachaElement.value }}</b>
                     </span>
-                    <span class="min-w-0 rounded-[1.45rem] bg-camelia-rose px-4 py-3 text-white shadow-sm" data-testid="hero-gacha-summary-card">
-                        <small class="block text-[0.65rem] font-black tracking-[0.18em] text-white/70 uppercase">Fiche</small>
-                        <b class="mt-1 block text-sm leading-tight break-words" data-testid="hero-gacha-summary-value">À conserver</b>
+                    <span class="lp-stat lp-stat--rose" data-testid="hero-gacha-summary-card">
+                        <small class="lp-stat-label">Fiche</small>
+                        <b class="lp-stat-value" data-testid="hero-gacha-summary-value">À conserver</b>
                     </span>
                 </div>
             </div>
         </section>
 
-        <section id="bot" class="-mt-px scroll-mt-24 rounded-t-[2.5rem] bg-camelia-cream px-6 py-18 md:scroll-mt-28 md:px-12 md:py-28 xl:px-18">
-            <div class="grid gap-10 md:grid-cols-[minmax(12rem,24rem)_minmax(0,48rem)] md:gap-20">
-                <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">Le rituel</p>
-                <div>
-                    <h2 class="font-display text-5xl leading-[0.94] tracking-normal md:text-7xl">
-                        On ne rejoint pas seulement le serveur. On entre dans la collection.
-                    </h2>
-                    <p class="mt-7 max-w-3xl text-lg leading-8 text-camelia-muted">
+        <section id="bot" class="lp-section lp-section--cream lp-section--rounded lp-section-anchor">
+            <div class="lp-split">
+                <p class="lp-eyebrow">Le rituel</p>
+                <div class="lp-split-body">
+                    <h2 class="lp-title">On ne rejoint pas seulement le serveur. On entre dans la collection.</h2>
+                    <p class="lp-lead">
                         Gachamélia donne du relief au premier contact : le salon d’accueil annonce
                         le tirage, révèle une rareté, associe un rôle de personnage et ouvre une
                         petite histoire que le membre peut garder avec lui.
                     </p>
-                    <div class="mt-8 flex flex-wrap gap-3">
-                        <span class="rounded-full bg-white px-4 py-2 text-sm font-extrabold shadow-sm">Invocation d’arrivée</span>
-                        <span class="rounded-full bg-white px-4 py-2 text-sm font-extrabold shadow-sm">Messages de rareté</span>
-                        <span class="rounded-full bg-white px-4 py-2 text-sm font-extrabold shadow-sm">Rôle Discord</span>
-                        <span class="rounded-full bg-white px-4 py-2 text-sm font-extrabold shadow-sm">Élément</span>
-                        <span class="rounded-full bg-white px-4 py-2 text-sm font-extrabold shadow-sm">Fiche publique</span>
+                    <div class="lp-tags">
+                        <span class="lp-tag">Invocation d’arrivée</span>
+                        <span class="lp-tag">Messages de rareté</span>
+                        <span class="lp-tag">Rôle Discord</span>
+                        <span class="lp-tag">Élément</span>
+                        <span class="lp-tag">Fiche publique</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="bg-camelia-ivory px-6 py-18 md:px-12 md:py-28 xl:px-18">
-            <div class="max-w-4xl">
-                <p class="mb-5 text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">Dans Discord</p>
-                <h2 class="font-display text-5xl leading-[0.94] tracking-normal md:text-7xl">
-                    Le serveur gagne ses petits moments de jeu.
-                </h2>
+        <section class="lp-section lp-section--ivory">
+            <div class="lp-heading">
+                <p class="lp-eyebrow lp-eyebrow--spaced">Dans Discord</p>
+                <h2 class="lp-title">Le serveur gagne ses petits moments de jeu.</h2>
             </div>
 
-            <div class="mt-12 grid gap-5 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-center">
-                <article class="rounded-4xl bg-camelia-cream p-8 shadow-[inset_0_0_0_1px_rgba(36,24,19,0.08)]">
-                    <span class="inline-flex size-12 items-center justify-center rounded-full bg-camelia-rose font-display text-2xl text-white">1</span>
-                    <h3 class="mt-18 max-w-64 font-display text-4xl leading-none">Un membre arrive</h3>
-                    <p class="mt-4 leading-7 text-camelia-muted">Le salon d’accueil devient une scène, avec un message qui donne tout de suite le ton.</p>
+            <div class="lp-steps">
+                <article class="lp-step">
+                    <span class="lp-step-number">1</span>
+                    <h3 class="lp-step-title">Un membre arrive</h3>
+                    <p class="lp-step-text">Le salon d’accueil devient une scène, avec un message qui donne tout de suite le ton.</p>
                 </article>
-                <span class="hidden text-3xl font-black text-camelia-rose lg:block">→</span>
-                <article class="rounded-4xl bg-camelia-cream p-8 shadow-[inset_0_0_0_1px_rgba(36,24,19,0.08)] lg:mt-12">
-                    <span class="inline-flex size-12 items-center justify-center rounded-full bg-camelia-rose font-display text-2xl text-white">2</span>
-                    <h3 class="mt-18 max-w-64 font-display text-4xl leading-none">Son identité tombe</h3>
-                    <p class="mt-4 leading-7 text-camelia-muted">Protecteur, Comète, Lame Stellaire, Sève, Brume ou Ambre : le tirage lui donne une couleur.</p>
+                <span class="lp-arrow">→</span>
+                <article class="lp-step lp-step--2">
+                    <span class="lp-step-number">2</span>
+                    <h3 class="lp-step-title">Son identité tombe</h3>
+                    <p class="lp-step-text">Protecteur, Comète, Lame Stellaire, Sève, Brume ou Ambre : le tirage lui donne une couleur.</p>
                 </article>
-                <span class="hidden text-3xl font-black text-camelia-rose lg:block">→</span>
-                <article class="rounded-4xl bg-camelia-cream p-8 shadow-[inset_0_0_0_1px_rgba(36,24,19,0.08)] lg:mt-24">
-                    <span class="inline-flex size-12 items-center justify-center rounded-full bg-camelia-rose font-display text-2xl text-white">3</span>
-                    <h3 class="mt-18 max-w-64 font-display text-4xl leading-none">La fiche reste</h3>
-                    <p class="mt-4 leading-7 text-camelia-muted">La fiche perso garde la trace du tirage et donne à chacun une place visible dans la collection.</p>
+                <span class="lp-arrow">→</span>
+                <article class="lp-step lp-step--3">
+                    <span class="lp-step-number">3</span>
+                    <h3 class="lp-step-title">La fiche reste</h3>
+                    <p class="lp-step-text">La fiche perso garde la trace du tirage et donne à chacun une place visible dans la collection.</p>
                 </article>
             </div>
         </section>
 
-        <section id="fiche" class="grid scroll-mt-24 gap-12 bg-camelia-leaf px-6 py-18 text-white md:scroll-mt-28 md:px-12 md:py-28 lg:grid-cols-[minmax(0,0.95fr)_minmax(20rem,32rem)] lg:items-center xl:px-18">
+        <section id="fiche" class="lp-section lp-section--leaf lp-section-anchor lp-fiche">
             <div>
-                <p class="mb-5 text-xs font-black tracking-[0.18em] text-camelia-blush uppercase">La fiche</p>
-                <h2 class="font-display text-5xl leading-[0.94] tracking-normal md:text-7xl">
-                    Une carte personnage à garder sous la main.
-                </h2>
-                <p class="mt-7 max-w-2xl text-lg leading-8 text-white/75">
+                <p class="lp-eyebrow lp-eyebrow--spaced lp-eyebrow--light">La fiche</p>
+                <h2 class="lp-title">Une carte personnage à garder sous la main.</h2>
+                <p class="lp-lead">
                     La fiche garde le souvenir du tirage : rareté, rôle, éléments, statistiques
                     et emblème aujourd’hui. Demain, elle pourra raconter les quêtes remportées,
                     les objets découverts et la progression du personnage.
                 </p>
             </div>
 
-            <aside class="overflow-hidden rounded-[2.5rem] bg-white text-camelia-ink shadow-2xl">
-                <div class="bg-camelia-blush p-8">
-                    <span class="rounded-full bg-camelia-rose px-4 py-2 text-xs font-black tracking-wider text-white uppercase">Invocation confirmée</span>
-                    <h3 class="mt-14 font-display text-6xl leading-[0.88]">Membre<br>{{ gachaRarity }}★</h3>
+            <aside class="lp-card">
+                <div class="lp-card-head">
+                    <span class="lp-badge">Invocation confirmée</span>
+                    <h3 class="lp-card-title">Membre<br>{{ gachaRarity }}★</h3>
                 </div>
-                <div class="grid grid-cols-1 gap-3 p-5 sm:grid-cols-2">
-                    <div class="rounded-3xl bg-camelia-cream p-5">
-                        <small class="text-xs font-black tracking-wider text-camelia-muted uppercase">Rôle</small>
-                        <b class="mt-2 block text-xl">{{ gachaRole.value }}</b>
+                <div class="lp-card-grid">
+                    <div class="lp-card-cell">
+                        <small>Rôle</small>
+                        <b>{{ gachaRole.value }}</b>
                     </div>
-                    <div class="rounded-3xl bg-camelia-cream p-5">
-                        <small class="text-xs font-black tracking-wider text-camelia-muted uppercase">Élément</small>
-                        <b class="mt-2 block text-xl">{{ gachaElement.value }}</b>
+                    <div class="lp-card-cell">
+                        <small>Élément</small>
+                        <b>{{ gachaElement.value }}</b>
                     </div>
-                    <div class="rounded-3xl bg-camelia-cream p-5">
-                        <small class="text-xs font-black tracking-wider text-camelia-muted uppercase">Rareté</small>
-                        <b class="mt-2 block text-xl">{{ gachaRarity }} étoiles</b>
+                    <div class="lp-card-cell">
+                        <small>Rareté</small>
+                        <b>{{ gachaRarity }} étoiles</b>
                     </div>
-                    <div class="rounded-3xl bg-camelia-cream p-5">
-                        <small class="text-xs font-black tracking-wider text-camelia-muted uppercase">Stat</small>
-                        <b class="mt-2 block text-xl">{{ gachaStat.value }}</b>
+                    <div class="lp-card-cell">
+                        <small>Stat</small>
+                        <b>{{ gachaStat.value }}</b>
                     </div>
                 </div>
             </aside>
         </section>
 
-        <section id="espaces" class="scroll-mt-24 bg-camelia-cream px-6 py-18 md:scroll-mt-28 md:px-12 md:py-28 xl:px-18">
-            <div class="grid gap-10 md:grid-cols-[minmax(12rem,24rem)_minmax(0,48rem)] md:gap-20">
-                <p class="text-xs font-black tracking-[0.18em] text-camelia-rose uppercase">Pour qui ?</p>
+        <section id="espaces" class="lp-section lp-section--cream lp-section-anchor">
+            <div class="lp-split">
+                <p class="lp-eyebrow">Pour qui ?</p>
                 <div>
-                    <h2 class="font-display text-5xl leading-[0.94] tracking-normal md:text-7xl">
-                        Une collection à rejoindre, un univers à faire grandir.
-                    </h2>
-                    <p class="mt-7 max-w-3xl text-lg leading-8 text-camelia-muted">
+                    <h2 class="lp-title">Une collection à rejoindre, un univers à faire grandir.</h2>
+                    <p class="lp-lead">
                         Les membres viennent découvrir qui le serveur leur a confié. L’équipe,
                         elle, garde la main sur les mots, les raretés et les petites surprises
                         qui donnent au rituel sa couleur.
@@ -370,68 +283,57 @@
                 </div>
             </div>
 
-            <div class="mt-12 grid gap-5 lg:grid-cols-2">
-                <article class="rounded-[2.5rem] bg-white p-8 shadow-xl shadow-camelia-ink/5 md:p-14">
-                    <h3 class="font-display text-5xl leading-none md:text-6xl">Pour les membres</h3>
-                    <p class="mt-6 max-w-xl text-lg leading-8 text-camelia-muted">
+            <div class="lp-audience">
+                <article class="lp-panel">
+                    <h3 class="lp-panel-title">Pour les membres</h3>
+                    <p class="lp-panel-text">
                         Retrouver leur fiche, comparer leur tirage et suivre leur progression
                         quand les quarts de lune, constellations et hauts-faits arriveront.
                     </p>
-                    <ul class="mt-10 flex flex-wrap gap-3">
-                        <li class="rounded-full bg-camelia-cream px-4 py-2 font-extrabold">Fiche perso</li>
-                        <li class="rounded-full bg-camelia-cream px-4 py-2 font-extrabold">Rareté</li>
-                        <li class="rounded-full bg-camelia-cream px-4 py-2 font-extrabold">Élément</li>
-                        <li class="rounded-full bg-camelia-cream px-4 py-2 font-extrabold">Progression</li>
+                    <ul class="lp-panel-tags">
+                        <li>Fiche perso</li>
+                        <li>Rareté</li>
+                        <li>Élément</li>
+                        <li>Progression</li>
                     </ul>
                 </article>
 
-                <article class="rounded-[2.5rem] bg-camelia-ink p-8 text-white shadow-xl shadow-camelia-ink/10 md:p-14">
-                    <h3 class="font-display text-5xl leading-none md:text-6xl">Pour l’équipe</h3>
-                    <p class="mt-6 max-w-xl text-lg leading-8 text-white/72">
+                <article class="lp-panel lp-panel--ink">
+                    <h3 class="lp-panel-title">Pour l’équipe</h3>
+                    <p class="lp-panel-text">
                         Écrire les invocations, composer les raretés, choisir les rôles et préparer
                         les prochaines histoires qui apparaîtront dans le serveur.
                     </p>
-                    <ul class="mt-10 flex flex-wrap gap-3">
-                        <li class="rounded-full bg-white/12 px-4 py-2 font-extrabold">Invocations</li>
-                        <li class="rounded-full bg-white/12 px-4 py-2 font-extrabold">Raretés</li>
-                        <li class="rounded-full bg-white/12 px-4 py-2 font-extrabold">Rôles</li>
-                        <li class="rounded-full bg-white/12 px-4 py-2 font-extrabold">Quêtes</li>
+                    <ul class="lp-panel-tags">
+                        <li>Invocations</li>
+                        <li>Raretés</li>
+                        <li>Rôles</li>
+                        <li>Quêtes</li>
                     </ul>
                 </article>
             </div>
         </section>
 
-        <section class="overflow-hidden bg-camelia-ink px-6 py-18 text-white md:px-12 md:py-28 xl:px-18">
-            <div class="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,28rem)] lg:items-center">
-                <div class="max-w-4xl">
-                    <p class="mb-5 inline-flex border-b-2 border-camelia-pink pb-2 text-xs font-black tracking-[0.18em] text-white/80 uppercase">Gachamélia</p>
-                    <h2 class="font-display text-5xl leading-[0.94] tracking-normal md:text-7xl">
-                        Un bot pour donner une place à chacun dans l’histoire du serveur.
-                    </h2>
-                    <p class="mt-7 max-w-2xl text-lg leading-8 text-white/80">
-                        Aujourd’hui, Gachamélia pose le rituel d’arrivée et la fiche. La suite construit
-                        une aventure complète autour de l’activité, des inventaires, des combats et des succès.
-                    </p>
-                    <div class="mt-9 flex flex-wrap gap-3">
-                        <a href="{{ installUrl }}" class="inline-flex min-h-13 items-center justify-center rounded-full bg-white px-6 text-sm font-black text-camelia-rose transition hover:bg-camelia-blush" target="_blank" rel="noopener noreferrer">
-                            Ajouter à mon serveur
-                        </a>
-                        <a href="{{ repositoryUrl }}" class="inline-flex min-h-13 items-center justify-center rounded-full border border-white/24 px-6 text-sm font-black text-white transition hover:bg-white hover:text-camelia-rose" target="_blank" rel="noopener noreferrer">
-                            Voir le Gitea
-                        </a>
-                        <a href="{{ discordUrl }}" class="inline-flex min-h-13 items-center justify-center rounded-full border border-white/24 px-6 text-sm font-black text-white transition hover:bg-white hover:text-camelia-rose" target="_blank" rel="noopener noreferrer">
-                            Rejoindre Discord
-                        </a>
-                    </div>
+        <section class="lp-section lp-section--ink lp-closing">
+            <div class="lp-heading">
+                <p class="lp-eyebrow lp-eyebrow--underlined">Gachamélia</p>
+                <h2 class="lp-title">Un bot pour donner une place à chacun dans l’histoire du serveur.</h2>
+                <p class="lp-lead">
+                    Aujourd’hui, Gachamélia pose le rituel d’arrivée et la fiche. La suite construit
+                    une aventure complète autour de l’activité, des inventaires, des combats et des succès.
+                </p>
+                <div class="lp-actions">
+                    <a href="{{ installUrl }}" class="lp-btn lp-btn--lg lp-btn--white" target="_blank" rel="noopener noreferrer">Ajouter à mon serveur</a>
+                    <a href="{{ repositoryUrl }}" class="lp-btn lp-btn--lg lp-btn--outline" target="_blank" rel="noopener noreferrer">Voir le Gitea</a>
+                    <a href="{{ discordUrl }}" class="lp-btn lp-btn--lg lp-btn--outline" target="_blank" rel="noopener noreferrer">Rejoindre Discord</a>
                 </div>
-                <img
-                    src="{{ botAvatarImage }}"
-                    alt="Avatar Discord du bot Gachamélia"
-                    class="mx-auto aspect-square w-full max-w-[24rem] rounded-full object-cover drop-shadow-2xl lg:ml-auto lg:max-w-md"
-                    data-testid="bot-avatar-visual"
-                >
             </div>
+            <img
+                src="{{ botAvatarImage }}"
+                alt="Avatar Discord du bot Gachamélia"
+                class="lp-avatar"
+                data-testid="bot-avatar-visual"
+            >
         </section>
     </main>
-</body>
-</html>
+{% endblock %}

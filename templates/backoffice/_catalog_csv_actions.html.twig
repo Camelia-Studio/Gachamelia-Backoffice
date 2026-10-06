@@ -7,24 +7,14 @@
         {% set example_url = path('app_catalog_template_csv_example', { templateId: target_id, section: active_section }) %}
     {% endif %}
 
-    <div class="flex flex-wrap items-center gap-3 border border-camelia-ink/10 bg-camelia-ivory p-5 shadow-sm" data-testid="catalog-csv-actions">
-        <div class="mr-auto">
-            <p class="font-black text-camelia-ink">Actions CSV</p>
-            <p class="mt-1 text-sm font-bold text-camelia-muted">Fusionne les lignes du fichier avec cette section du catalogue.</p>
+    <div class="bo-toolbar" data-testid="catalog-csv-actions">
+        <div class="bo-toolbar-text">
+            <p class="bo-card-title">Actions CSV</p>
+            <p class="bo-panel-lead">Fusionne les lignes du fichier avec cette section du catalogue.</p>
         </div>
-        <a
-            href="{{ example_url }}"
-            class="inline-flex min-h-11 items-center justify-center rounded-full border border-camelia-ink/10 bg-white px-5 text-sm font-black text-camelia-ink transition hover:border-camelia-rose/30 hover:text-camelia-rose"
-        >
-            Télécharger un exemple
-        </a>
+        <a href="{{ example_url }}" class="bo-btn bo-btn--outline bo-btn--lg">Télécharger un exemple</a>
         {% if not read_only %}
-            <a
-                href="{{ import_url }}"
-                class="inline-flex min-h-11 items-center justify-center rounded-full bg-camelia-ink px-5 text-sm font-black text-white transition hover:bg-camelia-rose"
-            >
-                Importer un CSV
-            </a>
+            <a href="{{ import_url }}" class="bo-btn bo-btn--ink bo-btn--lg">Importer un CSV</a>
         {% endif %}
     </div>
 {% endif %}

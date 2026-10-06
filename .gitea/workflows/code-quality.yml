@@ -29,7 +29,7 @@ jobs:
             - name: Install system dependencies
               run: |
                   apt-get update -qq
-                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
+                  apt-get install -y --no-install-recommends unzip git ca-certificates libzip-dev
                   docker-php-ext-install pdo_mysql pcntl zip
 
             - name: Checkout repository
@@ -46,18 +46,15 @@ jobs:
 
             - name: Install dependencies
               run: composer install --prefer-dist --no-progress --no-interaction
-            - uses: actions/setup-node@v7
-              with:
-                node-version: 22
-                package-manager-cache: false
-            -   run: npm ci
-            -   run: npm run build
 
             - name: Prepare test database
               run: php bin/console doctrine:migrations:migrate --env=test --no-interaction
 
             - name: Run PHPUnit tests
               run: php vendor/bin/phpunit --no-coverage
+
+            - name: Compile production assets
+              run: APP_ENV=prod APP_DEBUG=0 php bin/console asset-map:compile
 
     phpstan:
         name: PHPStan
@@ -69,7 +66,7 @@ jobs:
             - name: Install system dependencies
               run: |
                   apt-get update -qq
-                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
+                  apt-get install -y --no-install-recommends unzip git ca-certificates libzip-dev
                   docker-php-ext-install zip
 
             - name: Checkout repository
@@ -97,7 +94,7 @@ jobs:
             - name: Install system dependencies
               run: |
                   apt-get update -qq
-                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
+                  apt-get install -y --no-install-recommends unzip git ca-certificates libzip-dev
                   docker-php-ext-install zip
 
             - name: Checkout repository
@@ -125,7 +122,7 @@ jobs:
             - name: Install system dependencies
               run: |
                   apt-get update -qq
-                  apt-get install -y --no-install-recommends unzip git nodejs ca-certificates libzip-dev
+                  apt-get install -y --no-install-recommends unzip git ca-certificates libzip-dev
                   docker-php-ext-install zip
 
             - name: Checkout repository

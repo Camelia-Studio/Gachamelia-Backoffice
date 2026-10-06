@@ -198,7 +198,7 @@ final class CatalogTemplateBackofficeControllerTest extends WebTestCase
             self::assertResponseIsSuccessful();
             $layout = $crawler->filter('[data-testid="template-catalog-layout"]');
             self::assertSame(1, $layout->count(), $section);
-            self::assertStringContainsString('xl:items-start', $layout->attr('class') ?? '', $section);
+            self::assertStringContainsString('bo-columns--side', $layout->attr('class') ?? '', $section);
         }
     }
 

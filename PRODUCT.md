@@ -40,7 +40,7 @@ Fonctionnalités observées dans le code, à préserver lors de futurs travaux d
 
 Une documentation décrit le déploiement Apache sous un sous-chemin (`docs/apache-subpath.md`). L’hébergeur et l’URL de production ne sont pas confirmés.
 
-Au moment de l’initialisation, les fichiers de build frontend et les assets sources sont en cours de modification ou supprimés dans le checkout, alors que les templates appellent encore Encore. La commande de développement et le pipeline frontend doivent être vérifiés avant une réalisation ou une prévisualisation ; la présence des templates ne prouve pas que le site est exécutable dans cet état.
+Le front repose sur AssetMapper (sans build Node) avec du CSS natif : `assets/styles/base.css` (jetons et reset), `app.css` (vitrine, préfixe `lp-`) et `backoffice.css` (backoffice, préfixe `bo-`). En développement, `symfony serve` suffit ; en production, `php bin/console asset-map:compile` est nécessaire.
 
 ## Brand Commitments
 

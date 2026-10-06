@@ -24,10 +24,10 @@ final class HomeControllerTest extends WebTestCase
         self::assertSelectorTextContains('body', 'Découvrir le projet');
         self::assertSelectorTextContains('body', 'Pour les membres');
         self::assertSelectorTextContains('body', 'Pour l’équipe');
-        self::assertSelectorExists('[data-controller="mobile-menu"]');
-        self::assertSelectorExists('a[href="#bot"][data-action="mobile-menu#navigate"]');
-        self::assertSelectorExists('a[href="#fiche"][data-action="mobile-menu#navigate"]');
-        self::assertSelectorExists('a[href="#espaces"][data-action="mobile-menu#navigate"]');
+        self::assertSelectorExists('[data-mobile-menu]');
+        self::assertSelectorExists('a[href="#bot"][data-mobile-menu-link]');
+        self::assertSelectorExists('a[href="#fiche"][data-mobile-menu-link]');
+        self::assertSelectorExists('a[href="#espaces"][data-mobile-menu-link]');
         self::assertSelectorExists('a[href="https://git.crystalyx.net/camelia-studio/Gachamelia/wiki"]');
         self::assertSelectorExists('a[href="https://git.crystalyx.net/camelia-studio/Gachamelia"]');
         self::assertSelectorExists('a[href="https://discord.gg/nBuZ9vJ"]');
@@ -43,15 +43,13 @@ final class HomeControllerTest extends WebTestCase
             '/images/gachamelia-bot-avatar.png',
             $crawler->filter('[data-testid="bot-avatar-visual"]')->attr('src'),
         );
-        foreach ($crawler->filter('img[src="/images/gachamelia-bot-avatar.png"]') as $avatar) {
-            if (!$avatar instanceof \DOMElement) {
-                self::fail('Expected an image element.');
-            }
-
-            self::assertStringContainsString('rounded-full', $avatar->getAttribute('class'));
-        }
+        self::assertSame(
+            $crawler->filter('img[src="/images/gachamelia-bot-avatar.png"]')->count(),
+            $crawler->filter('.lp-brand img, .lp-drawer-brand img, img.lp-avatar')->count(),
+            'Every bot avatar must use a component that rounds it.',
+        );
         self::assertStringContainsString(
-            'scroll-mt-24',
+            'lp-section-anchor',
             $crawler->filter('#bot')->attr('class') ?? '',
         );
     }
@@ -80,20 +78,17 @@ final class HomeControllerTest extends WebTestCase
 
         $summary = $crawler->filter('[data-testid="hero-desktop-gacha-summary"]');
         self::assertSame(1, $summary->count());
-        self::assertStringContainsString('w-[min(calc(100vw-3rem),48rem)]', $summary->attr('class') ?? '');
+        self::assertStringContainsString('lp-summary--desktop', $summary->attr('class') ?? '');
 
         $summaryGrid = $summary->filter('[data-testid="hero-desktop-gacha-summary-grid"]');
-        self::assertStringContainsString(
-            'grid-cols-[minmax(5.5rem,0.75fr)_minmax(12rem,1.6fr)_minmax(6rem,0.9fr)_minmax(7rem,1fr)]',
-            $summaryGrid->attr('class') ?? '',
-        );
+        self::assertStringContainsString('lp-summary-grid', $summaryGrid->attr('class') ?? '');
 
         foreach ($summary->filter('[data-testid="hero-gacha-summary-card"]') as $card) {
             if (!$card instanceof \DOMElement) {
                 self::fail('Expected a summary card element.');
             }
 
-            self::assertStringContainsString('min-w-0', $card->getAttribute('class'));
+            self::assertStringContainsString('lp-stat', $card->getAttribute('class'));
         }
 
         foreach ($summary->filter('[data-testid="hero-gacha-summary-value"]') as $value) {
@@ -101,12 +96,23 @@ final class HomeControllerTest extends WebTestCase
                 self::fail('Expected a summary value element.');
             }
 
-            self::assertStringContainsString('break-words', $value->getAttribute('class'));
-            self::assertStringNotContainsString('whitespace-nowrap', $value->getAttribute('class'));
+            self::assertStringContainsString('lp-stat-value', $value->getAttribute('class'));
         }
+
+        // Les valeurs aléatoires peuvent être longues : la grille borne la largeur et le texte passe à la ligne.
+        $stylesheet = file_get_contents(\dirname(__DIR__, 2).'/assets/styles/app.css');
+        self::assertIsString($stylesheet);
+        self::assertStringContainsString('width: min(calc(100vw - 3rem), 48rem);', $stylesheet);
+        self::assertStringContainsString(
+            'grid-template-columns: minmax(5.5rem, 0.75fr) minmax(12rem, 1.6fr) minmax(6rem, 0.9fr) minmax(7rem, 1fr);',
+            $stylesheet,
+        );
+        self::assertMatchesRegularExpression('/\.lp-stat\s*\{[^}]*min-width:\s*0;/', $stylesheet);
+        self::assertMatchesRegularExpression('/\.lp-stat-value\s*\{[^}]*overflow-wrap:\s*anywhere;/', $stylesheet);
+        self::assertStringNotContainsString('white-space: nowrap', $stylesheet);
     }
 
-    public function testHomePageExposesSeoMetadataAndDisablesTurbo(): void
+    public function testHomePageExposesSeoMetadata(): void
     {
         $client = self::createClient();
 
@@ -117,7 +123,6 @@ final class HomeControllerTest extends WebTestCase
             'Gachamélia - Bot gacha communautaire Discord',
             trim($crawler->filter('title')->text()),
         );
-        self::assertSelectorExists('body[data-turbo="false"]');
         self::assertSame(
             'Gachamélia transforme les arrivées Discord en invocations gacha communautaires avec rareté, rôle, élément et fiche personnage.',
             $crawler->filter('meta[name="description"]')->attr('content'),
@@ -178,6 +183,13 @@ final class HomeControllerTest extends WebTestCase
                 'https://cila.camelia-studio.org/gachamelia/images/gachamelia-hero.jpg',
                 $crawler->filter('meta[property="og:image"]')->attr('content'),
             );
+            $importMap = json_decode($crawler->filter('script[type="importmap"]')->text(), true, flags: JSON_THROW_ON_ERROR);
+            self::assertStringStartsWith('/gachamelia/assets/app-', $importMap['imports']['app']);
+            self::assertSame(2, $crawler->filter('link[rel="stylesheet"][href^="/gachamelia/assets/"]')->count());
+            foreach ($crawler->filter('link[rel="stylesheet"][href^="/"]') as $stylesheet) {
+                self::assertInstanceOf(\DOMElement::class, $stylesheet);
+                self::assertStringStartsWith('/gachamelia/assets/styles/', $stylesheet->getAttribute('href'));
+            }
             $content = $client->getResponse()->getContent();
             self::assertIsString($content);
             self::assertStringNotContainsString('/gachamelia/gachamelia/', $content);
