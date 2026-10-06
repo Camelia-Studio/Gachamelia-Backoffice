@@ -1475,6 +1475,54 @@
     font-weight: 900;
 }
 
+.bo-columns.bo-catalog-layout {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.bo-catalog-table {
+    min-width: 36rem;
+}
+
+.bo-catalog-table td {
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.bo-catalog-table td[data-column="message"] {
+    min-width: 18rem;
+    white-space: pre-wrap;
+}
+
+.bo-table-number {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.bo-catalog-actions {
+    width: 9rem;
+}
+
+.bo-row-editor > summary {
+    cursor: pointer;
+    width: max-content;
+}
+
+.bo-row-editor-body {
+    min-width: 24rem;
+    padding-top: 1rem;
+    display: grid;
+    gap: 1rem;
+}
+
+.bo-row-editor-body .bo-form {
+    margin: 0;
+}
+
+.bo-table-wrap:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 3px;
+}
+
 /* ---------- Fiche personnage ---------- */
 
 .bo-sheet {

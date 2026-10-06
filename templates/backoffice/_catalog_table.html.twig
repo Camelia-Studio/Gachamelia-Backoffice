@@ -1,0 +1,69 @@
+{% set is_server = target_type == 'server' %}
+{% set columns = {
+    'ranks': {name: 'Nom', identity: is_server ? 'Rôle Discord' : 'Clé de rôle', percentage: '%', bye_title: 'Titre du message de départ', is_staff: 'Staff'},
+    'role-stats': {role_name: 'Rôle', stat_name: 'Stat', percentage: '%'},
+    'welcome-messages': {rank_name: 'Rang', message: 'Message'},
+    'bye-messages': {rank_name: 'Rang', message: 'Message'},
+    'roles': {name: 'Nom', emoji_markup: 'Emoji', emoji_source_label: 'Source', percentage: '%'},
+    'stats': {name: 'Nom'},
+    'elements': {name: 'Nom', emoji_markup: 'Emoji', emoji_source_label: 'Source'},
+    'settings': {label: 'Réglage', value: 'Valeur'}
+}[active_section] %}
+{% set entries = active_section == 'settings' ? [
+    {id: 'welcome', label: 'Salon d’arrivée', value: catalog.settings.welcome_channel_id ? discord_resource_labels.channels[catalog.settings.welcome_channel_id]|default(catalog.settings.welcome_channel_id) : 'Non configuré'},
+    {id: 'bye', label: 'Salon de départ', value: catalog.settings.bye_channel_id ? discord_resource_labels.channels[catalog.settings.bye_channel_id]|default(catalog.settings.bye_channel_id) : 'Non configuré'},
+    {id: 'staff', label: 'Rôle staff', value: catalog.settings.staff_role_id ? discord_resource_labels.roles[catalog.settings.staff_role_id]|default(catalog.settings.staff_role_id) : 'Non configuré'}
+] : attribute(catalog, active_section|replace({'-': '_'})) %}
+{% set row_testids = {ranks: 'rank-card', 'role-stats': 'role-stat-card', 'welcome-messages': 'message-card', 'bye-messages': 'message-card', roles: 'role-card', stats: 'stat-card', elements: 'element-card', settings: 'setting-row'} %}
+<section class="bo-panel" data-testid="catalog-list-panel" data-catalog-scope="{{ target_type }}-{{ target_id }}-{{ active_section }}">
+    <div class="bo-panel-head">
+        <h2 class="bo-section-title">{{ active_section == 'settings' ? 'Réglages actuels' : 'Entrées du catalogue' }}</h2>
+        <span class="bo-badge bo-badge--gold" data-catalog-count>{{ entries|length }} entrées</span>
+    </div>
+    <div class="bo-table-wrap" tabindex="0" role="region" aria-label="Tableau {{ page_title }}">
+        <table class="bo-table bo-catalog-table" data-catalog-table data-section="{{ active_section }}">
+            <thead><tr>
+                {% for key, label in columns %}<th scope="col" data-column="{{ key }}">{{ label }}</th>{% endfor %}
+                <th scope="col">Actions</th>
+            </tr></thead>
+            <tbody>
+                {% for row in entries %}
+                    {% set row_key = active_section == 'role-stats' ? row.role_id ~ '-' ~ row.stat_id : row.id %}
+                    <tr data-catalog-row="{{ row_key }}" data-testid="{{ is_server ? row_testids[active_section] : 'template-' ~ row_testids[active_section] }}">
+                        {% for key, label in columns %}
+                            <td data-column="{{ key }}">
+                                {% if key == 'identity' %}
+                                    {{ is_server ? discord_resource_labels.roles[row.discord_id]|default(row.discord_id) : row.role_key }}
+                                {% elseif key == 'is_staff' %}
+                                    {{ row.is_staff ? 'Oui' : 'Non' }}
+                                {% elseif key == 'percentage' %}
+                                    <span class="bo-table-number">{{ row.percentage }} %</span>
+                                {% elseif key == 'emoji_markup' and row.emoji_cdn_url %}
+                                    <img src="{{ row.emoji_cdn_url }}" alt="Emoji {{ active_section == 'roles' ? 'du rôle' : 'de l’élément' }} {{ row.name }}" class="bo-emoji" loading="lazy">
+                                {% else %}
+                                    {{ attribute(row, key)|default('—') }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                        <td class="bo-catalog-actions">
+                            {% if active_section == 'settings' %}
+                                <a href="#catalog-settings" class="bo-btn bo-btn--outline">Modifier</a>
+                            {% else %}
+                                <details class="bo-row-editor">
+                                    <summary class="bo-btn bo-btn--outline">Modifier</summary>
+                                    <div class="bo-row-editor-body">
+                                        {% set rank = row %}{% set role_stat = row %}{% set message = row %}{% set stat = row %}{% set role = row %}{% set element = row %}{% set entry = row %}
+                                        {% set route_params = (is_server ? {guildId: target_id} : {templateId: target_id})|merge({(id_key|default('id')): row.id|default(null)}) %}
+                                        {% include 'backoffice/_catalog_editor_' ~ target_type ~ '.html.twig' %}
+                                    </div>
+                                </details>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr data-catalog-empty><td colspan="{{ columns|length + 1 }}" class="bo-empty">Aucune entrée pour l’instant. Ajoute la première ou importe un CSV.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>

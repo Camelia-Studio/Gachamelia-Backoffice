@@ -35,6 +35,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         foreach (['ranks', 'role-stats', 'welcome-messages', 'bye-messages', 'roles', 'stats', 'elements'] as $section) {
             $client->request('GET', '/app/serveurs/guild/configuration/'.$section);
             self::assertResponseIsSuccessful();
+            self::assertSelectorExists('table[data-catalog-table] th[scope="col"]');
             self::assertSelectorExists('[data-testid="catalog-csv-actions"] a[href="/app/serveurs/guild/configuration/'.$section.'/csv"]');
             self::assertSelectorExists('[data-testid="catalog-csv-actions"] a[href="/app/serveurs/guild/configuration/'.$section.'/csv/exemple"]');
 
@@ -47,6 +48,7 @@ final class CatalogCsvImportControllerTest extends WebTestCase
         $client->request('GET', '/app/serveurs/guild/configuration/settings');
         self::assertResponseIsSuccessful();
         self::assertSelectorNotExists('[data-testid="catalog-csv-actions"]');
+        self::assertSelectorExists('table[data-catalog-table][data-section="settings"]');
     }
 
     public function testExampleDownloadUsesBomExpectedHeaderAndNoDiscordId(): void
