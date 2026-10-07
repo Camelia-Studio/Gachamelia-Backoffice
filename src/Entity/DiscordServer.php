@@ -6,6 +6,7 @@ namespace App\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Progression\ProgressionSettings;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'discord_servers')]
@@ -25,6 +26,10 @@ class DiscordServer
 
     #[ORM\Column(name: 'staff_role_id', length: 32, nullable: true)]
     private ?string $staffRoleId = null;
+
+    /** @var array<string, mixed>|null */
+    #[ORM\Column(name: 'progression_settings', type: Types::JSON, nullable: true)]
+    private ?array $progressionSettings = null;
 
     #[ORM\Column(options: ['default' => true])]
     private bool $active = true;
@@ -84,6 +89,23 @@ class DiscordServer
     public function staffRoleId(): ?string
     {
         return $this->staffRoleId;
+    }
+
+    /** @return array<string, mixed> */
+    public function progressionSettings(): array
+    {
+        return $this->progressionSettings ?? ProgressionSettings::DEFAULTS;
+    }
+
+    /** @param array<string, mixed> $settings */
+    public function updateProgressionSettings(array $settings): void
+    {
+        $validated = ProgressionSettings::validate($settings);
+        if (null === $validated) {
+            throw new \InvalidArgumentException('Invalid progression settings.');
+        }
+        $this->progressionSettings = $validated;
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function active(): bool

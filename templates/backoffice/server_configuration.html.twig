@@ -205,6 +205,73 @@
 
                                 {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'server', target_id: guild.id } %}
                             </div>
+                        {% elseif active_section == 'progression' %}
+                            <section class="bo-panel bo-panel--padded bo-progression">
+                                <div class="bo-progression-intro">
+                                    <h2 class="bo-card-heading">Paliers et gains d’XP</h2>
+                                    <p class="bo-page-lead">Associez les rangs du catalogue aux étoiles, puis ajustez les seuils et les gains pour ce serveur.</p>
+                                </div>
+                                {% if catalog.ranks|filter(rank => not rank.is_staff)|length < 5 %}
+                                    <p class="bo-notice bo-notice--gold">Il faut cinq rangs non staff dans le catalogue pour configurer la progression.</p>
+                                {% endif %}
+                                <form method="post" action="{{ path('app_server_progression_update', { guildId: guild.id }) }}" class="bo-progression-form">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                    <fieldset class="bo-progression-group">
+                                        <legend>Rangs et seuils</legend>
+                                        <p class="bo-panel-lead">Chaque étape relie un rang au nombre d’XP nécessaire pour atteindre le suivant.</p>
+                                        <div class="bo-progression-steps">
+                                        {% for i in 0..4 %}
+                                            <div class="bo-progression-step">
+                                                <label class="bo-field"><span>Rang {{ i + 1 }}★</span>
+                                                    <select name="rank_ids[{{ i }}]" class="bo-input" required>
+                                                        <option value="">Choisir un rang</option>
+                                                        {% for rank in catalog.ranks %}
+                                                            {% if not rank.is_staff %}<option value="{{ rank.id }}" {% if catalog.progression.rank_ids[i] == rank.id %}selected{% endif %}>{{ rank.name }}</option>{% endif %}
+                                                        {% endfor %}
+                                                    </select>
+                                                </label>
+                                                {% if i < 4 %}
+                                            <label class="bo-field"><span>XP vers {{ i + 2 }}★</span>
+                                                <input name="thresholds[{{ i }}]" type="number" min="1" value="{{ catalog.progression.thresholds[i] }}" required class="bo-input">
+                                            </label>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                        </div>
+                                    </fieldset>
+                                    <fieldset class="bo-progression-group">
+                                        <legend>Quarts de lune</legend>
+                                        <p class="bo-panel-lead">Pourcentage du seuil du rang suivant, dans l’ordre croissant.</p>
+                                        <div class="bo-progression-grid bo-progression-grid--quarters">
+                                        {% for i in 0..3 %}
+                                        <label class="bo-field">Quart {{ i + 1 }} · %
+                                            <input name="quarter_percentages[{{ i }}]" type="number" min="1" max="99" value="{{ catalog.progression.quarter_percentages[i] }}" required class="bo-input">
+                                        </label>
+                                        {% endfor %}
+                                        </div>
+                                    </fieldset>
+                                    <fieldset class="bo-progression-group">
+                                        <legend>Gains et constellations</legend>
+                                        <div class="bo-progression-grid">
+                                        <label class="bo-field">XP par constellation
+                                        <input name="constellation_threshold" type="number" min="1" value="{{ catalog.progression.constellation_threshold }}" required class="bo-input">
+                                        </label>
+                                        <label class="bo-field">XP par message normal
+                                        <input name="message_xp" type="number" min="1" value="{{ catalog.progression.message_xp }}" required class="bo-input">
+                                        </label>
+                                        <label class="bo-field">XP par période vocale
+                                        <input name="voice_xp" type="number" min="1" value="{{ catalog.progression.voice_xp }}" required class="bo-input">
+                                        </label>
+                                        <label class="bo-field">Durée d’une période vocale · min
+                                        <input name="voice_interval_minutes" type="number" min="1" value="{{ catalog.progression.voice_interval_minutes }}" required class="bo-input">
+                                        </label>
+                                        </div>
+                                    </fieldset>
+                                    <div class="bo-progression-actions">
+                                        <button type="submit" class="bo-btn bo-btn--ink bo-btn--lg">Enregistrer la progression</button>
+                                    </div>
+                                </form>
+                            </section>
                         {% elseif active_section == 'ranks' %}
                             <div class="bo-columns bo-columns--side bo-catalog-layout">
 

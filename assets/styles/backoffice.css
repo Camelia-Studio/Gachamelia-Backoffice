@@ -1284,6 +1284,88 @@ html[data-backoffice-theme] {
     gap: 1.25rem;
 }
 
+.bo-progression {
+    min-width: 0;
+}
+
+.bo-progression-intro {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.bo-progression-intro .bo-page-lead {
+    max-width: 68ch;
+}
+
+.bo-progression-form {
+    display: grid;
+    gap: 2rem;
+}
+
+.bo-progression-group {
+    min-width: 0;
+    margin: 0;
+    padding: 1.5rem 0 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+}
+
+.bo-progression-group legend {
+    padding: 0;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.bo-progression-group .bo-panel-lead {
+    margin: 0.5rem 0 1.25rem;
+}
+
+.bo-progression-steps {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.bo-progression-step,
+.bo-progression-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.bo-progression-step {
+    align-items: end;
+    padding: 0.75rem;
+    border-radius: var(--radius-soft);
+    background: var(--ivory);
+}
+
+.bo-progression-step .bo-input {
+    background: var(--surface);
+}
+
+.bo-progression-grid--quarters {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.bo-progression-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 47.99rem) {
+    .bo-progression-step,
+    .bo-progression-grid,
+    .bo-progression-grid--quarters {
+        grid-template-columns: 1fr;
+    }
+
+    .bo-progression-actions .bo-btn {
+        width: 100%;
+    }
+}
+
 .bo-form--tight {
     gap: 1rem;
 }
@@ -1702,6 +1784,42 @@ html[data-backoffice-theme] {
     letter-spacing: 0.025em;
     text-transform: uppercase;
     color: var(--on-strong);
+}
+
+.bo-sheet-progression {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--ivory);
+}
+
+.bo-sheet-progression > div {
+    min-width: 0;
+}
+
+.bo-sheet-progression dt {
+    color: var(--muted);
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.bo-sheet-progression dd {
+    margin: 0.25rem 0 0;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+@media (min-width: 40rem) {
+    .bo-sheet-progression {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.5rem;
+    }
 }
 
 .bo-sheet-body {

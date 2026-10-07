@@ -53,6 +53,11 @@ final readonly class CharacterSheetProvider
             'role' => $this->rolePayload($user->role()),
             'elements' => $elements,
             'stats' => $this->statsPayload($user),
+            'progression' => [
+                'xp' => $user->progressionXp(),
+                'total_xp' => $user->totalXp(),
+                'constellations' => $user->constellations(),
+            ],
         ];
     }
 

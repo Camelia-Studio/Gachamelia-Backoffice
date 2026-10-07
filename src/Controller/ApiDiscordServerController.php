@@ -284,6 +284,7 @@ final class ApiDiscordServerController extends AbstractController
                 ],
                 $entityManager->getRepository(Element::class)->findBy(['server' => $server], ['name' => 'ASC']),
             ),
+            'progression' => $server->progressionSettings(),
         ];
     }
 

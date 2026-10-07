@@ -28,6 +28,15 @@ class GachaUser
     #[ORM\JoinColumn(name: 'role_id', nullable: true, onDelete: 'SET NULL')]
     private ?CharacterRole $role = null;
 
+    #[ORM\Column(name: 'progression_xp', type: Types::BIGINT, options: ['default' => 0])]
+    private int $progressionXp = 0;
+
+    #[ORM\Column(name: 'total_xp', type: Types::BIGINT, options: ['default' => 0])]
+    private int $totalXp = 0;
+
+    #[ORM\Column(name: 'constellations', options: ['default' => 0])]
+    private int $constellations = 0;
+
     /**
      * @var Collection<int, UserElement>
      */
@@ -76,6 +85,50 @@ class GachaUser
     public function role(): ?CharacterRole
     {
         return $this->role;
+    }
+
+    public function progressionXp(): int
+    {
+        return $this->progressionXp;
+    }
+
+    public function totalXp(): int
+    {
+        return $this->totalXp;
+    }
+
+    public function constellations(): int
+    {
+        return $this->constellations;
+    }
+
+    public function addProgressionXp(int $amount): void
+    {
+        if ($amount <= 0 || $this->progressionXp > PHP_INT_MAX - $amount || $this->totalXp > PHP_INT_MAX - $amount) {
+            throw new \InvalidArgumentException('Invalid XP gain.');
+        }
+        $this->progressionXp += $amount;
+        $this->totalXp += $amount;
+        $this->touch();
+    }
+
+    public function advanceProgression(int $threshold, ?Rank $nextRank): void
+    {
+        if ($threshold <= 0 || $this->progressionXp < $threshold) {
+            throw new \InvalidArgumentException('Invalid rank advancement.');
+        }
+        $this->progressionXp -= $threshold;
+        $this->updateRank($nextRank);
+    }
+
+    public function addConstellation(int $threshold): void
+    {
+        if ($threshold <= 0 || $this->progressionXp < $threshold) {
+            throw new \InvalidArgumentException('Invalid constellation advancement.');
+        }
+        $this->progressionXp -= $threshold;
+        ++$this->constellations;
+        $this->touch();
     }
 
     /**

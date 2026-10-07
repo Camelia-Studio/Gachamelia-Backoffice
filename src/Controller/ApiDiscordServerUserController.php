@@ -12,7 +12,9 @@ use App\Entity\GachaUser;
 use App\Entity\Rank;
 use App\Entity\Stat;
 use App\Entity\UserStat;
+use App\Progression\ProgressionService;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\DBAL\LockMode;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,6 +23,46 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class ApiDiscordServerUserController extends AbstractController
 {
+    #[Route('/api/discord-servers/{discordId}/users/{userDiscordId}/xp', name: 'api_discord_server_user_grant_xp', methods: ['POST'])]
+    public function grantXp(string $discordId, string $userDiscordId, Request $request, EntityManagerInterface $entityManager, ProgressionService $progression): JsonResponse
+    {
+        $payload = $this->jsonPayload($request);
+        if (null === $payload || !\is_string($payload['source'] ?? null) || !\in_array($payload['source'], ['message', 'voice'], true)) {
+            return $this->json(['error' => 'invalid_payload'], Response::HTTP_BAD_REQUEST);
+        }
+        $server = $this->serverOr404($entityManager, $discordId);
+        if (!$server instanceof DiscordServer) {
+            return $this->json(['error' => 'server_not_found'], Response::HTTP_NOT_FOUND);
+        }
+        if (!$server->active()) {
+            return $this->json(['error' => 'server_inactive'], Response::HTTP_CONFLICT);
+        }
+
+        $entityManager->beginTransaction();
+        try {
+            $user = $this->userOr404($entityManager, $server, $userDiscordId);
+            if (!$user instanceof GachaUser) {
+                $entityManager->rollback();
+
+                return $this->json(['error' => 'user_not_found'], Response::HTTP_NOT_FOUND);
+            }
+            $entityManager->lock($user, LockMode::PESSIMISTIC_WRITE);
+            $entityManager->refresh($user);
+            $result = $progression->grant($user, $payload['source']);
+            $entityManager->flush();
+            $entityManager->commit();
+
+            return $this->json(['progression' => $result, 'user' => $this->userPayload($entityManager, $user)]);
+        } catch (\DomainException $exception) {
+            $entityManager->rollback();
+
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_CONFLICT);
+        } catch (\Throwable $exception) {
+            $entityManager->rollback();
+            throw $exception;
+        }
+    }
+
     #[Route('/api/discord-servers/{discordId}/users/{userDiscordId}', name: 'api_discord_server_users_ensure', methods: ['PUT'])]
     public function ensure(
         string $discordId,
@@ -355,12 +397,16 @@ final class ApiDiscordServerUserController extends AbstractController
     private function defaultRank(EntityManagerInterface $entityManager, DiscordServer $server): ?Rank
     {
         $ranks = $entityManager->getRepository(Rank::class)->findBy(['server' => $server], ['percentage' => 'ASC', 'name' => 'ASC']);
+        $progressionRankIds = array_filter($server->progressionSettings()['rank_ids'] ?? [], static fn (mixed $id): bool => null !== $id);
+        if (5 === \count($progressionRankIds)) {
+            $ranks = array_values(array_filter($ranks, static fn (Rank $rank): bool => \in_array((int) $rank->id(), $progressionRankIds, true)));
+        }
 
         if ([] === $ranks) {
             return null;
         }
 
-        return $this->weightedPick($ranks, static fn (Rank $rank): int => $rank->percentage());
+        return $this->weightedPick($ranks, static fn (Rank $rank): int => $rank->percentage(), false);
     }
 
     private function defaultRole(EntityManagerInterface $entityManager, DiscordServer $server): ?CharacterRole
@@ -388,14 +434,14 @@ final class ApiDiscordServerUserController extends AbstractController
      *
      * @return T
      */
-    private function weightedPick(array $items, callable $weight): object
+    private function weightedPick(array $items, callable $weight, bool $requireHundred = true): object
     {
         $total = array_sum(array_map(static fn (object $item): int => max(0, $weight($item)), $items));
-        if (100 !== $total) {
+        if ($total <= 0 || ($requireHundred && 100 !== $total)) {
             throw new \LogicException('A percentage distribution must total exactly 100.');
         }
 
-        $point = random_int(1, 100);
+        $point = random_int(1, $total);
         $cumulative = 0;
         foreach ($items as $item) {
             $cumulative += max(0, $weight($item));
@@ -474,6 +520,11 @@ final class ApiDiscordServerUserController extends AbstractController
                 $user->elements()->toArray(),
             ),
             'stats' => $this->userStatsPayload($entityManager, $user),
+            'progression' => [
+                'xp' => $user->progressionXp(),
+                'total_xp' => $user->totalXp(),
+                'constellations' => $user->constellations(),
+            ],
         ];
     }
 
