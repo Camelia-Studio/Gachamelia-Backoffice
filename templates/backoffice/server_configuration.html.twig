@@ -160,7 +160,7 @@
                                                         <option value="{{ catalog.settings.welcome_channel_id }}" selected>ID actuel introuvable ({{ catalog.settings.welcome_channel_id }})</option>
                                                     {% endif %}
                                                     {% for channel in discord_resources.channels %}
-                                                        <option value="{{ channel.id }}" {% if catalog.settings.welcome_channel_id == channel.id %}selected{% endif %}>{{ channel.label }}</option>
+                                                        {% if channel.type in [0, 5] %}<option value="{{ channel.id }}" {% if catalog.settings.welcome_channel_id == channel.id %}selected{% endif %}>{{ channel.label }}</option>{% endif %}
                                                     {% endfor %}
                                                 </select>
                                             {% else %}
@@ -176,7 +176,7 @@
                                                         <option value="{{ catalog.settings.bye_channel_id }}" selected>ID actuel introuvable ({{ catalog.settings.bye_channel_id }})</option>
                                                     {% endif %}
                                                     {% for channel in discord_resources.channels %}
-                                                        <option value="{{ channel.id }}" {% if catalog.settings.bye_channel_id == channel.id %}selected{% endif %}>{{ channel.label }}</option>
+                                                        {% if channel.type in [0, 5] %}<option value="{{ channel.id }}" {% if catalog.settings.bye_channel_id == channel.id %}selected{% endif %}>{{ channel.label }}</option>{% endif %}
                                                     {% endfor %}
                                                 </select>
                                             {% else %}
@@ -206,6 +206,47 @@
                                 {% include 'backoffice/_catalog_table.html.twig' with { target_type: 'server', target_id: guild.id } %}
                             </div>
                         {% elseif active_section == 'progression' %}
+                            <section class="bo-panel bo-panel--padded bo-progression">
+                                <div class="bo-progression-intro">
+                                    <h2 class="bo-card-heading">Salons autorisés pour l’XP</h2>
+                                    <p class="bo-page-lead">Seuls les messages et les périodes vocales dans les salons cochés donnent de l’XP. Une liste vide bloque les gains correspondants. Le bot applique les changements à la prochaine synchronisation du catalogue.</p>
+                                </div>
+                                <form method="post" action="{{ path('app_server_progression_channels_update', { guildId: guild.id }) }}" class="bo-progression-form">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('backoffice') }}">
+                                    {% if discord_resources.channels is empty %}<p class="bo-notice bo-notice--rose">Les salons Discord sont temporairement indisponibles. Tu peux saisir leurs IDs directement.</p>{% endif %}
+                                    <div class="bo-progression-grid">
+                                        <fieldset class="bo-progression-group">
+                                            <legend>Messages</legend>
+                                            {% for channel in discord_resources.channels %}
+                                                {% if channel.type in [0, 5] %}
+                                                    <label class="bo-channel-choice"><input type="checkbox" name="message_channel_ids[]" value="{{ channel.id }}" {% if channel.id in catalog.progression.message_channel_ids %}checked{% endif %}><span>{{ channel.label }}</span></label>
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% for id in catalog.progression.message_channel_ids %}
+                                                {% if id not in discord_resource_ids.channels %}<label class="bo-channel-choice"><input type="checkbox" name="message_channel_ids[]" value="{{ id }}" checked><span>ID actuel introuvable ({{ id }})</span></label>{% endif %}
+                                            {% endfor %}
+                                            <label class="bo-field">Ajouter des IDs de salons texte
+                                                <textarea name="message_channel_ids_manual" class="bo-input" rows="2" placeholder="Un ID par ligne ou séparés par des virgules"></textarea>
+                                            </label>
+                                        </fieldset>
+                                        <fieldset class="bo-progression-group">
+                                            <legend>Vocal</legend>
+                                            {% for channel in discord_resources.channels %}
+                                                {% if channel.type in [2, 13] %}
+                                                    <label class="bo-channel-choice"><input type="checkbox" name="voice_channel_ids[]" value="{{ channel.id }}" {% if channel.id in catalog.progression.voice_channel_ids %}checked{% endif %}><span>{{ channel.label }}</span></label>
+                                                {% endif %}
+                                            {% endfor %}
+                                            {% for id in catalog.progression.voice_channel_ids %}
+                                                {% if id not in discord_resource_ids.channels %}<label class="bo-channel-choice"><input type="checkbox" name="voice_channel_ids[]" value="{{ id }}" checked><span>ID actuel introuvable ({{ id }})</span></label>{% endif %}
+                                            {% endfor %}
+                                            <label class="bo-field">Ajouter des IDs de salons vocaux
+                                                <textarea name="voice_channel_ids_manual" class="bo-input" rows="2" placeholder="Un ID par ligne ou séparés par des virgules"></textarea>
+                                            </label>
+                                        </fieldset>
+                                    </div>
+                                    <div class="bo-progression-actions"><button type="submit" class="bo-btn bo-btn--ink">Enregistrer les salons</button></div>
+                                </form>
+                            </section>
                             <section class="bo-panel bo-panel--padded bo-progression">
                                 <div class="bo-progression-intro">
                                     <h2 class="bo-card-heading">Paliers et gains d’XP</h2>

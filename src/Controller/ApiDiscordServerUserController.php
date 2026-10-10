@@ -27,7 +27,8 @@ final class ApiDiscordServerUserController extends AbstractController
     public function grantXp(string $discordId, string $userDiscordId, Request $request, EntityManagerInterface $entityManager, ProgressionService $progression): JsonResponse
     {
         $payload = $this->jsonPayload($request);
-        if (null === $payload || !\is_string($payload['source'] ?? null) || !\in_array($payload['source'], ['message', 'voice'], true)) {
+        if (null === $payload || !\is_string($payload['source'] ?? null) || !\in_array($payload['source'], ['message', 'voice'], true)
+            || !\is_string($payload['channel_id'] ?? null) || !preg_match('/^[0-9]{1,32}$/D', $payload['channel_id'])) {
             return $this->json(['error' => 'invalid_payload'], Response::HTTP_BAD_REQUEST);
         }
         $server = $this->serverOr404($entityManager, $discordId);
@@ -48,7 +49,7 @@ final class ApiDiscordServerUserController extends AbstractController
             }
             $entityManager->lock($user, LockMode::PESSIMISTIC_WRITE);
             $entityManager->refresh($user);
-            $result = $progression->grant($user, $payload['source']);
+            $result = $progression->grant($user, $payload['source'], $payload['channel_id']);
             $entityManager->flush();
             $entityManager->commit();
 

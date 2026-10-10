@@ -16,21 +16,25 @@ final readonly class ProgressionService
     }
 
     /** @return array{gain: int, rank_ups: list<int>, new_constellations: int, quarter: int} */
-    public function grant(GachaUser $user, string $source): array
+    public function grant(GachaUser $user, string $source, string $channelId): array
     {
         $server = $user->server();
         $settings = ProgressionSettings::validate($server->progressionSettings());
         if (null === $settings || \in_array(null, $settings['rank_ids'], true)) {
             throw new \DomainException('progression_not_configured');
         }
+        if (!\in_array($source, ['message', 'voice'], true)) {
+            throw new \InvalidArgumentException('invalid_xp_source');
+        }
+        $allowedChannels = 'message' === $source ? $settings['message_channel_ids'] : $settings['voice_channel_ids'];
+        if (!\in_array($channelId, $allowedChannels, true)) {
+            throw new \DomainException('xp_channel_not_allowed');
+        }
         $ranks = $this->ranks($server, $settings['rank_ids']);
         $rank = $user->rank();
         $index = $rank instanceof Rank ? array_search((int) $rank->id(), $settings['rank_ids'], true) : false;
         if (false === $index) {
             throw new \DomainException('user_rank_not_in_progression');
-        }
-        if (!\in_array($source, ['message', 'voice'], true)) {
-            throw new \InvalidArgumentException('invalid_xp_source');
         }
 
         $gain = 'message' === $source ? $settings['message_xp'] : $settings['voice_xp'];

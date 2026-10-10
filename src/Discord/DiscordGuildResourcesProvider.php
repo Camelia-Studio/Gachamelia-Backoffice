@@ -11,7 +11,7 @@ final readonly class DiscordGuildResourcesProvider implements DiscordGuildResour
     /**
      * @var list<int>
      */
-    private const array MESSAGE_CHANNEL_TYPES = [0, 5];
+    private const array SUPPORTED_CHANNEL_TYPES = [0, 2, 5, 13];
 
     public function __construct(
         private DiscordGuildResourcesClientInterface $client,
@@ -76,14 +76,14 @@ final readonly class DiscordGuildResourcesProvider implements DiscordGuildResour
             $id = $channel['id'] ?? null;
             $name = $channel['name'] ?? null;
             $type = $channel['type'] ?? null;
-            if (!\is_string($id) || !\is_string($name) || !\is_int($type) || !\in_array($type, self::MESSAGE_CHANNEL_TYPES, true)) {
+            if (!\is_string($id) || !\is_string($name) || !\is_int($type) || !\in_array($type, self::SUPPORTED_CHANNEL_TYPES, true)) {
                 continue;
             }
 
             $payload[] = [
                 'id' => $id,
                 'name' => $name,
-                'label' => '#'.$name,
+                'label' => \in_array($type, [2, 13], true) ? '🔊 '.$name : '#'.$name,
                 'type' => $type,
             ];
         }

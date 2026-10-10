@@ -14,12 +14,14 @@ final class ProgressionSettings
         'message_xp' => 7,
         'voice_xp' => 15,
         'voice_interval_minutes' => 5,
+        'message_channel_ids' => [],
+        'voice_channel_ids' => [],
     ];
 
     /**
      * @param array<string, mixed> $input
      *
-     * @return array{rank_ids: list<int|null>, thresholds: list<int>, quarter_percentages: list<int>, constellation_threshold: int, message_xp: int, voice_xp: int, voice_interval_minutes: int}|null
+     * @return array{rank_ids: list<int|null>, thresholds: list<int>, quarter_percentages: list<int>, constellation_threshold: int, message_xp: int, voice_xp: int, voice_interval_minutes: int, message_channel_ids: list<string>, voice_channel_ids: list<string>}|null
      */
     public static function validate(array $input): ?array
     {
@@ -62,6 +64,17 @@ final class ProgressionSettings
                 return null;
             }
         }
+        foreach (['message_channel_ids', 'voice_channel_ids'] as $key) {
+            $ids = $input[$key] ?? [];
+            if (!\is_array($ids) || !array_is_list($ids) || \count($ids) !== \count(array_unique($ids))) {
+                return null;
+            }
+            foreach ($ids as $id) {
+                if (!\is_string($id) || !preg_match('/^[0-9]{1,32}$/D', $id)) {
+                    return null;
+                }
+            }
+        }
 
         return [
             'rank_ids' => $rankIds,
@@ -71,6 +84,8 @@ final class ProgressionSettings
             'message_xp' => $input['message_xp'],
             'voice_xp' => $input['voice_xp'],
             'voice_interval_minutes' => $input['voice_interval_minutes'],
+            'message_channel_ids' => $input['message_channel_ids'] ?? [],
+            'voice_channel_ids' => $input['voice_channel_ids'] ?? [],
         ];
     }
 }

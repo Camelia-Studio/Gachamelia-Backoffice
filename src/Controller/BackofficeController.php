@@ -202,7 +202,7 @@ final class BackofficeController extends AbstractController
         }
         $server = $this->findServerEntityOr404($entityManager, $guild['id']);
         $catalog = $this->catalogPayload($entityManager, $server);
-        $discordResources = $server->active() && \in_array($section, ['settings', 'ranks'], true)
+        $discordResources = $server->active() && \in_array($section, ['settings', 'ranks', 'progression'], true)
             ? $discordGuildResourcesProvider->resourcesForGuild($guild['id'])
             : $this->emptyDiscordResourcesPayload();
 
@@ -264,6 +264,8 @@ final class BackofficeController extends AbstractController
             'message_xp' => $this->positiveProgressionInt($request->request->get('message_xp')),
             'voice_xp' => $this->positiveProgressionInt($request->request->get('voice_xp')),
             'voice_interval_minutes' => $this->positiveProgressionInt($request->request->get('voice_interval_minutes')),
+            'message_channel_ids' => $server->progressionSettings()['message_channel_ids'],
+            'voice_channel_ids' => $server->progressionSettings()['voice_channel_ids'],
         ];
         try {
             $server->updateProgressionSettings($settings);
@@ -271,6 +273,46 @@ final class BackofficeController extends AbstractController
             $this->addFlash('success', 'Progression enregistrée pour ce serveur.');
         } catch (\InvalidArgumentException) {
             $this->addFlash('error', 'Les rangs doivent être distincts et les valeurs d’XP positives.');
+        }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'progression']);
+    }
+
+    #[Route('/app/serveurs/{guildId}/progression/salons', name: 'app_server_progression_channels_update', methods: ['POST'])]
+    public function updateProgressionChannels(
+        string $guildId,
+        Request $request,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $settings = $server->progressionSettings();
+        foreach (['message_channel_ids', 'voice_channel_ids'] as $key) {
+            $selected = $request->request->all($key);
+            foreach ($selected as $id) {
+                if (!\is_string($id)) {
+                    $this->addFlash('error', 'La liste des salons contient un identifiant invalide.');
+
+                    return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'progression']);
+                }
+            }
+            $manual = $request->request->get($key.'_manual', '');
+            if (!\is_string($manual)) {
+                $manual = '';
+            }
+            $manualIds = preg_split('/[\s,;]+/', trim($manual), -1, PREG_SPLIT_NO_EMPTY);
+            if (false === $manualIds) {
+                $manualIds = [];
+            }
+            $settings[$key] = array_values(array_unique([...$selected, ...$manualIds]));
+        }
+        try {
+            $server->updateProgressionSettings($settings);
+            $entityManager->flush();
+            $this->addFlash('success', 'Salons autorisés pour l’XP enregistrés.');
+        } catch (\InvalidArgumentException) {
+            $this->addFlash('error', 'La liste des salons contient un identifiant invalide.');
         }
 
         return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'progression']);
