@@ -9,6 +9,7 @@ use Doctrine\Migrations\AbstractMigration;
 
 final class Version20261007120000 extends AbstractMigration
 {
+    #[\Override]
     public function getDescription(): string
     {
         return 'Add per-server progression settings and user XP state.';
@@ -20,6 +21,7 @@ final class Version20261007120000 extends AbstractMigration
         $this->addSql('ALTER TABLE users ADD progression_xp BIGINT NOT NULL DEFAULT 0, ADD total_xp BIGINT NOT NULL DEFAULT 0, ADD constellations INT NOT NULL DEFAULT 0');
     }
 
+    #[\Override]
     public function down(Schema $schema): void
     {
         $this->addSql('ALTER TABLE users DROP progression_xp, DROP total_xp, DROP constellations');

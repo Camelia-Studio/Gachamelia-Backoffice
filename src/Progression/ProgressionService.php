@@ -9,7 +9,7 @@ use App\Entity\GachaUser;
 use App\Entity\Rank;
 use Doctrine\ORM\EntityManagerInterface;
 
-final class ProgressionService
+final readonly class ProgressionService
 {
     public function __construct(private EntityManagerInterface $entityManager)
     {

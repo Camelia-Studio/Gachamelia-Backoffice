@@ -6,7 +6,7 @@ namespace App\Progression;
 
 final class ProgressionSettings
 {
-    public const DEFAULTS = [
+    public const array DEFAULTS = [
         'rank_ids' => [null, null, null, null, null],
         'thresholds' => [10000, 150000, 450000, 960000],
         'quarter_percentages' => [20, 40, 60, 80],

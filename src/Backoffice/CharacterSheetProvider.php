@@ -25,7 +25,8 @@ final readonly class CharacterSheetProvider
      *     rank: array{name: string, is_staff: bool}|null,
      *     role: array{name: string, emoji: string|null, emoji_url: string|null}|null,
      *     elements: list<array{name: string, emoji: string|null, emoji_url: string|null}>,
-     *     stats: list<array{name: string, value: int}>
+     *     stats: list<array{name: string, value: int}>,
+     *     progression: array{xp: int, total_xp: int, constellations: int}
      * }|null
      */
     public function forMember(DiscordServer $server, string $discordId): ?array

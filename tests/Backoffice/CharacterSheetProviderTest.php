@@ -107,6 +107,11 @@ final class CharacterSheetProviderTest extends KernelTestCase
                     'value' => 12,
                 ],
             ],
+            'progression' => [
+                'xp' => 0,
+                'total_xp' => 0,
+                'constellations' => 0,
+            ],
         ], $sheet);
     }
 
@@ -126,6 +131,11 @@ final class CharacterSheetProviderTest extends KernelTestCase
             'role' => null,
             'elements' => [],
             'stats' => [],
+            'progression' => [
+                'xp' => 0,
+                'total_xp' => 0,
+                'constellations' => 0,
+            ],
         ], $this->provider()->forMember($server, 'empty'));
     }
 
