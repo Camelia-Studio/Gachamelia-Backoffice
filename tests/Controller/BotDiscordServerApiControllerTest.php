@@ -532,6 +532,7 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
                         'cdn_url' => null,
                     ],
                 ]],
+                'progression' => \App\Progression\ProgressionSettings::DEFAULTS,
             ],
         ], $responsePayload);
 

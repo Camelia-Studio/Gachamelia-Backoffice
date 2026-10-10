@@ -1,4 +1,4 @@
-{% if active_section != 'overview' and active_section != 'settings' %}
+{% if active_section in ['ranks', 'role-stats', 'welcome-messages', 'bye-messages', 'roles', 'stats', 'elements'] %}
     {% if target_type == 'server' %}
         {% set export_url = path('app_server_catalog_csv_export', { guildId: target_id, section: active_section }) %}
         {% set import_url = path('app_server_catalog_csv_import', { guildId: target_id, section: active_section }) %}

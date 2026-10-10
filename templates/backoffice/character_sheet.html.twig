@@ -80,6 +80,21 @@
                     </div>
                 </div>
 
+                <dl class="bo-sheet-progression" data-testid="character-sheet-progression">
+                    <div>
+                        <dt>XP dans ce rang</dt>
+                        <dd>{{ character_sheet.progression.xp|number_format(0, ',', ' ') }}</dd>
+                    </div>
+                    <div>
+                        <dt>XP au total</dt>
+                        <dd>{{ character_sheet.progression.total_xp|number_format(0, ',', ' ') }}</dd>
+                    </div>
+                    <div>
+                        <dt>Constellations</dt>
+                        <dd>{{ character_sheet.progression.constellations|number_format(0, ',', ' ') }}</dd>
+                    </div>
+                </dl>
+
                 <div class="bo-sheet-body">
                     <div class="bo-sheet-column">
                         <section class="bo-stack bo-stack--tight" data-testid="character-sheet-role">

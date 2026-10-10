@@ -71,6 +71,12 @@ final class BackofficeController extends AbstractController
             'catalog_key' => 'ranks',
             'icon' => 'ranks',
         ],
+        'progression' => [
+            'label' => 'Progression XP',
+            'description' => 'Les rangs, seuils et gains d’expérience propres à ce serveur.',
+            'catalog_key' => 'progression',
+            'icon' => 'ranks',
+        ],
         'role-stats' => [
             'label' => 'Stats de rôle',
             'description' => 'Les probabilités de caractéristiques associées à chaque rôle.',
@@ -172,7 +178,7 @@ final class BackofficeController extends AbstractController
     #[Route(
         '/app/serveurs/{guildId}/configuration/{section}',
         name: 'app_server_configuration_section',
-        requirements: ['section' => 'settings|ranks|role-stats|welcome-messages|bye-messages|roles|stats|elements'],
+        requirements: ['section' => 'settings|ranks|progression|role-stats|welcome-messages|bye-messages|roles|stats|elements'],
         methods: ['GET'],
     )]
     public function configurationSection(
@@ -214,6 +220,65 @@ final class BackofficeController extends AbstractController
             'active_configuration_section' => $this->configurationSectionPayload($catalog, $section),
             'read_only' => !$server->active(),
         ]);
+    }
+
+    #[Route('/app/serveurs/{guildId}/progression', name: 'app_server_progression_update', methods: ['POST'])]
+    public function updateProgression(
+        string $guildId,
+        Request $request,
+        BackofficeSession $backofficeSession,
+        BackofficeAccess $backofficeAccess,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $server = $this->manageableServerOr404($guildId, $backofficeSession, $backofficeAccess, $entityManager);
+        $rankIds = [];
+        for ($i = 0; $i < 5; ++$i) {
+            $raw = $request->request->all('rank_ids')[$i] ?? '';
+            if (!\is_string($raw) || !ctype_digit($raw) || (int) $raw <= 0) {
+                $this->addFlash('error', 'Associe les cinq rangs de progression.');
+
+                return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'progression']);
+            }
+            $rank = $this->rankForServerOr404($entityManager, $server, (int) $raw);
+            if ($rank->isStaff()) {
+                $this->addFlash('error', 'Un rang staff ne peut pas être un palier de progression.');
+
+                return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'progression']);
+            }
+            $rankIds[] = (int) $raw;
+        }
+
+        $thresholds = [];
+        for ($i = 0; $i < 4; ++$i) {
+            $thresholds[] = $this->positiveProgressionInt($request->request->all('thresholds')[$i] ?? null);
+        }
+        $quarters = [];
+        for ($i = 0; $i < 4; ++$i) {
+            $quarters[] = $this->positiveProgressionInt($request->request->all('quarter_percentages')[$i] ?? null);
+        }
+        $settings = [
+            'rank_ids' => $rankIds,
+            'thresholds' => $thresholds,
+            'quarter_percentages' => $quarters,
+            'constellation_threshold' => $this->positiveProgressionInt($request->request->get('constellation_threshold')),
+            'message_xp' => $this->positiveProgressionInt($request->request->get('message_xp')),
+            'voice_xp' => $this->positiveProgressionInt($request->request->get('voice_xp')),
+            'voice_interval_minutes' => $this->positiveProgressionInt($request->request->get('voice_interval_minutes')),
+        ];
+        try {
+            $server->updateProgressionSettings($settings);
+            $entityManager->flush();
+            $this->addFlash('success', 'Progression enregistrée pour ce serveur.');
+        } catch (\InvalidArgumentException) {
+            $this->addFlash('error', 'Les rangs doivent être distincts et les valeurs d’XP positives.');
+        }
+
+        return $this->redirectToRoute('app_server_configuration_section', ['guildId' => $guildId, 'section' => 'progression']);
+    }
+
+    private function positiveProgressionInt(mixed $raw): ?int
+    {
+        return \is_string($raw) && ctype_digit($raw) && (int) $raw > 0 ? (int) $raw : null;
     }
 
     #[Route('/app/serveurs/{guildId}/catalogue/ranks', name: 'app_server_catalog_rank_create', methods: ['POST'])]
@@ -1002,6 +1067,7 @@ final class BackofficeController extends AbstractController
 
         return [
             'settings' => $this->serverSettingsPayload($server),
+            'progression' => $server->progressionSettings(),
             'ranks' => array_map(
                 fn (Rank $rank): array => [
                     'id' => (int) $rank->id(),
@@ -1329,6 +1395,9 @@ final class BackofficeController extends AbstractController
      */
     private function configurationSectionCount(array $catalog, string $catalogKey): int
     {
+        if ('progression' === $catalogKey) {
+            return \count(array_filter($catalog['progression']['rank_ids'], static fn (mixed $id): bool => null !== $id));
+        }
         if ('settings' === $catalogKey) {
             return \count(array_filter(
                 $catalog['settings'],
