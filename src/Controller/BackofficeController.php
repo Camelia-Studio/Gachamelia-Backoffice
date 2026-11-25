@@ -153,7 +153,7 @@ final class BackofficeController extends AbstractController
 
         $guild = $this->findGuildOr404($backofficeSession, $backofficeAccess, $guildId);
         if (true !== ($guild['canManageConfiguration'] ?? false)) {
-            throw new AccessDeniedHttpException('Administrator permission required for this server.');
+            throw new AccessDeniedHttpException('Manage Server permission required for this server.');
         }
         $server = $this->findServerEntityOr404($entityManager, $guild['id']);
         $catalog = $this->catalogPayload($entityManager, $server);
@@ -198,7 +198,7 @@ final class BackofficeController extends AbstractController
 
         $guild = $this->findGuildOr404($backofficeSession, $backofficeAccess, $guildId);
         if (true !== ($guild['canManageConfiguration'] ?? false)) {
-            throw new AccessDeniedHttpException('Administrator permission required for this server.');
+            throw new AccessDeniedHttpException('Manage Server permission required for this server.');
         }
         $server = $this->findServerEntityOr404($entityManager, $guild['id']);
         $catalog = $this->catalogPayload($entityManager, $server);
@@ -976,7 +976,7 @@ final class BackofficeController extends AbstractController
 
         $guild = $this->findGuildOr404($backofficeSession, $backofficeAccess, $guildId);
         if (true !== ($guild['canManageConfiguration'] ?? false)) {
-            throw new AccessDeniedHttpException('Administrator permission required for this server.');
+            throw new AccessDeniedHttpException('Manage Server permission required for this server.');
         }
 
         $server = $this->findServerEntityOr404($entityManager, $guild['id']);

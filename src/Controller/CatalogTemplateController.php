@@ -771,7 +771,7 @@ final class CatalogTemplateController extends AbstractController
         }
 
         if (true !== ($guild['canManageConfiguration'] ?? false)) {
-            throw new AccessDeniedHttpException('Administrator permission required for this server.');
+            throw new AccessDeniedHttpException('Manage Server permission required for this server.');
         }
 
         return $guild;

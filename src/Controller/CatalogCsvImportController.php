@@ -500,7 +500,7 @@ final class CatalogCsvImportController extends AbstractController
             throw new NotFoundHttpException('Server is not available in this backoffice session.');
         }
         if (true !== ($guild['canManageConfiguration'] ?? false)) {
-            throw new AccessDeniedHttpException('Administrator permission required for this server.');
+            throw new AccessDeniedHttpException('Manage Server permission required for this server.');
         }
         $server = $entityManager->getRepository(DiscordServer::class)->findOneBy(['discordId' => $guildId]);
         if (!$server instanceof DiscordServer) {

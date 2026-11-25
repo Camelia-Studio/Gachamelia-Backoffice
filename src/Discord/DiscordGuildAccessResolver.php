@@ -7,6 +7,7 @@ namespace App\Discord;
 final class DiscordGuildAccessResolver
 {
     private const int ADMINISTRATOR_PERMISSION = 0x8;
+    private const int MANAGE_GUILD_PERMISSION = 0x20;
 
     /**
      * @param list<array<string, mixed>> $userGuilds
@@ -49,15 +50,18 @@ final class DiscordGuildAccessResolver
                 'icon' => \is_string($icon) && '' !== $icon ? $icon : null,
                 'owner' => $owner,
                 'permissions' => $permissions,
-                'canManageConfiguration' => $owner || $this->hasAdministratorPermission($permissions),
+                'canManageConfiguration' => $owner || $this->hasManageGuildPermission($permissions),
             ];
         }
 
         return $accessibleGuilds;
     }
 
-    private function hasAdministratorPermission(string $permissions): bool
+    /**
+     * « Gérer le serveur » suffit ; « Administrateur » l'accorde implicitement côté Discord.
+     */
+    private function hasManageGuildPermission(string $permissions): bool
     {
-        return (((int) $permissions) & self::ADMINISTRATOR_PERMISSION) === self::ADMINISTRATOR_PERMISSION;
+        return 0 !== (((int) $permissions) & (self::MANAGE_GUILD_PERMISSION | self::ADMINISTRATOR_PERMISSION));
     }
 }
