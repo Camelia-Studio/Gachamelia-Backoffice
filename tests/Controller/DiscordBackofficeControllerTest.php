@@ -630,6 +630,35 @@ final class DiscordBackofficeControllerTest extends WebTestCase
         self::assertSelectorTextContains('[data-testid="configuration-panel"]', 'Ressources Discord temporairement indisponibles');
     }
 
+    public function testAdministratorCanConfigureXpChannelsWithoutFiveRanks(): void
+    {
+        $client = self::createClient();
+        $client->disableReboot();
+        $this->resetDatabase();
+        $this->seedPersistentBackofficeAccess($client);
+        self::getContainer()->set(DiscordGuildResourcesProviderInterface::class, new FakeDiscordGuildResourcesProvider(
+            [
+                ['id' => '111111111111111111', 'name' => 'discussion', 'label' => '#discussion', 'type' => 0],
+                ['id' => '222222222222222222', 'name' => 'vocal', 'label' => '🔊 vocal', 'type' => 2],
+            ],
+            [],
+        ));
+
+        $client->request('GET', '/app/serveurs/admin/configuration/progression');
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('input[name="message_channel_ids[]"][value="111111111111111111"]');
+        self::assertSelectorExists('input[name="voice_channel_ids[]"][value="222222222222222222"]');
+
+        $this->post($client, '/app/serveurs/admin/progression/salons', [
+            'message_channel_ids' => ['111111111111111111'],
+            'voice_channel_ids' => ['222222222222222222'],
+        ]);
+        self::assertResponseRedirects('/app/serveurs/admin/configuration/progression');
+        $stored = json_decode((string) $this->connection()->fetchOne('SELECT progression_settings FROM discord_servers WHERE discord_id = ?', ['admin']), true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame(['111111111111111111'], $stored['message_channel_ids']);
+        self::assertSame(['222222222222222222'], $stored['voice_channel_ids']);
+    }
+
     public function testAdministratorCanCreateServerCatalogRows(): void
     {
         $client = self::createClient();

@@ -1349,6 +1349,26 @@ html[data-backoffice-theme] {
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.bo-channel-choice {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0.5rem 0;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-soft);
+    cursor: pointer;
+}
+
+.bo-channel-choice:has(input:checked) {
+    border-color: var(--rose);
+    background: var(--ivory);
+}
+
+.bo-channel-choice input {
+    accent-color: var(--rose);
+}
+
 .bo-progression-actions {
     display: flex;
     justify-content: flex-end;

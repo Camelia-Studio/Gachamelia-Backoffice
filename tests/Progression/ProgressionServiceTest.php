@@ -31,6 +31,8 @@ final class ProgressionServiceTest extends TestCase
             'message_xp' => 26,
             'voice_xp' => 7,
             'voice_interval_minutes' => 5,
+            'message_channel_ids' => ['123'],
+            'voice_channel_ids' => ['456'],
         ]);
 
         $repository = self::createStub(EntityRepository::class);
@@ -40,12 +42,20 @@ final class ProgressionServiceTest extends TestCase
         $progression = new ProgressionService($manager);
         $user = new GachaUser($server, 'user-1', $ranks[1]);
 
-        self::assertSame(['gain' => 26, 'rank_ups' => [2, 3], 'new_constellations' => 0, 'quarter' => 3], $progression->grant($user, 'message'));
+        try {
+            $progression->grant($user, 'message', '999');
+            self::fail('An unlisted channel must not grant XP.');
+        } catch (\DomainException $exception) {
+            self::assertSame('xp_channel_not_allowed', $exception->getMessage());
+            self::assertSame(0, $user->totalXp());
+        }
+
+        self::assertSame(['gain' => 26, 'rank_ups' => [2, 3], 'new_constellations' => 0, 'quarter' => 3], $progression->grant($user, 'message', '123'));
         self::assertSame($ranks[3], $user->rank());
         self::assertSame(6, $user->progressionXp());
         self::assertSame(26, $user->totalXp());
 
-        self::assertSame(['gain' => 26, 'rank_ups' => [4, 5], 'new_constellations' => 1, 'quarter' => 0], $progression->grant($user, 'message'));
+        self::assertSame(['gain' => 26, 'rank_ups' => [4, 5], 'new_constellations' => 1, 'quarter' => 0], $progression->grant($user, 'message', '123'));
         self::assertSame($ranks[5], $user->rank());
         self::assertSame(1, $user->constellations());
         self::assertSame(0, $user->progressionXp());
@@ -58,6 +68,6 @@ final class ProgressionServiceTest extends TestCase
         $user = new GachaUser($server, 'user-2');
         $manager = self::createStub(EntityManagerInterface::class);
         $this->expectExceptionMessage('progression_not_configured');
-        (new ProgressionService($manager))->grant($user, 'message');
+        (new ProgressionService($manager))->grant($user, 'message', '123');
     }
 }

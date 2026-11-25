@@ -94,7 +94,7 @@ class DiscordServer
     /** @return array<string, mixed> */
     public function progressionSettings(): array
     {
-        return $this->progressionSettings ?? ProgressionSettings::DEFAULTS;
+        return array_replace(ProgressionSettings::DEFAULTS, $this->progressionSettings ?? []);
     }
 
     /** @param array<string, mixed> $settings */

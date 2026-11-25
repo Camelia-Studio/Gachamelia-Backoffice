@@ -36,6 +36,7 @@ final class DiscordGuildResourcesProviderTest extends TestCase
         self::assertSame([
             ['id' => '100000000000000002', 'name' => 'annonces', 'label' => '#annonces', 'type' => 5],
             ['id' => '100000000000000001', 'name' => 'bienvenue', 'label' => '#bienvenue', 'type' => 0],
+            ['id' => '100000000000000003', 'name' => 'vocal', 'label' => '🔊 vocal', 'type' => 2],
         ], $firstPayload['channels']);
         self::assertSame([
             ['id' => '200000000000000002', 'name' => 'Staff', 'label' => '@Staff', 'position' => 8, 'managed' => false],
