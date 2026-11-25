@@ -866,6 +866,81 @@ final class BotDiscordServerApiControllerTest extends WebTestCase
         self::assertSame(0, (int) $this->connection()->fetchOne('SELECT COUNT(*) FROM user_stats'));
     }
 
+    public function testXpGrantsAreRecordedInTheProgressionJournal(): void
+    {
+        $client = self::createClient();
+        $this->resetDatabase();
+        $catalogue = $this->seedRuntimeCatalogue();
+        $rankIds = [$catalogue['rank_id']];
+        for ($tier = 2; $tier <= 5; ++$tier) {
+            $this->connection()->insert('ranks', [
+                'server_id' => $catalogue['server_id'],
+                'discord_id' => 'rank-tier-'.$tier,
+                'name' => $tier.'★',
+                'percentage' => 0,
+                'bye_title' => null,
+                'is_staff' => 0,
+                'created_at' => '2026-07-06 10:00:00',
+                'updated_at' => '2026-07-06 10:00:00',
+            ]);
+            $rankIds[] = (int) $this->connection()->lastInsertId();
+        }
+        $this->connection()->update('discord_servers', ['progression_settings' => json_encode([
+            'rank_ids' => $rankIds,
+            'thresholds' => [10, 100, 100, 100],
+            'quarter_percentages' => [20, 40, 60, 80],
+            'constellation_threshold' => 1000,
+            'message_xp' => 7,
+            'voice_xp' => 15,
+            'voice_interval_minutes' => 5,
+            'message_channel_ids' => ['111'],
+            'voice_channel_ids' => ['222'],
+        ], JSON_THROW_ON_ERROR)], ['id' => $catalogue['server_id']]);
+
+        $token = $this->requestAccessToken($client);
+        $client->request('PUT', '/api/discord-servers/123456789/users/42', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+            'CONTENT_TYPE' => 'application/json',
+        ], content: '{}');
+        self::assertResponseStatusCodeSame(Response::HTTP_CREATED);
+
+        foreach ([['message', '111'], ['voice', '222']] as [$source, $channelId]) {
+            $client->request('POST', '/api/discord-servers/123456789/users/42/xp', server: [
+                'HTTP_AUTHORIZATION' => 'Bearer '.$token,
+                'CONTENT_TYPE' => 'application/json',
+            ], content: json_encode(['source' => $source, 'channel_id' => $channelId], JSON_THROW_ON_ERROR));
+            self::assertResponseIsSuccessful();
+        }
+
+        $userId = (int) $this->connection()->fetchOne('SELECT id FROM users WHERE discord_id = ?', ['42']);
+        $journal = fn (): array => array_map(static fn (array $row): array => [
+            'type' => $row['type'],
+            'tier' => (int) $row['tier'],
+            'previous_value' => (int) $row['previous_value'],
+            'new_value' => (int) $row['new_value'],
+            'rank_id' => null === $row['rank_id'] ? null : (int) $row['rank_id'],
+            'rank_name' => $row['rank_name'],
+        ], $this->connection()->fetchAllAssociative('SELECT type, tier, previous_value, new_value, rank_id, rank_name FROM progression_events WHERE user_id = ? ORDER BY id', [$userId]));
+        self::assertSame([
+            ['type' => 'quarter', 'tier' => 1, 'previous_value' => 0, 'new_value' => 3, 'rank_id' => $rankIds[0], 'rank_name' => 'Novice'],
+            ['type' => 'quarter', 'tier' => 1, 'previous_value' => 3, 'new_value' => 4, 'rank_id' => $rankIds[0], 'rank_name' => 'Novice'],
+            ['type' => 'rank', 'tier' => 2, 'previous_value' => 1, 'new_value' => 2, 'rank_id' => $rankIds[1], 'rank_name' => '2★'],
+        ], $journal());
+
+        // Renommer puis supprimer le rang ne doit ni bloquer la suppression ni effacer l'historique.
+        $this->connection()->update('ranks', ['name' => 'Renommé'], ['id' => $rankIds[1]]);
+        $this->connection()->update('discord_servers', ['progression_settings' => null], ['id' => $catalogue['server_id']]);
+        $this->connection()->update('users', ['rank_id' => $catalogue['rank_id']], ['id' => $userId]);
+        $this->connection()->delete('ranks', ['id' => $rankIds[1]]);
+        self::assertSame(['rank_id' => null, 'rank_name' => '2★'], array_intersect_key($journal()[2], ['rank_id' => true, 'rank_name' => true]));
+
+        $daily = $this->connection()->fetchAllAssociative('SELECT server_id, message_xp, voice_xp FROM user_daily_xp WHERE user_id = ?', [$userId]);
+        self::assertCount(1, $daily);
+        self::assertSame($catalogue['server_id'], (int) $daily[0]['server_id']);
+        self::assertSame(7, (int) $daily[0]['message_xp']);
+        self::assertSame(15, (int) $daily[0]['voice_xp']);
+    }
+
     private function requestAccessToken(KernelBrowser $client): string
     {
         $client->request('POST', '/api/auth/token', server: [

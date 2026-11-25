@@ -24,6 +24,8 @@ final class CatalogScopeSchemaListener
         $this->addCompositeForeignKey($schema, 'user_stats', ['stat_id', 'server_id'], 'stats', ['id', 'server_id'], 'fk_user_stats_stat_scope', true);
         $this->addCompositeForeignKey($schema, 'users_elements', ['user_id', 'server_id'], 'users', ['id', 'server_id'], 'fk_users_elements_user_scope', true);
         $this->addCompositeForeignKey($schema, 'users_elements', ['element_id', 'server_id'], 'elements', ['id', 'server_id'], 'fk_users_elements_element_scope', true);
+        $this->addCompositeForeignKey($schema, 'progression_events', ['user_id', 'server_id'], 'users', ['id', 'server_id'], 'fk_progression_events_user_scope', true);
+        $this->addCompositeForeignKey($schema, 'user_daily_xp', ['user_id', 'server_id'], 'users', ['id', 'server_id'], 'fk_user_daily_xp_user_scope', true);
         $this->addCompositeForeignKey($schema, 'welcome_messages', ['rank_id', 'server_id'], 'ranks', ['id', 'server_id'], 'fk_welcome_messages_rank_scope', true);
         $this->addCompositeForeignKey($schema, 'bye_messages', ['rank_id', 'server_id'], 'ranks', ['id', 'server_id'], 'fk_bye_messages_rank_scope', true);
 

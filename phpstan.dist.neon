@@ -6,6 +6,7 @@ parameters:
     scanFiles:
         - migrations/Version20260721231728.php
         - migrations/Version20260728120000.php
+        - migrations/Version20261125225525.php
     symfony:
         containerXmlPath: var/cache/dev/App_KernelDevDebugContainer.xml
     doctrine:

@@ -26,6 +26,8 @@ trait DatabaseResetter
             'discord_users',
             'bye_messages',
             'welcome_messages',
+            'progression_events',
+            'user_daily_xp',
             'users_elements',
             'user_stats',
             'role_stats',
